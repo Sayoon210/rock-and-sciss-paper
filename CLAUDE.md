@@ -1,0 +1,65 @@
+# RockAndScissPaper — Technical Guide
+
+Godot 4.7 (Mono/C#) card game. 1:1 host-client multiplayer.
+Design doc will be added separately later — this document covers tech stack / architecture rules only.
+
+## Rules
+
+- C# only.
+- All game rule validation (legal plays, shuffling, win/loss) happens on the host only.
+- Hidden information (opponent's hand, deck order) is sent only via targeted RPC to the peer allowed to see it.
+- Card/game data is defined as `Resource`-derived classes (e.g. `CardData : Resource`), one `.tres` file per instance.
+- Script name must reveal its role via suffix: `...Manager` (Autoload service), `...Controller` (drives a node/scene), `...Data` (Resource definition), `...View`/`...UI` (presentation only), `...Effect` (composable behavior), `I...` (interface). File name matches class name.
+- `GameState` has an explicit reset function called at the start of each match.
+
+## Avoid
+
+- GDScript.
+- Trusting client-sent values without host-side re-validation.
+- Full-syncing hidden information through `MultiplayerSynchronizer` — the default Godot multiplayer pattern, but it exposes everything to every peer.
+- Subclass trees for variants (`FireCard : AttackCard : Card`) — use composition (`ICardEffect`) instead.
+- Hardcoding card stats/text in scripts.
+- Scene-local state in Autoload, or Autoloads referencing each other directly.
+- Adding abstractions/scaffolding "in case it's needed later."
+
+## Multiplayer
+
+- `ENetMultiplayerPeer` + Godot's High-Level Multiplayer API (`[Rpc]`, `MultiplayerSynchronizer`).
+- No custom GDExtension/C++ netcode — a turn-based card game doesn't need it.
+- Host-authoritative flow: clients send "I want to do X" requests, the host validates against game rules and broadcasts the result.
+- This also enforces information asymmetry naturally, since the host decides what each client is told.
+
+## Class Hierarchy & Composition
+
+- Favor interfaces + composition over deep inheritance — define behavior contracts as C# interfaces (`ICardEffect`, `IInteractable`) rather than a new base class per variant.
+- Keep Godot node inheritance shallow (at most one custom class between a script and its Godot node base, e.g. `Card : Node2D`).
+- Keep pure game logic (plain C# classes, no node dependency) separate from node/scene-bound scripts where practical, for testability and reuse.
+
+## Data Management (Godot Resources)
+
+- `CardDatabase` (Autoload) loads and indexes `.tres` `CardData` resources — it does not define card stats itself.
+- Each card is one `.tres` file, giving type-safe, editor-visible data instead of a `Dictionary`/JSON blob.
+- The special-card roster is currently fixed (all 6 designed special cards go in every deck), but a future deckbuilding step where players pick a subset from a larger pool is planned (see [DESIGN.md](DESIGN.md)).
+- Don't hardcode "there are exactly 6 special cards" into deck-assembly logic — read the special-card set from `CardDatabase` rather than assuming a fixed count/list.
+
+## Autoload
+
+- Every Autoload singleton must have one clear, single purpose — no dumping ground. New ones can be added later as long as they meet this bar; this isn't a closed list.
+- Currently registered:
+  - `NetworkManager` — connection/matchmaking
+  - `GameState`/`MatchState` — current match
+  - `CardDatabase` — static card data
+  - `EventBus` — global signal relay, added only once actually needed
+
+## AI-Assisted Development
+
+- Verify Godot API members against the actual 4.7 C# API before using them — training data mixes GDScript examples and older Godot versions, so a hallucinated or outdated method/property name is a real risk here.
+- Test multiplayer RPC/authority behavior with two running instances rather than assuming it from memory of docs.
+- This project has the `godot-mcp` MCP server configured (local, stdio, via `npx @coding-solo/godot-mcp`) with `GODOT_PATH` pointing at the local Godot 4.7 Mono install.
+- It gives Claude direct control over the Godot editor — launching the editor/project, capturing debug output, creating nodes/scenes.
+
+## Git Commits
+
+- Commits in this project are made via the global `commit` skill (`~/.claude/skills/commit/`, invoked as `/commit`).
+- It enforces Conventional Commits prefix, a detailed body, and a mandatory "why".
+- Use it rather than writing a generic commit message by hand.
