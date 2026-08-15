@@ -10,7 +10,6 @@ Design doc will be added separately later — this document covers tech stack / 
 - Hidden information (opponent's hand, deck order) is sent only via targeted RPC to the peer allowed to see it.
 - Card/game data is defined as `Resource`-derived classes (e.g. `CardData : Resource`), one `.tres` file per instance.
 - Script name must reveal its role via suffix: `...Manager` (Autoload service), `...Controller` (drives a node/scene), `...Data` (Resource definition), `...View`/`...UI` (presentation only), `...Effect` (composable behavior), `I...` (interface). File name matches class name.
-- `GameState` has an explicit reset function called at the start of each match.
 
 ## Avoid
 
@@ -19,8 +18,22 @@ Design doc will be added separately later — this document covers tech stack / 
 - Full-syncing hidden information through `MultiplayerSynchronizer` — the default Godot multiplayer pattern, but it exposes everything to every peer.
 - Subclass trees for variants (`FireCard : AttackCard : Card`) — use composition (`ICardEffect`) instead.
 - Hardcoding card stats/text in scripts.
-- Scene-local state in Autoload, or Autoloads referencing each other directly.
 - Adding abstractions/scaffolding "in case it's needed later."
+
+## Project Structure
+
+Three .NET projects in one solution (`RockAndScissPaper.sln`), net8.0:
+
+```
+RockAndScissPaper.csproj   Godot.NET.Sdk — scenes, nodes, UI, networking
+  └─ references ─→ Core/   Microsoft.NET.Sdk — pure game rules, references nothing
+Tests/                     xUnit — references Core only
+```
+
+- Pure game logic goes in `Core/`. Anything touching `Node`, `Resource`, RPC, or the scene tree goes under `Scripts/`.
+- `Core` references nothing, so Godot types can't be used there — `using Godot;` fails the build with `error CS0246`. That's the boundary, and it's enforced by the compiler rather than by discipline.
+- The Godot `.csproj` excludes `Core/**` and `Tests/**` from its compile glob; without that it would swallow those files and the boundary would silently vanish.
+- `dotnet build` builds all three. `dotnet test` runs the suite.
 
 ## Multiplayer
 
@@ -41,15 +54,6 @@ Design doc will be added separately later — this document covers tech stack / 
 - Each card is one `.tres` file, giving type-safe, editor-visible data instead of a `Dictionary`/JSON blob.
 - The special-card roster is currently fixed (all 6 designed special cards go in every deck), but a future deckbuilding step where players pick a subset from a larger pool is planned (see [DESIGN.md](DESIGN.md)).
 - Don't hardcode "there are exactly 6 special cards" into deck-assembly logic — read the special-card set from `CardDatabase` rather than assuming a fixed count/list.
-
-## Autoload
-
-- Every Autoload singleton must have one clear, single purpose — no dumping ground. New ones can be added later as long as they meet this bar; this isn't a closed list.
-- Currently registered:
-  - `NetworkManager` — connection/matchmaking
-  - `GameState`/`MatchState` — current match
-  - `CardDatabase` — static card data
-  - `EventBus` — global signal relay, added only once actually needed
 
 ## AI-Assisted Development
 

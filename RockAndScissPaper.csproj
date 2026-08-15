@@ -1,0 +1,23 @@
+<Project Sdk="Godot.NET.Sdk/4.7.0">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <RootNamespace>RockAndScissPaper</RootNamespace>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <!-- Core and Tests are separate projects. Godot's SDK globs **/*.cs from the
+       project root, so they must be excluded here or their files would be
+       compiled into the Godot assembly and the boundary would not exist. -->
+  <ItemGroup>
+    <Compile Remove="Core/**/*.cs" />
+    <Compile Remove="Tests/**/*.cs" />
+  </ItemGroup>
+
+  <!-- One-way reference: the Godot project knows Core. Core does not know Godot. -->
+  <ItemGroup>
+    <ProjectReference Include="Core/RockAndScissPaper.Core.csproj" />
+  </ItemGroup>
+
+</Project>
