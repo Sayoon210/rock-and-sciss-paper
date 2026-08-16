@@ -23,7 +23,7 @@
 ## 정정 2: "Core = 호스트 전용 실행"이 아님
 
 - 처음 든 생각: 멀티플레이어에서 호스트만 로직을 돌리고 싶어서 그걸 Core에 몰아둔 것 아닌가.
-- 정정: **Core.dll은 호스트와 클라이언트 양쪽에 동일하게 존재함.** 빌드 시 실행 파일에 통째로 링크되므로, 클라이언트 컴퓨터에도 `RoundResolver` 등 Core 코드가 그대로 들어있음. Core는 자신이 호스트에서 도는지 클라에서 도는지 알 방법도 관심도 없음 (Player1/Player2만 알고 peer ID나 host 여부는 아예 모르는 설계 — [Core/CLAUDE.md](../Core/CLAUDE.md) 참고).
+- 정정: **Core.dll은 호스트와 클라이언트 양쪽에 동일하게 존재함.** 빌드 시 실행 파일에 통째로 링크되므로, 클라이언트 컴퓨터에도 `RoundResolver` 등 Core 코드가 그대로 들어있음. Core는 자신이 호스트에서 도는지 클라에서 도는지 알 방법도 관심도 없음 (Player1/Player2만 알고 peer ID나 host 여부는 아예 모르는 설계 — [GameLogic/CLAUDE.md](../GameLogic/CLAUDE.md) 참고).
 - **실제 호스트 전용 실행은 런타임 분기로 만들어짐**: `GameState._session`이 호스트에선 실제 세션 객체, 클라에선 항상 `null`. 클라의 `GameState`는 `_session`이 없어서 애초에 `RoundResolver`를 부를 게 없음 — 코드가 없어서가 아니라 부르지 않도록 짜여서 안 도는 것.
 - Core 분리(컴파일 타임 경계)와 호스트 권위(런타임 분기)는 **서로 다른 문제를 푸는 별개의 메커니즘**이고, 하나가 다른 하나의 이유가 아님:
 

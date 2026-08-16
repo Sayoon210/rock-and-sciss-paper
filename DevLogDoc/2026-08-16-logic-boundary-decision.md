@@ -49,7 +49,7 @@ Autoload에 게임 로직을 어디까지 넣을지에서 출발해서, 최종�
 - **Why**: 검증할 조합이 실제로 많음(조커 × 6종 특수, 리셋 충돌, 무승부, 소멸 vs 덱바닥). A안은 조합당 비용이 너무 커서 결국 검증을 안 하게 되고, 그러면 판정 버그가 플레이 중에야 발견됨.
 - **전제 조건**: 이 판단은 "테스트를 실제로 쓴다"에 걸려 있음. 안 쓸 거면 경계는 순수 비용이므로 A가 맞음. 쓰기로 했으므로 B.
 - **부수 이득**: 경계 덕분에 Godot 전용 테스트 도구(GdUnit4 등) 없이 평범한 .NET 표준 xUnit을 쓸 수 있음.
-- 관련 지침을 순수 로직 쪽(이후 `Core/`로 이동 — [Core/CLAUDE.md](../Core/CLAUDE.md))과 [Scripts/Autoload/CLAUDE.md](../Scripts/Autoload/CLAUDE.md)에 반영.
+- 관련 지침을 순수 로직 쪽(이후 `Core/`로 이동 — [GameLogic/CLAUDE.md](../GameLogic/CLAUDE.md))과 [Scripts/Autoload/CLAUDE.md](../Scripts/Autoload/CLAUDE.md)에 반영.
 
 ## 남은 작업
 
