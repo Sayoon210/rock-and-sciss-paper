@@ -13,6 +13,7 @@ Design doc will be added separately later — this document covers tech stack / 
 - Name a type after what it actually holds or does, not a vague category. `WinLossResult`, not `Outcome`; `WinLossRules`, not `Helper`.
 - Use DESIGN.md's own vocabulary verbatim — normal card, dummy, joker, special, vanish, deck bottom. If the design doc and the code call the same thing different names, one of them is wrong.
 - Godot script names must reveal their role via suffix: `...Manager` (Autoload service), `...Controller` (drives a node/scene), `...Data` (Resource definition), `...View`/`...UI` (presentation only), `...Effect` (composable behavior), `I...` (interface). File name matches class name.
+- Write the plain form of a construct, not the compressed one. Full method bodies with `{ }` and `return`, not expression-bodied `=>` members. `switch` statements with `case`/`return`, not switch expressions. Same reasoning as the naming rules: the code has to be readable by someone who hasn't memorized C#'s newer shorthands, and stacked `=>` arrows read as noise rather than as structure.
 
 ## Avoid
 

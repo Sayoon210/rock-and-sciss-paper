@@ -36,7 +36,10 @@ Why this matters for this project specifically:
   {
       public static NetworkManager Instance { get; private set; }
 
-      public override void _EnterTree() => Instance = this;
+      public override void _EnterTree()
+      {
+          Instance = this;
+      }
   }
   ```
 

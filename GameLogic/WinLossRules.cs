@@ -29,15 +29,31 @@ public static class WinLossRules
             return WinLossResult.Draw;
         }
 
-        return Beats(player1, player2) ? WinLossResult.Player1Win : WinLossResult.Player2Win;
+        if (Beats(player1, player2))
+        {
+            return WinLossResult.Player1Win;
+        }
+
+        return WinLossResult.Player2Win;
     }
 
-    private static bool Beats(NormalCard attacker, NormalCard defender) =>
-        (attacker, defender) switch
+    private static bool Beats(NormalCard attacker, NormalCard defender)
+    {
+        if (attacker == NormalCard.Scissors && defender == NormalCard.Paper)
         {
-            (NormalCard.Scissors, NormalCard.Paper) => true,
-            (NormalCard.Rock, NormalCard.Scissors) => true,
-            (NormalCard.Paper, NormalCard.Rock) => true,
-            _ => false,
-        };
+            return true;
+        }
+
+        if (attacker == NormalCard.Rock && defender == NormalCard.Scissors)
+        {
+            return true;
+        }
+
+        if (attacker == NormalCard.Paper && defender == NormalCard.Rock)
+        {
+            return true;
+        }
+
+        return false;
+    }
 }
