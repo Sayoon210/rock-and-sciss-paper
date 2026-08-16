@@ -9,18 +9,18 @@ Design doc will be added separately later — this document covers tech stack / 
 - All game rule validation (legal plays, shuffling, win/loss) happens on the host only.
 - Hidden information (opponent's hand, deck order) is sent only via targeted RPC to the peer allowed to see it.
 - Card/game data is defined as `Resource`-derived classes (e.g. `CardData : Resource`), one `.tres` file per instance.
-- Spell every name out in full. No initialisms or shortened forms (`Rps`, `Mgr`, `Cfg`, `Btn`) — a name has to be readable by someone who has never seen this codebase.
-- Name a type after what it actually holds or does, not a vague category. `WinLossResult`, not `Outcome`; `WinLossRules`, not `Helper`.
-- Use DESIGN.md's own vocabulary verbatim — normal card, dummy, joker, special, vanish, deck bottom. If the design doc and the code call the same thing different names, one of them is wrong.
-- Godot script names must reveal their role via suffix: `...Manager` (Autoload service), `...Controller` (drives a node/scene), `...Data` (Resource definition), `...View`/`...UI` (presentation only), `...Effect` (composable behavior), `I...` (interface). File name matches class name.
-- Write the plain form of a construct, not the compressed one. Full method bodies with `{ }` and `return`, not expression-bodied `=>` members. `switch` statements with `case`/`return`, not switch expressions. Same reasoning as the naming rules: the code has to be readable by someone who hasn't memorized C#'s newer shorthands, and stacked `=>` arrows read as noise rather than as structure.
+- Spell every name out in full. No initialisms (`Rps`, `Mgr`, `Cfg`, `Btn`).
+- Name a type after what it holds or does, not a vague category (`WinLossRules`, not `Helper`).
+- Use DESIGN.md's vocabulary verbatim — normal card, dummy, joker, special, vanish, deck bottom.
+- Godot script names reveal role via suffix: `...Manager`, `...Controller`, `...Data`, `...View`/`...UI`, `...Effect`, `I...`. File name matches class name.
+- Write the plain form of a C# construct, not the compressed one: full `{ }`/`return` bodies, not expression-bodied `=>` members or switch expressions.
 
 ## Avoid
 
 - GDScript.
 - Trusting client-sent values without host-side re-validation.
-- Full-syncing hidden information through `MultiplayerSynchronizer` — the default Godot multiplayer pattern, but it exposes everything to every peer.
-- Subclass trees for card variants (e.g. `ResetCard : SpecialCard : Card`) — cards are identified by the `CardName` enum and, where behavior actually differs (the special cards), composed via `ICardEffect`. Normal/Dummy/Joker have no card-level behavior of their own to subclass for; their handling is fixed logic in `RoundResolver`.
+- Full-syncing hidden information through `MultiplayerSynchronizer`.
+- Subclass trees for card variants (`ResetCard : SpecialCard : Card`) — cards are identified by `CardName`, special behavior composed via `ICardEffect`.
 - Hardcoding card stats/text in scripts.
 - Adding abstractions/scaffolding "in case it's needed later."
 
@@ -34,40 +34,35 @@ RockAndScissPaper.csproj      Godot.NET.Sdk — scenes, nodes, UI, networking
 Tests/                        xUnit — references GameLogic only
 ```
 
-- Pure game logic goes in `GameLogic/`. Anything touching `Node`, `Resource`, RPC, or the scene tree goes under `Scripts/`.
-- `GameLogic` references nothing, so Godot types can't be used there — `using Godot;` fails the build with `error CS0246`. That's the boundary, and it's enforced by the compiler rather than by discipline.
-- The Godot `.csproj` excludes `GameLogic/**` and `Tests/**` from its compile glob; without that it would swallow those files and the boundary would silently vanish.
+- Pure game logic goes in `GameLogic/`; anything touching `Node`, `Resource`, RPC, or the scene tree goes under `Scripts/`.
+- `GameLogic` references nothing — `using Godot;` fails to compile there (`error CS0246`).
+- The Godot `.csproj` excludes `GameLogic/**` and `Tests/**` from its compile glob.
 - `dotnet build` builds all three. `dotnet test` runs the suite.
 
 ## Multiplayer
 
 - `ENetMultiplayerPeer` + Godot's High-Level Multiplayer API (`[Rpc]`, `MultiplayerSynchronizer`).
-- No custom GDExtension/C++ netcode — a turn-based card game doesn't need it.
-- Host-authoritative flow: clients send "I want to do X" requests, the host validates against game rules and broadcasts the result.
-- This also enforces information asymmetry naturally, since the host decides what each client is told.
+- No custom GDExtension/C++ netcode.
+- Host-authoritative flow: clients send "I want to do X" requests, the host validates and broadcasts the result.
 
 ## Class Hierarchy & Composition
 
-- Favor interfaces + composition over deep inheritance — define behavior contracts as C# interfaces (`ICardEffect`, `IInteractable`) rather than a new base class per variant.
-- Keep Godot node inheritance shallow (at most one custom class between a script and its Godot node base, e.g. `Card : Node2D`).
-- Keep pure game logic (plain C# classes, no node dependency) separate from node/scene-bound scripts where practical, for testability and reuse.
+- Favor interfaces + composition over deep inheritance (`ICardEffect`, `IInteractable`).
+- Keep Godot node inheritance shallow — at most one custom class between a script and its node base (e.g. `Card : Node2D`).
+- Keep pure game logic (plain C#, no node dependency) separate from node/scene-bound scripts.
 
 ## Data Management (Godot Resources)
 
-- `CardDatabase` (Autoload) loads and indexes `.tres` `CardData` resources — it does not define card stats itself.
-- Each card is one `.tres` file, giving type-safe, editor-visible data instead of a `Dictionary`/JSON blob.
-- The special-card roster is currently fixed (all 6 designed special cards go in every deck), but a future deckbuilding step where players pick a subset from a larger pool is planned (see [DESIGN.md](DESIGN.md)).
-- Don't hardcode "there are exactly 6 special cards" into deck-assembly logic — read the special-card set from `CardDatabase` rather than assuming a fixed count/list.
+- `CardDatabase` (Autoload) loads and indexes `.tres` `CardData` resources; it does not define card stats itself.
+- One `.tres` file per card.
+- Don't hardcode "there are exactly 6 special cards" into deck-assembly logic — read the special-card set from `CardDatabase` (deckbuilding/pool expansion planned, see [DESIGN.md](DESIGN.md)).
 
 ## AI-Assisted Development
 
-- Verify Godot API members against the actual 4.7 C# API before using them — training data mixes GDScript examples and older Godot versions, so a hallucinated or outdated method/property name is a real risk here.
-- Test multiplayer RPC/authority behavior with two running instances rather than assuming it from memory of docs.
-- This project has the `godot-mcp` MCP server configured (local, stdio, via `npx @coding-solo/godot-mcp`) with `GODOT_PATH` pointing at the local Godot 4.7 Mono install.
-- It gives Claude direct control over the Godot editor — launching the editor/project, capturing debug output, creating nodes/scenes.
+- Verify Godot API members against the actual 4.7 C# API before using them.
+- Test multiplayer RPC/authority behavior with two running instances, not from memory.
+- `godot-mcp` MCP server is configured (local, stdio, `GODOT_PATH` → local Godot 4.7 Mono install) for direct editor control.
 
 ## Git Commits
 
-- Commits in this project are made via the global `commit` skill (`~/.claude/skills/commit/`, invoked as `/commit`).
-- It enforces Conventional Commits prefix, a detailed body, and a mandatory "why".
-- Use it rather than writing a generic commit message by hand.
+- Commit via the global `commit` skill (`~/.claude/skills/commit/`, `/commit`) — Conventional Commits prefix, detailed body, mandatory "why".
