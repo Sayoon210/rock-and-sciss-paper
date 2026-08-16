@@ -1,53 +1,45 @@
 namespace RockAndScissPaper.GameLogic;
 
 /// <summary>Resolves one round: figures out each card's fate and any win/loss, applies
-/// that to each player's DeckAndHand (vanish/return-to-bottom, then draw), and returns
-/// what happened. Only handles Normal/Dummy/Joker so far — Special cards need
-/// ICardEffect, which does not exist yet.</summary>
+/// that to each player's DeckAndHand (vanish/return-to-bottom — this also removes the
+/// played card from the hand before any effect runs, so a card like Reset never sees
+/// itself as still "in hand"), runs Special effects in priority order, then draws for
+/// both sides. Transform, Foresight, and Swap have no ICardEffect yet — resolving a round
+/// that actually needs to run one of them throws.</summary>
 public static class RoundResolver
 {
+    private static readonly IReadOnlyDictionary<CardName, ICardEffect> SpecialEffects = new Dictionary<CardName, ICardEffect>
+    {
+        { CardName.Reset, new ResetEffect() },
+        { CardName.Refill, new RefillEffect() },
+        { CardName.Draw, new DrawEffect() },
+    };
+
     public static RoundResult Resolve(
         CardName player1Card,
         CardName player2Card,
         DeckAndHand player1,
-        DeckAndHand player2)
+        DeckAndHand player2,
+        Random rng)
     {
-        if (player1Card.GetCardType() == CardType.Special || player2Card.GetCardType() == CardType.Special)
-        {
-            throw new NotImplementedException("Special card resolution is not implemented yet.");
-        }
-
         CardFate player1Fate;
         CardFate player2Fate;
         WinLossResult? winLoss;
+        bool runEffects;
 
         if (player1Card == CardName.Joker || player2Card == CardName.Joker)
         {
             // Joker vanishes itself and destroys whatever the other side played,
-            // including another Joker. No win/loss when a Joker is involved.
+            // blocking its effect entirely — including another Joker's (no-op) effect.
             player1Fate = CardFate.Vanished;
             player2Fate = CardFate.Vanished;
             winLoss = null;
+            runEffects = false;
         }
         else
         {
-            if (player1Card.GetCardType() == CardType.Dummy)
-            {
-                player1Fate = CardFate.Vanished;
-            }
-            else
-            {
-                player1Fate = CardFate.ReturnedToDeckBottom;
-            }
-
-            if (player2Card.GetCardType() == CardType.Dummy)
-            {
-                player2Fate = CardFate.Vanished;
-            }
-            else
-            {
-                player2Fate = CardFate.ReturnedToDeckBottom;
-            }
+            player1Fate = DefaultFate(player1Card);
+            player2Fate = DefaultFate(player2Card);
 
             if (player1Card.IsNormal() && player2Card.IsNormal())
             {
@@ -57,10 +49,27 @@ public static class RoundResolver
             {
                 winLoss = null;
             }
+
+            runEffects = true;
         }
 
+        if (runEffects)
+        {
+            // Check before mutating anything: a throw halfway through would leave both
+            // players' DeckAndHand in a half-applied round.
+            RequireEffectExists(player1Card);
+            RequireEffectExists(player2Card);
+        }
+
+        // Remove each played card from its hand before any effect runs, so a special
+        // card's own effect never sees itself as still part of "my hand".
         ApplyFate(player1, player1Card, player1Fate);
         ApplyFate(player2, player2Card, player2Fate);
+
+        if (runEffects)
+        {
+            RunSpecialEffectsInPriorityOrder(player1Card, player1, player2Card, player2, rng);
+        }
 
         CardName player1Drew = player1.Draw();
         CardName player2Drew = player2.Draw();
@@ -75,6 +84,21 @@ public static class RoundResolver
             player2Drew);
     }
 
+    private static CardFate DefaultFate(CardName card)
+    {
+        if (card.GetCardType() == CardType.Dummy)
+        {
+            return CardFate.Vanished;
+        }
+
+        if (card.GetCardType() == CardType.Special)
+        {
+            return CardFate.Vanished;
+        }
+
+        return CardFate.ReturnedToDeckBottom;
+    }
+
     private static void ApplyFate(DeckAndHand player, CardName card, CardFate fate)
     {
         if (fate == CardFate.Vanished)
@@ -85,5 +109,53 @@ public static class RoundResolver
         {
             player.ReturnToDeckBottom(card);
         }
+    }
+
+    private static void RunSpecialEffectsInPriorityOrder(
+        CardName player1Card,
+        DeckAndHand player1,
+        CardName player2Card,
+        DeckAndHand player2,
+        Random rng)
+    {
+        // Reset outranks every other special. If both players played Reset, it runs
+        // twice, Player 1's card first, per DESIGN.md.
+        if (player1Card == CardName.Reset)
+        {
+            RunEffect(player1Card, player1, player2, rng);
+        }
+
+        if (player2Card == CardName.Reset)
+        {
+            RunEffect(player2Card, player2, player1, rng);
+        }
+
+        if (player1Card.GetCardType() == CardType.Special && player1Card != CardName.Reset)
+        {
+            RunEffect(player1Card, player1, player2, rng);
+        }
+
+        if (player2Card.GetCardType() == CardType.Special && player2Card != CardName.Reset)
+        {
+            RunEffect(player2Card, player2, player1, rng);
+        }
+    }
+
+    private static void RequireEffectExists(CardName card)
+    {
+        if (card.GetCardType() != CardType.Special)
+        {
+            return;
+        }
+
+        if (!SpecialEffects.ContainsKey(card))
+        {
+            throw new NotImplementedException($"{card} has no ICardEffect implementation yet.");
+        }
+    }
+
+    private static void RunEffect(CardName card, DeckAndHand self, DeckAndHand opponent, Random rng)
+    {
+        SpecialEffects[card].Apply(self, opponent, rng);
     }
 }

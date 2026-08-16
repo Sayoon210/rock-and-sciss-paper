@@ -35,8 +35,10 @@ Currently implemented:
 - `Hand` (add, remove, contains) in `Hand.cs`.
 - `DeckAndHand` (draw, return-to-deck-bottom, vanish — the operations spanning both) in `DeckAndHand.cs`.
 - `RoundResult` and `CardFate` (the outcome of one round: revealed cards, each card's fate, win/loss or none, what each player drew) in `RoundResult.cs`.
-- `RoundResolver.Resolve` — takes both submitted plays and each player's `DeckAndHand`, applies the outcome (fate, draw) to them directly, and returns the `RoundResult`. Normal/Dummy/Joker only so far; throws `NotImplementedException` for a Special card. No priority queue yet — with no real Special cards wired into it, "Joker present → both vanish, no win/loss; otherwise each card follows its own default fate" covers every case. The real priority ordering (Joker > Reset > other specials > rest) waits for the rest of `ICardEffect`.
 - `ICardEffect` (`self`, `opponent`, seeded `rng` — `opponent` unused except by Reset) in `Effects/ICardEffect.cs`, with three of the six special cards implemented: `ResetEffect`, `RefillEffect`, `DrawEffect` in `Effects/`. These three needed no extra input beyond the caster's and (for Reset) the opponent's `DeckAndHand`.
+- `RoundResolver.Resolve` — takes an extra seeded `Random` now that it can shuffle. Order: figure out each side's `CardFate`/win-loss, remove both played cards from their hands (`ApplyFate`), *then* run Special effects, then draw for both. Removing the played card before running effects matters — Reset's own card must not still be "in hand" when Reset asks what's in the hand, or it would get shuffled back into the deck instead of vanishing.
+  - Priority: Joker present → both vanish, no effects run, no win/loss (this is also what lets a Joker block an unimplemented Special without throwing). Otherwise: Reset runs first if either side played it (twice, Player 1 first, if both did), then any other Special, Player 1 before Player 2.
+  - A Special with no registered `ICardEffect` (Transform, Foresight, Swap) throws `NotImplementedException` — but only if it actually needs to run. A Joker-blocked one never reaches that check.
 
 ## Tests
 
