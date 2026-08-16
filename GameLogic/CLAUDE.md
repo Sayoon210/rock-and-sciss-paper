@@ -25,17 +25,17 @@ Resolution only needs to know *"this is a Joker"* — never what it looks like. 
 
 ## What lives here
 
-- `MatchSession` — the authoritative match: both players' zones, scores, round number, win condition (5 wins). Instantiated on the host only.
+- `MatchSession` — the authoritative match: both players' `DeckAndHand`, scores, round number, win condition (5 wins). Instantiated on the host only.
 - `RoundResolver` — takes both submitted plays, returns what happened. No mutation of its inputs.
-- `PlayerZone` — one player's deck and hand: draw, return-to-deck-bottom, vanish, shuffle.
 - `RoundResult` — a plain value object describing the outcome: both cards revealed, each card's fate, score delta, what each player drew.
 - `ICardEffect` implementations — one per special card (Reset, Swap, Change, Refill, Foresight, Draw), composed rather than subclassed, per the root convention.
-
-Don't split a class out until it's carrying its weight. `PlayerZone` may well start as two fields on `MatchSession` and only become its own type once that gets unwieldy.
 
 Currently implemented:
 - `WinLossRules.Judge` (normal-card matchup resolution) in `WinLossRules.cs`.
 - `CardName`, `CardType`, and the `CardNameExtensions` mapping between them (plus `ToNormalCard()`, the bridge into `WinLossRules`) in `CardName.cs`.
+- `Deck` (deck-top/deck-bottom operations, shuffle, peek/insert for effects like Foresight) in `Deck.cs`.
+- `Hand` (add, remove, contains) in `Hand.cs`.
+- `DeckAndHand` (draw, return-to-deck-bottom, vanish — the operations spanning both) in `DeckAndHand.cs`.
 
 ## Tests
 
