@@ -26,8 +26,6 @@ Resolution only needs to know *"this is a Joker"* — never what it looks like. 
 ## What lives here
 
 - `MatchSession` — the authoritative match: both players' `DeckAndHand`, scores, round number, win condition (5 wins). Instantiated on the host only.
-- `RoundResolver` — takes both submitted plays, returns what happened. No mutation of its inputs.
-- `RoundResult` — a plain value object describing the outcome: both cards revealed, each card's fate, score delta, what each player drew.
 - `ICardEffect` implementations — one per special card (Reset, Swap, Change, Refill, Foresight, Draw), composed rather than subclassed, per the root convention.
 
 Currently implemented:
@@ -36,6 +34,8 @@ Currently implemented:
 - `Deck` (deck-top/deck-bottom operations, shuffle, peek/insert for effects like Foresight) in `Deck.cs`.
 - `Hand` (add, remove, contains) in `Hand.cs`.
 - `DeckAndHand` (draw, return-to-deck-bottom, vanish — the operations spanning both) in `DeckAndHand.cs`.
+- `RoundResult` and `CardFate` (the outcome of one round: revealed cards, each card's fate, win/loss or none, what each player drew) in `RoundResult.cs`.
+- `RoundResolver.Resolve` — takes both submitted plays and each player's `DeckAndHand`, applies the outcome (fate, draw) to them directly, and returns the `RoundResult`. Normal/Dummy/Joker only so far; throws `NotImplementedException` for a Special card. No priority queue yet — with no real Special cards in play, "Joker present → both vanish, no win/loss; otherwise each card follows its own default fate" covers every case. The real priority ordering (Joker > Reset > other specials > rest) waits for `ICardEffect`.
 
 ## Tests
 
