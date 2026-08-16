@@ -8,27 +8,28 @@ public enum NormalCard
     Scissors,
 }
 
-public enum RoundOutcome
+/// <summary>Who won a round, or whether it was a draw.</summary>
+public enum WinLossResult
 {
     Player1Win,
     Player2Win,
     Draw,
 }
 
-public static class RpsRules
+public static class WinLossRules
 {
     /// <summary>
     /// Scissors beats Paper, Rock beats Scissors, Paper beats Rock. Same card draws.
-    /// Only normal cards reach here — specials and Jokers never produce an outcome.
+    /// Only normal cards reach here — specials, dummies and Jokers never produce a win or loss.
     /// </summary>
-    public static RoundOutcome Compare(NormalCard player1, NormalCard player2)
+    public static WinLossResult Judge(NormalCard player1, NormalCard player2)
     {
         if (player1 == player2)
         {
-            return RoundOutcome.Draw;
+            return WinLossResult.Draw;
         }
 
-        return Beats(player1, player2) ? RoundOutcome.Player1Win : RoundOutcome.Player2Win;
+        return Beats(player1, player2) ? WinLossResult.Player1Win : WinLossResult.Player2Win;
     }
 
     private static bool Beats(NormalCard attacker, NormalCard defender) =>

@@ -9,7 +9,10 @@ Design doc will be added separately later — this document covers tech stack / 
 - All game rule validation (legal plays, shuffling, win/loss) happens on the host only.
 - Hidden information (opponent's hand, deck order) is sent only via targeted RPC to the peer allowed to see it.
 - Card/game data is defined as `Resource`-derived classes (e.g. `CardData : Resource`), one `.tres` file per instance.
-- Script name must reveal its role via suffix: `...Manager` (Autoload service), `...Controller` (drives a node/scene), `...Data` (Resource definition), `...View`/`...UI` (presentation only), `...Effect` (composable behavior), `I...` (interface). File name matches class name.
+- Spell every name out in full. No initialisms or shortened forms (`Rps`, `Mgr`, `Cfg`, `Btn`) — a name has to be readable by someone who has never seen this codebase.
+- Name a type after what it actually holds or does, not a vague category. `WinLossResult`, not `Outcome`; `WinLossRules`, not `Helper`.
+- Use DESIGN.md's own vocabulary verbatim — normal card, dummy, joker, special, vanish, deck bottom. If the design doc and the code call the same thing different names, one of them is wrong.
+- Godot script names must reveal their role via suffix: `...Manager` (Autoload service), `...Controller` (drives a node/scene), `...Data` (Resource definition), `...View`/`...UI` (presentation only), `...Effect` (composable behavior), `I...` (interface). File name matches class name.
 
 ## Avoid
 

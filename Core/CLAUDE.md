@@ -31,7 +31,7 @@ Resolution only needs to know *"this is a Joker"* — never what it looks like. 
 
 Don't split a class out until it's carrying its weight. `PlayerZone` may well start as two fields on `MatchSession` and only become its own type once that gets unwieldy.
 
-Currently implemented: `RpsRules` (normal-card matchup resolution) in `RpsRules.cs`.
+Currently implemented: `WinLossRules.Judge` (normal-card matchup resolution) in `WinLossRules.cs`.
 
 ## Tests
 
