@@ -71,8 +71,8 @@ public static class RoundResolver
             RunSpecialEffectsInPriorityOrder(player1Card, player1, player2Card, player2, rng);
         }
 
-        CardName player1Drew = player1.Draw();
-        CardName player2Drew = player2.Draw();
+        player1.Draw();
+        player2.Draw();
 
         return new RoundResult(
             player1Card,
@@ -80,8 +80,10 @@ public static class RoundResolver
             player1Fate,
             player2Fate,
             winLoss,
-            player1Drew,
-            player2Drew);
+            player1.Hand.Cards,
+            player2.Hand.Cards,
+            player1.Deck.Count,
+            player2.Deck.Count);
     }
 
     private static CardFate DefaultFate(CardName card)

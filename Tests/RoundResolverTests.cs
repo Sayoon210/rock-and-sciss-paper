@@ -74,10 +74,26 @@ public class RoundResolverTests
 
         RoundResult result = RoundResolver.Resolve(CardName.Joker, CardName.Dummy, player1, player2, new Random(1));
 
-        Assert.Equal(CardName.Paper, result.Player1Drew);
-        Assert.Equal(CardName.Paper, result.Player2Drew);
+        Assert.Equal(new[] { CardName.Paper }, result.Player1Hand);
+        Assert.Equal(new[] { CardName.Paper }, result.Player2Hand);
         Assert.Contains(CardName.Paper, player1.Hand.Cards);
         Assert.Contains(CardName.Paper, player2.Hand.Cards);
+    }
+
+    [Fact]
+    public void Resolve_reports_the_full_post_round_hand_after_a_Draw_card()
+    {
+        // Draw's own card vanishes, its effect draws 2, then the round draw adds 1 more —
+        // three new cards in hand, which a single "what you drew" field could not describe.
+        DeckAndHand player1 = new DeckAndHand(
+            new Deck(new[] { CardName.Rock, CardName.Paper, CardName.Scissors }),
+            new Hand(new[] { CardName.Draw }));
+        DeckAndHand player2 = MakeZone(CardName.Dummy);
+
+        RoundResult result = RoundResolver.Resolve(CardName.Draw, CardName.Dummy, player1, player2, new Random(1));
+
+        Assert.Equal(new[] { CardName.Rock, CardName.Paper, CardName.Scissors }, result.Player1Hand);
+        Assert.Equal(0, result.Player1DeckCount);
     }
 
     [Fact]
