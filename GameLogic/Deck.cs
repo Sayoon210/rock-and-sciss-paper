@@ -34,8 +34,13 @@ public sealed class Deck
         return _cards.GetRange(0, count);
     }
 
+    /// <summary>Fisher-Yates: every permutation is equally likely, unlike naive per-card
+    /// random-swap approaches. rng is injected rather than global so a shuffle is
+    /// reproducible from its seed.</summary>
     public void Shuffle(Random rng)
     {
+        // Walk backward, and for each position pick a random index from the
+        // still-unshuffled range [0, i] (inclusive of i itself) to swap in.
         for (int i = _cards.Count - 1; i > 0; i--)
         {
             int j = rng.Next(i + 1);
