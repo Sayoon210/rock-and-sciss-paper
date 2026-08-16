@@ -20,7 +20,7 @@ Design doc will be added separately later — this document covers tech stack / 
 - GDScript.
 - Trusting client-sent values without host-side re-validation.
 - Full-syncing hidden information through `MultiplayerSynchronizer` — the default Godot multiplayer pattern, but it exposes everything to every peer.
-- Subclass trees for variants (`FireCard : AttackCard : Card`) — use composition (`ICardEffect`) instead.
+- Subclass trees for card variants (e.g. `ResetCard : SpecialCard : Card`) — cards are identified by the `CardName` enum and, where behavior actually differs (the special cards), composed via `ICardEffect`. Normal/Dummy/Joker have no card-level behavior of their own to subclass for; their handling is fixed logic in `RoundResolver`.
 - Hardcoding card stats/text in scripts.
 - Adding abstractions/scaffolding "in case it's needed later."
 

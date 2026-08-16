@@ -18,7 +18,7 @@ This isn't a convention you have to remember — it's enforced by the build. `Ga
 
 Because `CardData : Resource` can't cross the boundary, game logic deals in plain identity values, not `CardData`:
 
-- Here: `CardKind` (Rock / Paper / Scissors / Dummy / Joker / Special) and, for specials, which special it is. A deck is a list of those.
+- Here: `CardName` (Rock / Paper / Scissors / Dummy / Joker / Reset / Swap / Transform / Refill / Foresight / Draw). A deck is a list of those. `CardType` (Normal / Dummy / Joker / Special) is derived from a `CardName` via `GetCardType()` and is what `RoundResolver` actually dispatches on.
 - Outside: `CardDatabase` maps identity → `CardData` for display name, art, and description at the presentation layer.
 
 Resolution only needs to know *"this is a Joker"* — never what it looks like. Keeping art and flavor text out of the rules is what makes the rules testable.
@@ -33,7 +33,9 @@ Resolution only needs to know *"this is a Joker"* — never what it looks like. 
 
 Don't split a class out until it's carrying its weight. `PlayerZone` may well start as two fields on `MatchSession` and only become its own type once that gets unwieldy.
 
-Currently implemented: `WinLossRules.Judge` (normal-card matchup resolution) in `WinLossRules.cs`.
+Currently implemented:
+- `WinLossRules.Judge` (normal-card matchup resolution) in `WinLossRules.cs`.
+- `CardName`, `CardType`, and the `CardNameExtensions` mapping between them (plus `ToNormalCard()`, the bridge into `WinLossRules`) in `CardName.cs`.
 
 ## Tests
 
