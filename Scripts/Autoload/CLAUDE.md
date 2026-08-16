@@ -13,7 +13,7 @@ Autoload scripts are the project's global services: registered once in `project.
 The rules of the game do not live here. **Autoloads own and relay; the plain C# classes they own know the rules.**
 
 - `GameState` (Autoload) — owns the current match object, resets it between matches, receives network calls, emits signals for the UI.
-- `MatchSession`, `RoundResolver`, etc. (plain C# in the separate [`Core`](../../Core/CLAUDE.md) project) — round resolution order, scoring, deck/hand/vanish operations. No `Node`, no RPC, no scene tree.
+- `MatchSession`, `RoundResolver`, etc. (plain C# in the separate [`GameLogic`](../../GameLogic/CLAUDE.md) project) — round resolution order, scoring, deck/hand/vanish operations. No `Node`, no RPC, no scene tree.
 
 The test for whether the split is right: **a full match should be runnable in a plain console harness with no Godot and no network.** If it isn't, logic has leaked into the Autoload.
 
@@ -44,7 +44,7 @@ Why this matters for this project specifically:
 
 ## Structure
 
-- Keep the Autoload thin. It coordinates and holds references; the actual rules live in plain C# classes in the `Core` project that it delegates to.
+- Keep the Autoload thin. It coordinates and holds references; the actual rules live in plain C# classes in the `GameLogic` project that it delegates to.
 - Why: a `Node`-derived singleton is awkward to test and drags the scene tree into logic that doesn't need it. Pushing logic into plain classes keeps it testable and reusable, and keeps the singleton small enough to read in one sitting.
 - Public surface should be intent-shaped (`RequestCardPlay`, `StartMatch`), not a bag of public fields other code mutates directly.
 

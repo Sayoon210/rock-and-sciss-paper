@@ -28,14 +28,14 @@ Design doc will be added separately later — this document covers tech stack / 
 Three .NET projects in one solution (`RockAndScissPaper.sln`), net8.0:
 
 ```
-RockAndScissPaper.csproj   Godot.NET.Sdk — scenes, nodes, UI, networking
-  └─ references ─→ Core/   Microsoft.NET.Sdk — pure game rules, references nothing
-Tests/                     xUnit — references Core only
+RockAndScissPaper.csproj      Godot.NET.Sdk — scenes, nodes, UI, networking
+  └─ references ─→ GameLogic/ Microsoft.NET.Sdk — pure game rules, references nothing
+Tests/                        xUnit — references GameLogic only
 ```
 
-- Pure game logic goes in `Core/`. Anything touching `Node`, `Resource`, RPC, or the scene tree goes under `Scripts/`.
-- `Core` references nothing, so Godot types can't be used there — `using Godot;` fails the build with `error CS0246`. That's the boundary, and it's enforced by the compiler rather than by discipline.
-- The Godot `.csproj` excludes `Core/**` and `Tests/**` from its compile glob; without that it would swallow those files and the boundary would silently vanish.
+- Pure game logic goes in `GameLogic/`. Anything touching `Node`, `Resource`, RPC, or the scene tree goes under `Scripts/`.
+- `GameLogic` references nothing, so Godot types can't be used there — `using Godot;` fails the build with `error CS0246`. That's the boundary, and it's enforced by the compiler rather than by discipline.
+- The Godot `.csproj` excludes `GameLogic/**` and `Tests/**` from its compile glob; without that it would swallow those files and the boundary would silently vanish.
 - `dotnet build` builds all three. `dotnet test` runs the suite.
 
 ## Multiplayer

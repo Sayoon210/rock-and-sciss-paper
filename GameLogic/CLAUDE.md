@@ -1,12 +1,14 @@
-# Core — Pure Game Logic
+# GameLogic — Pure Game Logic
 
-`RockAndScissPaper.Core` is a separate .NET project (`Microsoft.NET.Sdk`, no Godot reference). The rules of the match live here: round resolution, scoring, deck/hand operations, special card effects. This is the half of the architecture that `Scripts/Autoload/` owns but does not implement — see [Scripts/Autoload/CLAUDE.md](../Scripts/Autoload/CLAUDE.md) for the other side of the boundary.
+`RockAndScissPaper.GameLogic` is a separate .NET project (`Microsoft.NET.Sdk`, no Godot reference). The rules of the match live here: round resolution, scoring, deck/hand operations, special card effects. This is the half of the architecture that `Scripts/Autoload/` owns but does not implement — see [Scripts/Autoload/CLAUDE.md](../Scripts/Autoload/CLAUDE.md) for the other side of the boundary.
+
+Named `GameLogic` rather than `Core` on purpose — `Scripts/Cards/` also holds card-related files (the `CardData` Resource/`.tres` side), and a generic name like `Core` made the two easy to confuse. This folder is specifically the rules; `Scripts/Cards/` is specifically the presentation data.
 
 ## The boundary
 
 **No Godot types in this project.** No `Node`, no `Resource`, no `Signal`, no `GD.Print`, no RPC attributes.
 
-This isn't a convention you have to remember — it's enforced by the build. `Core` references nothing, so `using Godot;` fails with `error CS0246` before the code can run. Tests reference `Core` alone, so they never need Godot either.
+This isn't a convention you have to remember — it's enforced by the build. `GameLogic` references nothing, so `using Godot;` fails with `error CS0246` before the code can run. Tests reference `GameLogic` alone, so they never need Godot either.
 
 - The test: a full match should run in a plain console harness with no Godot and no network. If a class here can't, something leaked.
 - Why it's worth the discipline: round resolution has real branching (Joker > Reset > other specials > normal; ties; vanish vs. return-to-deck-bottom), and this is the code most likely to be wrong. Verifying it by launching two Godot instances and clicking through rounds is slow enough that it won't happen often. Verifying it as a plain function call is fast enough that it will.

@@ -7,17 +7,17 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <!-- Core and Tests are separate projects. Godot's SDK globs **/*.cs from the
+  <!-- GameLogic and Tests are separate projects. Godot's SDK globs **/*.cs from the
        project root, so they must be excluded here or their files would be
        compiled into the Godot assembly and the boundary would not exist. -->
   <ItemGroup>
-    <Compile Remove="Core/**/*.cs" />
+    <Compile Remove="GameLogic/**/*.cs" />
     <Compile Remove="Tests/**/*.cs" />
   </ItemGroup>
 
-  <!-- One-way reference: the Godot project knows Core. Core does not know Godot. -->
+  <!-- One-way reference: the Godot project knows GameLogic. GameLogic does not know Godot. -->
   <ItemGroup>
-    <ProjectReference Include="Core/RockAndScissPaper.Core.csproj" />
+    <ProjectReference Include="GameLogic/RockAndScissPaper.GameLogic.csproj" />
   </ItemGroup>
 
 </Project>

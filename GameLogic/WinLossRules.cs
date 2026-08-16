@@ -1,4 +1,4 @@
-namespace RockAndScissPaper.Core;
+namespace RockAndScissPaper.GameLogic;
 
 /// <summary>The three cards that actually decide a round.</summary>
 public enum NormalCard

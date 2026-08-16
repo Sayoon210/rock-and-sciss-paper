@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Core\RockAndScissPaper.Core.csproj" />
+    <ProjectReference Include="..\GameLogic\RockAndScissPaper.GameLogic.csproj" />
   </ItemGroup>
 
 </Project>

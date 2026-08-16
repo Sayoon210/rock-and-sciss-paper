@@ -1,4 +1,4 @@
-using RockAndScissPaper.Core;
+using RockAndScissPaper.GameLogic;
 
 namespace RockAndScissPaper.Tests;
 
