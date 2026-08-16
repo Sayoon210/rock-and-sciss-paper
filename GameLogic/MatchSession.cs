@@ -25,20 +25,31 @@ public sealed class MatchSession
     private readonly DeckAndHand _player1;
     private readonly DeckAndHand _player2;
     private readonly Random _rng;
+    private readonly Action<string>? _log;
 
     private CardName? _player1SubmittedCard;
     private CardName? _player2SubmittedCard;
 
     /// <summary>Takes each player's assembled deck. Deck composition is the caller's job —
-    /// CardDatabase lives on the Godot side, so this project never decides what goes in.</summary>
-    public MatchSession(IEnumerable<CardName> player1Deck, IEnumerable<CardName> player2Deck, Random rng)
+    /// CardDatabase lives on the Godot side, so this project never decides what goes in.
+    ///
+    /// log is a debug trace sink, null by default so tests stay quiet. It is injected
+    /// rather than written straight to the console because this project can't reference
+    /// GD.Print, and because a session that printed on its own would be the one piece of
+    /// GameLogic with a side effect of its own.</summary>
+    public MatchSession(
+        IEnumerable<CardName> player1Deck,
+        IEnumerable<CardName> player2Deck,
+        Random rng,
+        Action<string>? log = null)
     {
         _rng = rng;
+        _log = log;
         _player1 = new DeckAndHand(new Deck(player1Deck), new Hand(Array.Empty<CardName>()));
         _player2 = new DeckAndHand(new Deck(player2Deck), new Hand(Array.Empty<CardName>()));
 
-        Deal(_player1);
-        Deal(_player2);
+        Deal(Side.Player1);
+        Deal(Side.Player2);
     }
 
     public int Player1Score { get; private set; }
@@ -107,6 +118,8 @@ public sealed class MatchSession
             _player2SubmittedCard = card;
         }
 
+        _log?.Invoke($"[submit] round {RoundNumber}: {side} played {card}");
+
         if (_player1SubmittedCard == null || _player2SubmittedCard == null)
         {
             return null;
@@ -138,19 +151,48 @@ public sealed class MatchSession
             Player2Score++;
         }
 
+        if (_log != null)
+        {
+            string verdict;
+            if (result.WinLoss == null)
+            {
+                verdict = "no win/loss";
+            }
+            else
+            {
+                verdict = result.WinLoss.ToString()!;
+            }
+
+            _log($"[resolve] round {RoundNumber}: {result.Player1Card} ({result.Player1CardFate}) vs {result.Player2Card} ({result.Player2CardFate}) -> {verdict}, score {Player1Score}-{Player2Score}");
+            _log($"[hands]   P1 {Describe(result.Player1Hand)} (deck {result.Player1DeckCount}) | P2 {Describe(result.Player2Hand)} (deck {result.Player2DeckCount})");
+        }
+
         _player1SubmittedCard = null;
         _player2SubmittedCard = null;
         RoundNumber++;
+
+        if (Winner != null)
+        {
+            _log?.Invoke($"[match]   {Winner} wins {Player1Score}-{Player2Score}");
+        }
     }
 
-    private void Deal(DeckAndHand player)
+    private void Deal(Side side)
     {
+        DeckAndHand player = DeckAndHandOf(side);
         player.Deck.Shuffle(_rng);
 
         for (int i = 0; i < MulliganHandSize; i++)
         {
             player.Draw();
         }
+
+        _log?.Invoke($"[deal] {side} mulligan: {Describe(player.Hand.Cards)} (deck {player.Deck.Count})");
+    }
+
+    private static string Describe(IReadOnlyList<CardName> cards)
+    {
+        return string.Join(", ", cards);
     }
 
     private DeckAndHand DeckAndHandOf(Side side)
