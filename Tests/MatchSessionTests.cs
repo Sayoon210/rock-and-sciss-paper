@@ -51,8 +51,8 @@ public class MatchSessionTests
 
         RoundResult? afterFirst = session.SubmitCard(Side.Player1, player1Card);
         Assert.Null(afterFirst);
-        Assert.True(session.HasSubmitted(Side.Player1));
-        Assert.False(session.HasSubmitted(Side.Player2));
+        Assert.True(session.HasSubmittedCard(Side.Player1));
+        Assert.False(session.HasSubmittedCard(Side.Player2));
 
         RoundResult? afterSecond = session.SubmitCard(Side.Player2, player2Card);
         Assert.NotNull(afterSecond);
@@ -66,8 +66,8 @@ public class MatchSessionTests
         session.SubmitCard(Side.Player1, session.HandOf(Side.Player1)[0]);
         session.SubmitCard(Side.Player2, session.HandOf(Side.Player2)[0]);
 
-        Assert.False(session.HasSubmitted(Side.Player1));
-        Assert.False(session.HasSubmitted(Side.Player2));
+        Assert.False(session.HasSubmittedCard(Side.Player1));
+        Assert.False(session.HasSubmittedCard(Side.Player2));
         Assert.Equal(2, session.RoundNumber);
     }
 

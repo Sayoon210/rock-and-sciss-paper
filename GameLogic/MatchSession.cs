@@ -26,8 +26,8 @@ public sealed class MatchSession
     private readonly DeckAndHand _player2;
     private readonly Random _rng;
 
-    private CardName? _player1Submission;
-    private CardName? _player2Submission;
+    private CardName? _player1SubmittedCard;
+    private CardName? _player2SubmittedCard;
 
     /// <summary>Takes each player's assembled deck. Deck composition is the caller's job —
     /// CardDatabase lives on the Godot side, so this project never decides what goes in.</summary>
@@ -66,17 +66,17 @@ public sealed class MatchSession
 
     public IReadOnlyList<CardName> HandOf(Side side)
     {
-        return ZoneOf(side).Hand.Cards;
+        return DeckAndHandOf(side).Hand.Cards;
     }
 
     public int DeckCountOf(Side side)
     {
-        return ZoneOf(side).Deck.Count;
+        return DeckAndHandOf(side).Deck.Count;
     }
 
-    public bool HasSubmitted(Side side)
+    public bool HasSubmittedCard(Side side)
     {
-        return SubmissionOf(side) != null;
+        return SubmittedCardOf(side) != null;
     }
 
     /// <summary>Records one side's play. Returns null while waiting on the other side, and
@@ -88,37 +88,47 @@ public sealed class MatchSession
             throw new InvalidOperationException("The match is already over.");
         }
 
-        if (HasSubmitted(side))
+        if (HasSubmittedCard(side))
         {
             throw new InvalidOperationException($"{side} has already submitted this round.");
         }
 
-        if (!ZoneOf(side).Hand.Contains(card))
+        if (!DeckAndHandOf(side).Hand.Contains(card))
         {
             throw new ArgumentException($"{side} does not hold {card}.", nameof(card));
         }
 
         if (side == Side.Player1)
         {
-            _player1Submission = card;
+            _player1SubmittedCard = card;
         }
         else
         {
-            _player2Submission = card;
+            _player2SubmittedCard = card;
         }
 
-        if (_player1Submission == null || _player2Submission == null)
+        if (_player1SubmittedCard == null || _player2SubmittedCard == null)
         {
             return null;
         }
 
-        return ResolveRound(_player1Submission.Value, _player2Submission.Value);
+        RoundResult result = RoundResolver.Resolve(
+            _player1SubmittedCard.Value,
+            _player2SubmittedCard.Value,
+            _player1,
+            _player2,
+            _rng);
+
+        AdvanceToNextRound(result);
+
+        return result;
     }
 
-    private RoundResult ResolveRound(CardName player1Card, CardName player2Card)
+    /// <summary>Closes out a resolved round: records its score, clears both submitted
+    /// cards, and moves the round counter on. The rules of the round itself belong to
+    /// RoundResolver; this only writes the outcome into the match.</summary>
+    private void AdvanceToNextRound(RoundResult result)
     {
-        RoundResult result = RoundResolver.Resolve(player1Card, player2Card, _player1, _player2, _rng);
-
         if (result.WinLoss == WinLossResult.Player1Win)
         {
             Player1Score++;
@@ -128,11 +138,9 @@ public sealed class MatchSession
             Player2Score++;
         }
 
-        _player1Submission = null;
-        _player2Submission = null;
+        _player1SubmittedCard = null;
+        _player2SubmittedCard = null;
         RoundNumber++;
-
-        return result;
     }
 
     private void Deal(DeckAndHand player)
@@ -145,7 +153,7 @@ public sealed class MatchSession
         }
     }
 
-    private DeckAndHand ZoneOf(Side side)
+    private DeckAndHand DeckAndHandOf(Side side)
     {
         if (side == Side.Player1)
         {
@@ -155,13 +163,13 @@ public sealed class MatchSession
         return _player2;
     }
 
-    private CardName? SubmissionOf(Side side)
+    private CardName? SubmittedCardOf(Side side)
     {
         if (side == Side.Player1)
         {
-            return _player1Submission;
+            return _player1SubmittedCard;
         }
 
-        return _player2Submission;
+        return _player2SubmittedCard;
     }
 }
