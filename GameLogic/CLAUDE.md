@@ -26,7 +26,7 @@ Resolution only needs to know *"this is a Joker"* — never what it looks like. 
 ## What lives here
 
 - `MatchSession` — the authoritative match: both players' `DeckAndHand`, scores, round number, win condition (5 wins). Instantiated on the host only.
-- `ICardEffect` implementations — one per special card (Reset, Swap, Change, Refill, Foresight, Draw), composed rather than subclassed, per the root convention.
+- `ICardEffect` implementations for Transform, Foresight, and Swap — these need a player-chosen parameter (which card, which of 3, which cards to discard) whose delivery path isn't decided yet; see [DevLogDoc/2026-08-17-multiplayer-round-flow-design.md](../DevLogDoc/2026-08-17-multiplayer-round-flow-design.md).
 
 Currently implemented:
 - `WinLossRules.Judge` (normal-card matchup resolution) in `WinLossRules.cs`.
@@ -35,7 +35,8 @@ Currently implemented:
 - `Hand` (add, remove, contains) in `Hand.cs`.
 - `DeckAndHand` (draw, return-to-deck-bottom, vanish — the operations spanning both) in `DeckAndHand.cs`.
 - `RoundResult` and `CardFate` (the outcome of one round: revealed cards, each card's fate, win/loss or none, what each player drew) in `RoundResult.cs`.
-- `RoundResolver.Resolve` — takes both submitted plays and each player's `DeckAndHand`, applies the outcome (fate, draw) to them directly, and returns the `RoundResult`. Normal/Dummy/Joker only so far; throws `NotImplementedException` for a Special card. No priority queue yet — with no real Special cards in play, "Joker present → both vanish, no win/loss; otherwise each card follows its own default fate" covers every case. The real priority ordering (Joker > Reset > other specials > rest) waits for `ICardEffect`.
+- `RoundResolver.Resolve` — takes both submitted plays and each player's `DeckAndHand`, applies the outcome (fate, draw) to them directly, and returns the `RoundResult`. Normal/Dummy/Joker only so far; throws `NotImplementedException` for a Special card. No priority queue yet — with no real Special cards wired into it, "Joker present → both vanish, no win/loss; otherwise each card follows its own default fate" covers every case. The real priority ordering (Joker > Reset > other specials > rest) waits for the rest of `ICardEffect`.
+- `ICardEffect` (`self`, `opponent`, seeded `rng` — `opponent` unused except by Reset) in `Effects/ICardEffect.cs`, with three of the six special cards implemented: `ResetEffect`, `RefillEffect`, `DrawEffect` in `Effects/`. These three needed no extra input beyond the caster's and (for Reset) the opponent's `DeckAndHand`.
 
 ## Tests
 
