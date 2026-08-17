@@ -13,6 +13,7 @@ Design doc will be added separately later — this document covers tech stack / 
 - Name a type after what it holds or does, not a vague category (`WinLossRules`, not `Helper`).
 - Use DESIGN.md's vocabulary verbatim — normal card, dummy, joker, special, vanish, deck bottom.
 - Godot script names reveal role via suffix: `...Manager`, `...Controller`, `...Data`, `...View`/`...UI`, `...Effect`, `I...`. File name matches class name.
+- Name `const` members in `SCREAMING_SNAKE_CASE` (`MULLIGAN_HAND_SIZE`, `MAX_CLIENTS`) — a deliberate departure from the C#/Godot PascalCase convention, so a constant is distinguishable from a property at the call site. Don't "correct" these back.
 - Write the plain form of a C# construct, not the compressed one: full `{ }`/`return` bodies, not expression-bodied `=>` members or switch expressions.
 
 ## Avoid
