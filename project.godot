@@ -8,6 +8,10 @@
 
 config_version=5
 
+[autoload]
+
+CardDatabase="*res://Scripts/Autoload/CardDatabase.cs"
+
 [application]
 
 config/name="RockAndScissPaper"

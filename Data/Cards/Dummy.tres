@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Cards/CardData.cs" id="1_dummy"]
+
+[resource]
+script = ExtResource("1_dummy")
+CardName = 3
+DisplayName = "더미"
+Description = "효과 없이 소멸하는 카드. 내 카드를 소모하지 않으면서 상대가 이번 라운드에 뭘 냈는지 확인하는 \"패 까기\"용 카드."

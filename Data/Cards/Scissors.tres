@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Cards/CardData.cs" id="1_scissors"]
+
+[resource]
+script = ExtResource("1_scissors")
+CardName = 2
+DisplayName = "가위"
+Description = "보를 이기는 일반 카드. 승패와 관계없이 사용 후 덱 바닥으로 복귀한다."

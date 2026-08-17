@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Cards/CardData.cs" id="1_draw"]
+
+[resource]
+script = ExtResource("1_draw")
+CardName = 9
+DisplayName = "드로우"
+Description = "카드 2장을 뽑는다. 효과 발동 후 소멸한다."
