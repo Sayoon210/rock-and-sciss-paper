@@ -55,7 +55,7 @@ public class MatchSessionLogTests
             session.SubmitCard(Side.Player2, CardName.Scissors);
         }
 
-        Assert.Contains(lines, line => line.StartsWith("[match]") && line.Contains("Player1 wins 5-0"));
+        Assert.Contains(lines, line => line.StartsWith("[match]") && line.Contains($"Player1 wins {MatchSession.WINS_NEEDED_FOR_MATCH}-0"));
     }
 
     private static List<CardName> Repeated(CardName card, int count)

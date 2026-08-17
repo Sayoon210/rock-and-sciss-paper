@@ -8,7 +8,7 @@ public enum Side
     Player2,
 }
 
-/// <summary>One match, from the opening mulligan to a player reaching five wins.
+/// <summary>One match, from the opening mulligan to a player reaching ten wins.
 /// Instantiated on the host only, once both players are known.
 ///
 /// Rounds are simultaneous: each side submits independently, and nothing resolves until
@@ -19,7 +19,7 @@ public enum Side
 /// catch and drop them rather than let a malformed or malicious request reach here twice.</summary>
 public sealed class MatchSession
 {
-    public const int WINS_NEEDED_FOR_MATCH = 5;
+    public const int WINS_NEEDED_FOR_MATCH = 10;
     public const int MULLIGAN_HAND_SIZE = 6;
 
     private readonly DeckAndHand _player1;
@@ -56,7 +56,7 @@ public sealed class MatchSession
     public int Player2Score { get; private set; }
     public int RoundNumber { get; private set; } = 1;
 
-    /// <summary>The side that reached five wins, or null while the match is still running.</summary>
+    /// <summary>The side that reached ten wins, or null while the match is still running.</summary>
     public Side? Winner
     {
         get

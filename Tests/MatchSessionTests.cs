@@ -104,18 +104,18 @@ public class MatchSessionTests
     }
 
     [Fact]
-    public void Winner_is_set_once_a_player_reaches_five_wins()
+    public void Winner_is_set_once_a_player_reaches_the_needed_wins()
     {
-        MatchSession session = PlayRounds(5);
+        MatchSession session = PlayRounds(MatchSession.WINS_NEEDED_FOR_MATCH);
 
-        Assert.Equal(5, session.Player1Score);
+        Assert.Equal(MatchSession.WINS_NEEDED_FOR_MATCH, session.Player1Score);
         Assert.Equal(Side.Player1, session.Winner);
     }
 
     [Fact]
     public void SubmitCard_throws_once_the_match_is_over()
     {
-        MatchSession session = PlayRounds(5);
+        MatchSession session = PlayRounds(MatchSession.WINS_NEEDED_FOR_MATCH);
 
         Assert.Throws<InvalidOperationException>(
             () => session.SubmitCard(Side.Player1, session.HandOf(Side.Player1)[0]));
