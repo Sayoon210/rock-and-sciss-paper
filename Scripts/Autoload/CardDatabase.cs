@@ -5,6 +5,8 @@ using RockAndScissPaper.GameLogic;
 
 namespace RockAndScissPaper.Autoload;
 
+// 코드로 .tres 파일을 Dictionary로 로딩시키는코드 (싱글톤)
+
 /// <summary>Loads every CardData .tres under Data/Cards/ and indexes it by CardName.
 /// Does not define card stats itself — that text lives only in the .tres files. Scans the
 /// directory rather than listing filenames, since the special-card roster may grow later

@@ -11,6 +11,9 @@ config_version=5
 [autoload]
 
 CardDatabase="*res://Scripts/Autoload/CardDatabase.cs"
+EventBus="*res://Scripts/Autoload/EventBus.cs"
+NetworkManager="*res://Scripts/Autoload/NetworkManager.cs"
+GameState="*res://Scripts/Autoload/GameState.cs"
 
 [application]
 
