@@ -139,6 +139,43 @@ public class MatchSessionTests
         Assert.Throws<ArgumentException>(() => session.SubmitCard(Side.Player1, CardName.Joker));
     }
 
+    /// <summary>Every card is either Transform or Rock, so a six-card mulligan always
+    /// holds at least one of each.</summary>
+    private static List<CardName> TransformAndRockDeck()
+    {
+        var cards = new List<CardName>();
+        for (int i = 0; i < 5; i++)
+        {
+            cards.Add(CardName.Transform);
+            cards.Add(CardName.Rock);
+        }
+
+        return cards;
+    }
+
+    [Fact]
+    public void SubmitCard_accepts_a_play_that_carries_a_choice()
+    {
+        var session = new MatchSession(TransformAndRockDeck(), Repeated(CardName.Rock, 8), new Random(1));
+
+        session.SubmitCard(Side.Player1, CardPlay.Transforming(CardName.Rock, CardName.Paper));
+
+        Assert.True(session.HasSubmittedCard(Side.Player1));
+    }
+
+    [Fact]
+    public void SubmitCard_rejects_a_bad_choice_without_consuming_the_submission()
+    {
+        // A rejected play must leave the round untouched, or the side could never submit
+        // again this round and the match would wedge.
+        var session = new MatchSession(TransformAndRockDeck(), Repeated(CardName.Rock, 8), new Random(1));
+
+        Assert.Throws<ArgumentException>(
+            () => session.SubmitCard(Side.Player1, CardPlay.Transforming(CardName.Joker, CardName.Rock)));
+
+        Assert.False(session.HasSubmittedCard(Side.Player1));
+    }
+
     [Fact]
     public void The_same_seed_produces_the_same_opening_hands()
     {

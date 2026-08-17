@@ -5,7 +5,11 @@ namespace RockAndScissPaper.GameLogic;
 /// touches the opponent.</summary>
 public sealed class ResetEffect : ICardEffect
 {
-    public void Apply(DeckAndHand self, DeckAndHand opponent, Random rng)
+    public void Validate(CardPlay play, DeckAndHand self)
+    {
+    }
+
+    public void Apply(CardPlay play, DeckAndHand self, DeckAndHand opponent, Random rng)
     {
         ResetOne(self, rng);
         ResetOne(opponent, rng);

@@ -27,8 +27,8 @@ public sealed class MatchSession
     private readonly Random _rng;
     private readonly Action<string>? _log;
 
-    private CardName? _player1SubmittedCard;
-    private CardName? _player2SubmittedCard;
+    private CardPlay? _player1SubmittedCard;
+    private CardPlay? _player2SubmittedCard;
 
     /// <summary>Takes each player's assembled deck. Deck composition is the caller's job —
     /// CardDatabase lives on the Godot side, so this project never decides what goes in.
@@ -92,7 +92,7 @@ public sealed class MatchSession
 
     /// <summary>Records one side's play. Returns null while waiting on the other side, and
     /// the resolved RoundResult once both have submitted.</summary>
-    public RoundResult? SubmitCard(Side side, CardName card)
+    public RoundResult? SubmitCard(Side side, CardPlay play)
     {
         if (Winner != null)
         {
@@ -104,21 +104,20 @@ public sealed class MatchSession
             throw new InvalidOperationException($"{side} has already submitted this round.");
         }
 
-        if (!DeckAndHandOf(side).Hand.Contains(card))
-        {
-            throw new ArgumentException($"{side} does not hold {card}.", nameof(card));
-        }
+        // Validated before it is recorded: a rejected play must leave the round exactly
+        // as it was, or the side would be stuck unable to submit again.
+        RoundResolver.ValidatePlay(play, DeckAndHandOf(side));
 
         if (side == Side.Player1)
         {
-            _player1SubmittedCard = card;
+            _player1SubmittedCard = play;
         }
         else
         {
-            _player2SubmittedCard = card;
+            _player2SubmittedCard = play;
         }
 
-        _log?.Invoke($"[submit] round {RoundNumber}: {side} played {card}");
+        _log?.Invoke($"[submit] round {RoundNumber}: {side} played {play.Card}");
 
         if (_player1SubmittedCard == null || _player2SubmittedCard == null)
         {
@@ -126,8 +125,8 @@ public sealed class MatchSession
         }
 
         RoundResult result = RoundResolver.Resolve(
-            _player1SubmittedCard.Value,
-            _player2SubmittedCard.Value,
+            _player1SubmittedCard,
+            _player2SubmittedCard,
             _player1,
             _player2,
             _rng);
@@ -135,6 +134,12 @@ public sealed class MatchSession
         AdvanceToNextRound(result);
 
         return result;
+    }
+
+    /// <summary>Convenience for the cards that need no choice.</summary>
+    public RoundResult? SubmitCard(Side side, CardName card)
+    {
+        return SubmitCard(side, CardPlay.WithoutChoice(card));
     }
 
     /// <summary>Closes out a resolved round: records its score, clears both submitted
@@ -205,7 +210,7 @@ public sealed class MatchSession
         return _player2;
     }
 
-    private CardName? SubmittedCardOf(Side side)
+    private CardPlay? SubmittedCardOf(Side side)
     {
         if (side == Side.Player1)
         {

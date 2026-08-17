@@ -33,7 +33,7 @@ public class RoundResolverTests
         DeckAndHand player1 = MakeZone(player1Card);
         DeckAndHand player2 = MakeZone(player2Card);
 
-        RoundResult result = RoundResolver.Resolve(player1Card, player2Card, player1, player2, new Random(1));
+        RoundResult result = RoundResolver.Resolve(CardPlay.WithoutChoice(player1Card), CardPlay.WithoutChoice(player2Card), player1, player2, new Random(1));
 
         Assert.Equal(expectedPlayer1Fate, result.Player1CardFate);
         Assert.Equal(expectedPlayer2Fate, result.Player2CardFate);
@@ -46,7 +46,7 @@ public class RoundResolverTests
         DeckAndHand player1 = MakeZone(CardName.Rock);
         DeckAndHand player2 = MakeZone(CardName.Scissors);
 
-        RoundResolver.Resolve(CardName.Rock, CardName.Scissors, player1, player2, new Random(1));
+        RoundResolver.Resolve(CardPlay.WithoutChoice(CardName.Rock), CardPlay.WithoutChoice(CardName.Scissors), player1, player2, new Random(1));
 
         Assert.False(player1.Hand.Contains(CardName.Rock));
         Assert.False(player2.Hand.Contains(CardName.Scissors));
@@ -58,7 +58,7 @@ public class RoundResolverTests
         DeckAndHand player1 = MakeZone(CardName.Rock);
         DeckAndHand player2 = MakeZone(CardName.Scissors);
 
-        RoundResolver.Resolve(CardName.Rock, CardName.Scissors, player1, player2, new Random(1));
+        RoundResolver.Resolve(CardPlay.WithoutChoice(CardName.Rock), CardPlay.WithoutChoice(CardName.Scissors), player1, player2, new Random(1));
 
         // Deck started as [Paper]. Rock is returned to the bottom -> [Paper, Rock].
         // Then Paper is drawn off the top, leaving just [Rock].
@@ -72,7 +72,7 @@ public class RoundResolverTests
         DeckAndHand player1 = MakeZone(CardName.Joker);
         DeckAndHand player2 = MakeZone(CardName.Dummy);
 
-        RoundResult result = RoundResolver.Resolve(CardName.Joker, CardName.Dummy, player1, player2, new Random(1));
+        RoundResult result = RoundResolver.Resolve(CardPlay.WithoutChoice(CardName.Joker), CardPlay.WithoutChoice(CardName.Dummy), player1, player2, new Random(1));
 
         Assert.Equal(new[] { CardName.Paper }, result.Player1Hand);
         Assert.Equal(new[] { CardName.Paper }, result.Player2Hand);
@@ -90,7 +90,7 @@ public class RoundResolverTests
             new Hand(new[] { CardName.Draw }));
         DeckAndHand player2 = MakeZone(CardName.Dummy);
 
-        RoundResult result = RoundResolver.Resolve(CardName.Draw, CardName.Dummy, player1, player2, new Random(1));
+        RoundResult result = RoundResolver.Resolve(CardPlay.WithoutChoice(CardName.Draw), CardPlay.WithoutChoice(CardName.Dummy), player1, player2, new Random(1));
 
         Assert.Equal(new[] { CardName.Rock, CardName.Paper, CardName.Scissors }, result.Player1Hand);
         Assert.Equal(0, result.Player1DeckCount);
@@ -102,7 +102,7 @@ public class RoundResolverTests
         DeckAndHand player1 = MakeZone(CardName.Refill);
         DeckAndHand player2 = MakeZone(CardName.Rock);
 
-        RoundResolver.Resolve(CardName.Refill, CardName.Rock, player1, player2, new Random(1));
+        RoundResolver.Resolve(CardPlay.WithoutChoice(CardName.Refill), CardPlay.WithoutChoice(CardName.Rock), player1, player2, new Random(1));
 
         // Refill's own card vanishes (deck(1)+hand(1)=2 -> 1), then Refill's effect
         // adds two Dummy cards to the deck (1 -> 3). Total ends at 3.
@@ -124,54 +124,12 @@ public class RoundResolverTests
             new Hand(new[] { CardName.Reset, CardName.Rock, CardName.Scissors }));
         DeckAndHand player2 = MakeZone(CardName.Dummy);
 
-        RoundResolver.Resolve(CardName.Reset, CardName.Dummy, player1, player2, new Random(1));
+        RoundResolver.Resolve(CardPlay.WithoutChoice(CardName.Reset), CardPlay.WithoutChoice(CardName.Dummy), player1, player2, new Random(1));
 
         // Reset's own card never reappears: only Rock and Scissors (plus one post-round
         // draw) can possibly end up in player1's hand.
         Assert.DoesNotContain(CardName.Reset, player1.Hand.Cards);
         Assert.DoesNotContain(CardName.Reset, DeckContents(player1));
-    }
-
-    [Fact]
-    public void Resolve_lets_a_joker_block_an_unimplemented_specials_effect()
-    {
-        // Transform has no ICardEffect yet, but Joker destroys it before it would ever
-        // run — this must not throw.
-        DeckAndHand player1 = MakeZone(CardName.Joker);
-        DeckAndHand player2 = MakeZone(CardName.Transform);
-
-        RoundResult result = RoundResolver.Resolve(CardName.Joker, CardName.Transform, player1, player2, new Random(1));
-
-        Assert.Equal(CardFate.Vanished, result.Player1CardFate);
-        Assert.Equal(CardFate.Vanished, result.Player2CardFate);
-    }
-
-    [Theory]
-    [InlineData(CardName.Transform, CardName.Rock)]
-    [InlineData(CardName.Rock, CardName.Foresight)]
-    [InlineData(CardName.Swap, CardName.Refill)]
-    public void Resolve_throws_when_an_unblocked_special_has_no_effect_yet(CardName player1Card, CardName player2Card)
-    {
-        DeckAndHand player1 = MakeZone(player1Card);
-        DeckAndHand player2 = MakeZone(player2Card);
-
-        Assert.Throws<NotImplementedException>(
-            () => RoundResolver.Resolve(player1Card, player2Card, player1, player2, new Random(1)));
-    }
-
-    [Fact]
-    public void Resolve_leaves_both_players_untouched_when_it_throws()
-    {
-        DeckAndHand player1 = MakeZone(CardName.Transform);
-        DeckAndHand player2 = MakeZone(CardName.Rock);
-
-        Assert.Throws<NotImplementedException>(
-            () => RoundResolver.Resolve(CardName.Transform, CardName.Rock, player1, player2, new Random(1)));
-
-        Assert.Equal(new[] { CardName.Transform }, player1.Hand.Cards);
-        Assert.Equal(new[] { CardName.Rock }, player2.Hand.Cards);
-        Assert.Equal(1, player1.Deck.Count);
-        Assert.Equal(1, player2.Deck.Count);
     }
 
     private static List<CardName> DeckContents(DeckAndHand zone)

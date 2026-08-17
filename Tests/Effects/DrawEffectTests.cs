@@ -12,7 +12,7 @@ public class DrawEffectTests
             new Hand(Array.Empty<CardName>()));
         var opponent = new DeckAndHand(new Deck(Array.Empty<CardName>()), new Hand(Array.Empty<CardName>()));
 
-        new DrawEffect().Apply(self, opponent, new Random(1));
+        new DrawEffect().Apply(CardPlay.WithoutChoice(CardName.Rock), self, opponent, new Random(1));
 
         Assert.Equal(new[] { CardName.Rock, CardName.Paper }, self.Hand.Cards);
         Assert.Equal(1, self.Deck.Count);
@@ -24,7 +24,7 @@ public class DrawEffectTests
         var self = new DeckAndHand(new Deck(new[] { CardName.Rock, CardName.Paper }), new Hand(Array.Empty<CardName>()));
         var opponent = new DeckAndHand(new Deck(new[] { CardName.Scissors }), new Hand(Array.Empty<CardName>()));
 
-        new DrawEffect().Apply(self, opponent, new Random(1));
+        new DrawEffect().Apply(CardPlay.WithoutChoice(CardName.Rock), self, opponent, new Random(1));
 
         Assert.Equal(1, opponent.Deck.Count);
         Assert.Empty(opponent.Hand.Cards);

@@ -18,27 +18,25 @@ This isn't a convention you have to remember — it's enforced by the build. `Ga
 
 Because `CardData : Resource` can't cross the boundary, game logic deals in plain identity values, not `CardData`:
 
-- Here: `CardName` (Rock / Paper / Scissors / Dummy / Joker / Reset / Swap / Transform / Refill / Foresight / Draw). A deck is a list of those. `CardType` (Normal / Dummy / Joker / Special) is derived from a `CardName` via `GetCardType()` and is what `RoundResolver` actually dispatches on.
+- Here: `CardName` (Rock / Paper / Scissors / Dummy / Joker / Reset / Swap / Transform / Refill / Draw). A deck is a list of those. `CardType` (Normal / Dummy / Joker / Special) is derived from a `CardName` via `GetCardType()` and is what `RoundResolver` actually dispatches on.
 - Outside: `CardDatabase` maps identity → `CardData` for display name, art, and description at the presentation layer.
 
 Resolution only needs to know *"this is a Joker"* — never what it looks like. Keeping art and flavor text out of the rules is what makes the rules testable.
 
 ## What lives here
 
-- `ICardEffect` implementations for Transform, Foresight, and Swap — these need a player-chosen parameter (which card, which of 3, which cards to discard) whose delivery path isn't decided yet; see [DevLogDoc/2026-08-17-multiplayer-round-flow-design.md](../DevLogDoc/2026-08-17-multiplayer-round-flow-design.md).
-
-Currently implemented:
 - `WinLossRules.Judge` (normal-card matchup resolution) in `WinLossRules.cs`.
 - `CardName`, `CardType`, and the `CardNameExtensions` mapping between them (plus `ToNormalCard()`, the bridge into `WinLossRules`) in `CardName.cs`.
-- `Deck` (deck-top/deck-bottom operations, shuffle, peek/insert for effects like Foresight) in `Deck.cs`.
+- `Deck` (deck-top/deck-bottom operations, seeded Fisher-Yates shuffle) in `Deck.cs`.
 - `Hand` (add, remove, contains) in `Hand.cs`.
 - `DeckAndHand` (draw, return-to-deck-bottom, vanish — the operations spanning both) in `DeckAndHand.cs`.
 - `RoundResult` and `CardFate` (the outcome of one round: revealed cards, each card's fate, win/loss or none, and both players' full post-round hand and deck count) in `RoundResult.cs`. It carries whole hands rather than "what you drew" because Reset replaces both hands outright and Draw adds two extra cards — one drawn card can't describe those rounds. Hands are copied on construction, since `Hand.Cards` is a live view.
-- `MatchSession` and `Side` in `MatchSession.cs` — the authoritative match, host-only. Takes both assembled decks (composition is the caller's job; `CardDatabase` is Godot-side), shuffles, deals the 6-card mulligan. `SubmitCard(side, card)` returns `null` while waiting on the other side and the `RoundResult` once both are in, since rounds are simultaneous. Tracks scores, round number, and `Winner` (5 wins). Illegal submissions — match already over, same side twice, card not in hand — throw; `GameState` is expected to catch and drop those rather than pass a malformed client request through. Takes an optional `Action<string>` trace sink (null by default, so tests stay silent); the Godot side passes `GD.Print`, which this project can't call itself.
-- `ICardEffect` (`self`, `opponent`, seeded `rng` — `opponent` unused except by Reset) in `Effects/ICardEffect.cs`, with three of the six special cards implemented: `ResetEffect`, `RefillEffect`, `DrawEffect` in `Effects/`. These three needed no extra input beyond the caster's and (for Reset) the opponent's `DeckAndHand`.
+- `MatchSession` and `Side` in `MatchSession.cs` — the authoritative match, host-only. Takes both assembled decks (composition is the caller's job; `CardDatabase` is Godot-side), shuffles, deals the 6-card mulligan. `SubmitCard(side, play)` returns `null` while waiting on the other side and the `RoundResult` once both are in, since rounds are simultaneous. Tracks scores, round number, and `Winner` (5 wins). Illegal submissions — match already over, same side twice, card not in hand — throw; `GameState` is expected to catch and drop those rather than pass a malformed client request through. Takes an optional `Action<string>` trace sink (null by default, so tests stay silent); the Godot side passes `GD.Print`, which this project can't call itself.
+- `CardPlay` in `CardPlay.cs` — a played card plus whatever the player had to choose to play it. Built through `WithoutChoice`, `Transforming`, or `Swapping`. Only Transform and Swap carry a choice, and DESIGN.md guarantees every choice is made at submission time, so no card needs a mid-round round trip.
+- `ICardEffect` in `Effects/ICardEffect.cs` — `Validate(play, self)` then `Apply(play, self, opponent, rng)`. All five special cards are implemented in `Effects/`: `ResetEffect`, `SwapEffect`, `TransformEffect`, `RefillEffect`, `DrawEffect`. `opponent` is unused by everything except Reset. `Validate` exists so a bad play is rejected before anything mutates.
 - `RoundResolver.Resolve` — takes an extra seeded `Random` now that it can shuffle. Order: figure out each side's `CardFate`/win-loss, remove both played cards from their hands (`ApplyFate`), *then* run Special effects, then draw for both. Removing the played card before running effects matters — Reset's own card must not still be "in hand" when Reset asks what's in the hand, or it would get shuffled back into the deck instead of vanishing.
-  - Priority: Joker present → both vanish, no effects run, no win/loss (this is also what lets a Joker block an unimplemented Special without throwing). Otherwise: Reset runs first if either side played it (twice, Player 1 first, if both did), then any other Special, Player 1 before Player 2.
-  - A Special with no registered `ICardEffect` (Transform, Foresight, Swap) throws `NotImplementedException` — but only if it actually needs to run. A Joker-blocked one never reaches that check.
+  - Priority: Joker present → both vanish, no effects run, no win/loss. Otherwise: Reset runs first if either side played it (twice, Player 1 first, if both did), then any other Special, Player 1 before Player 2.
+  - `ValidatePlay` rejects an illegal play (card not in hand, or a choice the effect can't carry out) without mutating anything. `MatchSession` runs it before recording a submission, so a rejected play can't leave a side unable to submit again.
 
 ## Tests
 

@@ -37,28 +37,6 @@ public class DeckTests
     }
 
     [Fact]
-    public void InsertAtTop_becomes_the_next_TakeFromTop()
-    {
-        var deck = new Deck(new[] { CardName.Rock, CardName.Paper });
-
-        deck.InsertAtTop(CardName.Joker);
-
-        Assert.Equal(CardName.Joker, deck.TakeFromTop());
-        Assert.Equal(CardName.Rock, deck.TakeFromTop());
-    }
-
-    [Fact]
-    public void PeekTop_does_not_remove_cards()
-    {
-        var deck = new Deck(new[] { CardName.Rock, CardName.Paper, CardName.Scissors });
-
-        IReadOnlyList<CardName> peeked = deck.PeekTop(2);
-
-        Assert.Equal(new[] { CardName.Rock, CardName.Paper }, peeked);
-        Assert.Equal(3, deck.Count);
-    }
-
-    [Fact]
     public void Shuffle_preserves_every_card()
     {
         var original = new[]
@@ -94,6 +72,9 @@ public class DeckTests
         deckA.Shuffle(new Random(42));
         deckB.Shuffle(new Random(42));
 
-        Assert.Equal(deckA.PeekTop(deckA.Count), deckB.PeekTop(deckB.Count));
+        while (deckA.Count > 0)
+        {
+            Assert.Equal(deckA.TakeFromTop(), deckB.TakeFromTop());
+        }
     }
 }

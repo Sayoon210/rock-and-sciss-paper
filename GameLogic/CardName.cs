@@ -16,12 +16,11 @@ public enum CardName
     // Destroys the opponent's card and blocks its effect, then vanishes itself
     Joker,
 
-    // Special — has an ICardEffect via SpecialEffectRegistry, vanishes after use
+    // Special — has an ICardEffect, vanishes after use
     Reset,
     Swap,
     Transform,
     Refill,
-    Foresight,
     Draw,
 }
 
@@ -57,7 +56,6 @@ public static class CardNameExtensions
             case CardName.Swap:
             case CardName.Transform:
             case CardName.Refill:
-            case CardName.Foresight:
             case CardName.Draw:
                 return CardType.Special;
 

@@ -24,16 +24,6 @@ public sealed class Deck
         _cards.Add(card);
     }
 
-    public void InsertAtTop(CardName card)
-    {
-        _cards.Insert(0, card);
-    }
-
-    public IReadOnlyList<CardName> PeekTop(int count)
-    {
-        return _cards.GetRange(0, count);
-    }
-
     /// <summary>Fisher-Yates: every permutation is equally likely, unlike naive per-card
     /// random-swap approaches. rng is injected rather than global so a shuffle is
     /// reproducible from its seed.</summary>

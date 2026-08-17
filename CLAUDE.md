@@ -55,7 +55,7 @@ Tests/                        xUnit — references GameLogic only
 
 - `CardDatabase` (Autoload) loads and indexes `.tres` `CardData` resources; it does not define card stats itself.
 - One `.tres` file per card.
-- Don't hardcode "there are exactly 6 special cards" into deck-assembly logic — read the special-card set from `CardDatabase` (deckbuilding/pool expansion planned, see [DESIGN.md](DESIGN.md)).
+- Don't hardcode the special-card count or roster into deck-assembly logic — read the special-card set from `CardDatabase` (deckbuilding/pool expansion planned, see [DESIGN.md](DESIGN.md)).
 
 ## AI-Assisted Development
 
