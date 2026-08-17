@@ -8,19 +8,19 @@
 
 config_version=5
 
+[application]
+
+config/name="RockAndScissPaper"
+run/main_scene="res://Scenes/MatchDebugUI.tscn"
+config/features=PackedStringArray("4.7", "C#", "Forward Plus")
+config/icon="res://icon.svg"
+
 [autoload]
 
 CardDatabase="*res://Scripts/Autoload/CardDatabase.cs"
 EventBus="*res://Scripts/Autoload/EventBus.cs"
 NetworkManager="*res://Scripts/Autoload/NetworkManager.cs"
 GameState="*res://Scripts/Autoload/GameState.cs"
-
-[application]
-
-config/name="RockAndScissPaper"
-run/main_scene="res://Scenes/MatchDebugUI.tscn"
-config/features=PackedStringArray("4.7", "Forward Plus")
-config/icon="res://icon.svg"
 
 [display]
 
