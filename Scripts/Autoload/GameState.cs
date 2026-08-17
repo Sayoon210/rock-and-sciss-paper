@@ -47,6 +47,12 @@ public partial class GameState : Node
     [Signal] public delegate void MatchEndedEventHandler(bool didIWin);
     [Signal] public delegate void OpponentLeftEventHandler();
 
+    /// <summary>Fires whenever View.MyHand is replaced. Separate from RoundResolved because
+    /// a client's hand arrives in its own targeted RPC *after* the public broadcast — a UI
+    /// that only redrew on RoundResolved would render the previous round's hand and never
+    /// correct it.</summary>
+    [Signal] public delegate void MyHandChangedEventHandler();
+
     public override void _EnterTree()
     {
         Instance = this;
@@ -113,6 +119,7 @@ public partial class GameState : Node
 
         // Host fills its own View straight from the session it holds.
         View.MyHand = new List<CardName>(_session.HandOf(_mySide));
+        EmitSignalMyHandChanged();
         View.MyDeckCount = _session.DeckCountOf(_mySide);
         View.OpponentDeckCount = _session.DeckCountOf(clientSide);
         View.OpponentHandCount = _session.HandOf(clientSide).Count;
@@ -269,6 +276,7 @@ public partial class GameState : Node
     private void PrivateHandRpc(int[] hand)
     {
         View.MyHand = DecodeHand(hand);
+        EmitSignalMyHandChanged();
     }
 
     /// <summary>Host to one peer: the match has started — side assignment, mulligan hand,
@@ -279,6 +287,7 @@ public partial class GameState : Node
     {
         _mySide = (Side)side;
         View.MyHand = DecodeHand(mulliganHand);
+        EmitSignalMyHandChanged();
         View.MyDeckCount = myDeckCount;
         View.OpponentDeckCount = opponentDeckCount;
         View.OpponentHandCount = opponentHandCount;
@@ -398,6 +407,7 @@ public partial class GameState : Node
 
         // Host fills its own hand straight from the session
         View.MyHand = new List<CardName>(_session.HandOf(_mySide));
+        EmitSignalMyHandChanged();
 
         // The client's hand is private — send it only to that one peer, never broadcast.
         long? clientPeerId = ClientPeerId();
