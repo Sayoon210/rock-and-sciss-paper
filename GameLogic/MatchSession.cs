@@ -19,8 +19,8 @@ public enum Side
 /// catch and drop them rather than let a malformed or malicious request reach here twice.</summary>
 public sealed class MatchSession
 {
-    public const int WinsNeededForMatch = 5;
-    public const int MulliganHandSize = 6;
+    public const int WINS_NEEDED_FOR_MATCH = 5;
+    public const int MULLIGAN_HAND_SIZE = 6;
 
     private readonly DeckAndHand _player1;
     private readonly DeckAndHand _player2;
@@ -61,12 +61,12 @@ public sealed class MatchSession
     {
         get
         {
-            if (Player1Score >= WinsNeededForMatch)
+            if (Player1Score >= WINS_NEEDED_FOR_MATCH)
             {
                 return Side.Player1;
             }
 
-            if (Player2Score >= WinsNeededForMatch)
+            if (Player2Score >= WINS_NEEDED_FOR_MATCH)
             {
                 return Side.Player2;
             }
@@ -187,7 +187,7 @@ public sealed class MatchSession
         DeckAndHand player = DeckAndHandOf(side);
         player.Deck.Shuffle(_rng);
 
-        for (int i = 0; i < MulliganHandSize; i++)
+        for (int i = 0; i < MULLIGAN_HAND_SIZE; i++)
         {
             player.Draw();
         }

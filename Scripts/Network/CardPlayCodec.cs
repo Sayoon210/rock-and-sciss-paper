@@ -9,7 +9,7 @@ namespace RockAndScissPaper.Network;
 /// as the sentinel for "this choice wasn't made."</summary>
 public static class CardPlayCodec
 {
-    public const int NoCard = -1;
+    public const int NO_CARD = -1;
 
     public readonly struct EncodedCardPlay
     {
@@ -29,13 +29,13 @@ public static class CardPlayCodec
 
     public static EncodedCardPlay Encode(CardPlay play)
     {
-        int cardToTransform = NoCard;
+        int cardToTransform = NO_CARD;
         if (play.CardToTransform.HasValue)
         {
             cardToTransform = (int)play.CardToTransform.Value;
         }
 
-        int transformInto = NoCard;
+        int transformInto = NO_CARD;
         if (play.TransformInto.HasValue)
         {
             transformInto = (int)play.TransformInto.Value;
@@ -56,7 +56,7 @@ public static class CardPlayCodec
     /// can't overlap (a Transform play never populates cardsToReturn).</summary>
     public static CardPlay Decode(int card, int cardToTransform, int transformInto, int[] cardsToReturn)
     {
-        if (cardToTransform != NoCard && transformInto != NoCard)
+        if (cardToTransform != NO_CARD && transformInto != NO_CARD)
         {
             return CardPlay.Transforming((CardName)cardToTransform, (CardName)transformInto);
         }

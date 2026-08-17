@@ -12,9 +12,9 @@ namespace RockAndScissPaper.Cards;
 /// listing names here would need editing every time that pool grows (see root CLAUDE.md).</summary>
 public static class DeckAssembler
 {
-    private const int NormalCardCopies = 3;
-    private const int DummyCardCopies = 4;
-    private const int JokerCardCopies = 2;
+    private const int NORMAL_CARD_COPIES = 3;
+    private const int DUMMY_CARD_COPIES = 4;
+    private const int JOKER_CARD_COPIES = 2;
 
     public static List<CardName> BuildDeck()
     {
@@ -26,11 +26,11 @@ public static class DeckAssembler
 
         List<CardName> deck = new List<CardName>();
 
-        AddCopies(deck, CardName.Rock, NormalCardCopies);
-        AddCopies(deck, CardName.Paper, NormalCardCopies);
-        AddCopies(deck, CardName.Scissors, NormalCardCopies);
-        AddCopies(deck, CardName.Dummy, DummyCardCopies);
-        AddCopies(deck, CardName.Joker, JokerCardCopies);
+        AddCopies(deck, CardName.Rock, NORMAL_CARD_COPIES);
+        AddCopies(deck, CardName.Paper, NORMAL_CARD_COPIES);
+        AddCopies(deck, CardName.Scissors, NORMAL_CARD_COPIES);
+        AddCopies(deck, CardName.Dummy, DUMMY_CARD_COPIES);
+        AddCopies(deck, CardName.Joker, JOKER_CARD_COPIES);
 
         foreach (CardName cardName in cardDatabase.LoadedCardNames)
         {

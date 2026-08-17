@@ -11,17 +11,13 @@ public partial class EventBus : Node
 {
     public static EventBus? Instance { get; private set; }
 
-    [Signal]
-    public delegate void PeerConnectedEventHandler(long peerId);
+    [Signal] public delegate void PeerConnectedEventHandler(long peerId);
 
-    [Signal]
-    public delegate void PeerDisconnectedEventHandler(long peerId);
+    [Signal] public delegate void PeerDisconnectedEventHandler(long peerId);
 
-    [Signal]
-    public delegate void ServerDisconnectedEventHandler();
+    [Signal] public delegate void ServerDisconnectedEventHandler();
 
-    [Signal]
-    public delegate void ConnectionFailedEventHandler();
+    [Signal] public delegate void ConnectionFailedEventHandler();
 
     public override void _EnterTree()
     {

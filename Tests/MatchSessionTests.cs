@@ -25,8 +25,8 @@ public class MatchSessionTests
     {
         MatchSession session = NewSession();
 
-        Assert.Equal(MatchSession.MulliganHandSize, session.HandOf(Side.Player1).Count);
-        Assert.Equal(MatchSession.MulliganHandSize, session.HandOf(Side.Player2).Count);
+        Assert.Equal(MatchSession.MULLIGAN_HAND_SIZE, session.HandOf(Side.Player1).Count);
+        Assert.Equal(MatchSession.MULLIGAN_HAND_SIZE, session.HandOf(Side.Player2).Count);
         Assert.Equal(6, session.DeckCountOf(Side.Player1));
         Assert.Equal(6, session.DeckCountOf(Side.Player2));
     }

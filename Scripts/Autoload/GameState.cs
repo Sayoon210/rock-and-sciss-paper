@@ -21,8 +21,8 @@ public partial class GameState : Node
 {
     // Sentinels for the two nullable pieces of round/match state that cross the network as
     // plain ints — WinLossResult and Side are both zero-based enums, so -1 is unambiguous.
-    private const int NoWinLossSentinel = -1;
-    private const int NoWinnerSentinel = -1;
+    private const int NO_WIN_LOSS_RESULT_SENTINEL = -1;
+    private const int NO_WINNER_SIDE_SENTINEL = -1;
 
     public static GameState? Instance { get; private set; }
 
@@ -40,20 +40,12 @@ public partial class GameState : Node
 
     public MatchView View { get; private set; } = new MatchView();
 
-    [Signal]
-    public delegate void RoundResolvedEventHandler();
-
-    [Signal]
-    public delegate void SubmissionRejectedEventHandler(string reason);
-
-    [Signal]
-    public delegate void MatchStartedEventHandler();
-
-    [Signal]
-    public delegate void MatchEndedEventHandler(bool didIWin);
-
-    [Signal]
-    public delegate void OpponentLeftEventHandler();
+    // UI Signals - dont need to distribute side, only my side
+    [Signal] public delegate void RoundResolvedEventHandler();
+    [Signal] public delegate void SubmissionRejectedEventHandler(string reason);
+    [Signal] public delegate void MatchStartedEventHandler();
+    [Signal] public delegate void MatchEndedEventHandler(bool didIWin);
+    [Signal] public delegate void OpponentLeftEventHandler();
 
     public override void _EnterTree()
     {
@@ -70,16 +62,14 @@ public partial class GameState : Node
         }
     }
 
-    /// <summary>Clears match-lifetime state only — scores, hands, the session itself.
-    /// For starting a fresh match on a connection that is staying open.</summary>
+    // keep connection, only reset match (session & view)
     public void ResetMatch()
     {
         _session = null;
         View = new MatchView();
     }
 
-    /// <summary>Clears match-lifetime state plus connection-lifetime state (peer/side
-    /// assignments, my own side). For when the connection itself has ended.</summary>
+    // reset connection and match
     public void ResetConnection()
     {
         ResetMatch();
@@ -121,8 +111,7 @@ public partial class GameState : Node
             _session.DeckCountOf(_mySide),
             _session.HandOf(_mySide).Count);
 
-        // Host fills its own View straight from the session it holds, never through a
-        // network round trip to itself.
+        // Host fills its own View straight from the session it holds.
         View.MyHand = new List<CardName>(_session.HandOf(_mySide));
         View.MyDeckCount = _session.DeckCountOf(_mySide);
         View.OpponentDeckCount = _session.DeckCountOf(clientSide);
@@ -140,14 +129,15 @@ public partial class GameState : Node
         EmitSignalMatchStarted();
     }
 
-    /// <summary>The one entry point for playing a card, identical on both sides. On the
-    /// host it resolves locally; on a client it becomes an RPC to peer 1. The caller (a
-    /// CardController) never branches on host vs. client.</summary>
+    /// <summary>The one entry point for playing a card, identical on both sides. 
+    /// On the host it resolves locally;
+    /// on a client it becomes an RPC to peer 1.
+    /// The caller (a CardController) never branches on host vs. client.</summary>
     public void RequestCardPlay(CardPlay play)
     {
         if (Multiplayer.IsServer())
         {
-            HandleSubmission(_mySide, play, null);
+            HandleSubmission(_mySide, play, null); // handle as local signal
         }
         else
         {
@@ -164,14 +154,14 @@ public partial class GameState : Node
 
     private void OnPeerConnected(long peerId)
     {
-        // Only the host assigns sides — a client has nothing to record this into.
+        // Only the host assigns sides
         if (!Multiplayer.IsServer())
         {
             return;
         }
 
-        // Host is always Player1 (decision already made, no coin flip); the one
-        // connecting client is always Player2.
+        // Host is always Player1 (decision already made, no coin flip)
+        // Client is always side Player2
         _sideByPeerId[peerId] = Side.Player2;
     }
 
@@ -241,13 +231,13 @@ public partial class GameState : Node
         int winnerSide)
     {
         WinLossResult? winLossResult = null;
-        if (winLoss != NoWinLossSentinel)
+        if (winLoss != NO_WIN_LOSS_RESULT_SENTINEL)
         {
             winLossResult = (WinLossResult)winLoss;
         }
 
         Side? winner = null;
-        if (winnerSide != NoWinnerSentinel)
+        if (winnerSide != NO_WINNER_SIDE_SENTINEL)
         {
             winner = (Side)winnerSide;
         }
@@ -360,13 +350,13 @@ public partial class GameState : Node
 
     private void BroadcastRoundResult(RoundResult result)
     {
-        int winLoss = NoWinLossSentinel;
+        int winLoss = NO_WIN_LOSS_RESULT_SENTINEL;
         if (result.WinLoss.HasValue)
         {
             winLoss = (int)result.WinLoss.Value;
         }
 
-        int winnerSide = NoWinnerSentinel;
+        int winnerSide = NO_WINNER_SIDE_SENTINEL;
         if (_session!.Winner.HasValue)
         {
             winnerSide = (int)_session.Winner.Value;
@@ -406,8 +396,7 @@ public partial class GameState : Node
             _session.RoundNumber,
             _session.Winner);
 
-        // Host fills its own hand straight from the session, never through a network
-        // round trip to itself.
+        // Host fills its own hand straight from the session
         View.MyHand = new List<CardName>(_session.HandOf(_mySide));
 
         // The client's hand is private — send it only to that one peer, never broadcast.

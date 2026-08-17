@@ -13,7 +13,7 @@ namespace RockAndScissPaper.Autoload;
 /// and this must not need editing when it does.</summary>
 public partial class CardDatabase : Node
 {
-    private const string CardDirectoryPath = "res://Data/Cards/";
+    private const string CARD_DIRECTORY_PATH = "res://Data/Cards/";
 
     public static CardDatabase? Instance { get; private set; }
 
@@ -54,7 +54,7 @@ public partial class CardDatabase : Node
 
     private void LoadCards()
     {
-        string[] fileNames = DirAccess.GetFilesAt(CardDirectoryPath);
+        string[] fileNames = DirAccess.GetFilesAt(CARD_DIRECTORY_PATH);
         foreach (string fileName in fileNames)
         {
             if (!fileName.EndsWith(".tres"))
@@ -62,7 +62,7 @@ public partial class CardDatabase : Node
                 continue;
             }
 
-            string resourcePath = CardDirectoryPath + fileName;
+            string resourcePath = CARD_DIRECTORY_PATH + fileName;
             CardData cardData = GD.Load<CardData>(resourcePath);
             if (cardData != null)
             {

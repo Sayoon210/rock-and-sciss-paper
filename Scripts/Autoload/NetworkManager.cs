@@ -9,11 +9,11 @@ namespace RockAndScissPaper.Autoload;
 public partial class NetworkManager : Node
 {
     // Fixed port for this 1:1 game — no lobby/port picker in this pass.
-    private const int Port = 7777;
+    private const int PORT = 7777;
 
     // A strict 1:1 game: refusing the third connection at the transport layer means no
     // application code ever has to reject an over-limit peer itself.
-    private const int MaxClients = 1;
+    private const int MAX_CLIENTS = 1;
 
     public static NetworkManager? Instance { get; private set; }
 
@@ -33,10 +33,10 @@ public partial class NetworkManager : Node
     public void StartHost()
     {
         ENetMultiplayerPeer peer = new ENetMultiplayerPeer();
-        Error error = peer.CreateServer(Port, MaxClients);
+        Error error = peer.CreateServer(PORT, MAX_CLIENTS);
         if (error != Error.Ok)
         {
-            GD.PrintErr($"NetworkManager: failed to start host on port {Port} ({error}).");
+            GD.PrintErr($"NetworkManager: failed to start host on port {PORT} ({error}).");
             return;
         }
 
@@ -46,10 +46,10 @@ public partial class NetworkManager : Node
     public void JoinHost(string address)
     {
         ENetMultiplayerPeer peer = new ENetMultiplayerPeer();
-        Error error = peer.CreateClient(address, Port);
+        Error error = peer.CreateClient(address, PORT);
         if (error != Error.Ok)
         {
-            GD.PrintErr($"NetworkManager: failed to join {address}:{Port} ({error}).");
+            GD.PrintErr($"NetworkManager: failed to join {address}:{PORT} ({error}).");
             return;
         }
 

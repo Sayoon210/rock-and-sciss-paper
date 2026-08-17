@@ -49,7 +49,7 @@ public class MatchSessionLogTests
             new Random(1),
             lines.Add);
 
-        for (int round = 0; round < MatchSession.WinsNeededForMatch; round++)
+        for (int round = 0; round < MatchSession.WINS_NEEDED_FOR_MATCH; round++)
         {
             session.SubmitCard(Side.Player1, CardName.Rock);
             session.SubmitCard(Side.Player2, CardName.Scissors);
