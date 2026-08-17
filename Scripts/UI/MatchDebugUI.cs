@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using Godot;
 using RockAndScissPaper.Autoload;
 using RockAndScissPaper.Cards;
@@ -24,6 +26,7 @@ public partial class MatchDebugUI : Control
     private Button _startMatchButton = null!;
     private Label _statusLabel = null!;
     private HBoxContainer _handRow = null!;
+    private HBoxContainer _choiceRow = null!;
     private RichTextLabel _logView = null!;
 
     public override void _Ready()
@@ -113,6 +116,11 @@ public partial class MatchDebugUI : Control
         _handRow = new HBoxContainer();
         root.AddChild(_handRow);
 
+        // Only Transform and Swap ever fill this — every other card is playable from the
+        // hand row alone.
+        _choiceRow = new HBoxContainer();
+        root.AddChild(_choiceRow);
+
         _logView = new RichTextLabel();
         _logView.SizeFlagsVertical = SizeFlags.ExpandFill;
         _logView.ScrollFollowing = true;
@@ -140,12 +148,149 @@ public partial class MatchDebugUI : Control
 
     private void OnCardPressed(CardName card)
     {
+        // Transform and Swap can't be sent from a single click — they carry a choice, and
+        // they are the only two plays whose extra RPC payload CardPlayCodec has to encode,
+        // so being able to make that choice here is what puts those branches on the wire
+        // at all.
+        if (card == CardName.Transform)
+        {
+            ShowTransformChoice();
+            return;
+        }
+
+        if (card == CardName.Swap)
+        {
+            ShowSwapChoice();
+            return;
+        }
+
         // No judgment here — the harness sends the intent and lets the host rule on it
-        // (Scripts/CLAUDE.md: "a node that receives input does not judge it"). Transform
-        // and Swap need a choice this screen can't make, so playing one is expected to come
-        // back rejected, which is itself worth watching work.
+        // (Scripts/CLAUDE.md: "a node that receives input does not judge it").
         Log($"-> requesting {card}");
         GameState.Instance!.RequestCardPlay(CardPlay.WithoutChoice(card));
+    }
+
+    /// <summary>Neither picker filters by what the rules allow. The harness holds no rule
+    /// knowledge on purpose, so an illegal pick (a Joker as the target, a card not in hand)
+    /// is sent and rejected by the host — which is the path worth being able to exercise.</summary>
+    private void ShowTransformChoice()
+    {
+        ClearChoiceRow();
+
+        var label = new Label();
+        label.Text = "Transform";
+        _choiceRow.AddChild(label);
+
+        var fromPicker = new OptionButton();
+        foreach (CardName card in GameState.Instance!.View.MyHand)
+        {
+            fromPicker.AddItem(DisplayNameOf(card), (int)card);
+        }
+
+        _choiceRow.AddChild(fromPicker);
+
+        var intoLabel = new Label();
+        intoLabel.Text = "into";
+        _choiceRow.AddChild(intoLabel);
+
+        var intoPicker = new OptionButton();
+        foreach (CardName card in AllKnownCards())
+        {
+            intoPicker.AddItem(DisplayNameOf(card), (int)card);
+        }
+
+        _choiceRow.AddChild(intoPicker);
+
+        AddConfirmButtons(() =>
+        {
+            if (fromPicker.Selected < 0 || intoPicker.Selected < 0)
+            {
+                Log("pick both a card to change and what it becomes");
+                return;
+            }
+
+            var from = (CardName)fromPicker.GetItemId(fromPicker.Selected);
+            var into = (CardName)intoPicker.GetItemId(intoPicker.Selected);
+            Log($"-> requesting Transform {from} -> {into}");
+            GameState.Instance!.RequestCardPlay(CardPlay.Transforming(from, into));
+            ClearChoiceRow();
+        });
+    }
+
+    /// <summary>Lists the whole hand, Swap card included — returning the played Swap is
+    /// exactly the play the host now rejects, and being able to send it is how that stays
+    /// checkable from outside the test suite.</summary>
+    private void ShowSwapChoice()
+    {
+        ClearChoiceRow();
+
+        var label = new Label();
+        label.Text = "Swap back:";
+        _choiceRow.AddChild(label);
+
+        var toggles = new List<Button>();
+        var toggledCards = new List<CardName>();
+
+        foreach (CardName card in GameState.Instance!.View.MyHand)
+        {
+            var toggle = new Button();
+            toggle.Text = DisplayNameOf(card);
+            toggle.ToggleMode = true;
+            _choiceRow.AddChild(toggle);
+
+            toggles.Add(toggle);
+            toggledCards.Add(card);
+        }
+
+        AddConfirmButtons(() =>
+        {
+            var chosen = new List<CardName>();
+            for (int i = 0; i < toggles.Count; i++)
+            {
+                if (toggles[i].ButtonPressed)
+                {
+                    chosen.Add(toggledCards[i]);
+                }
+            }
+
+            Log($"-> requesting Swap, returning [{string.Join(", ", chosen)}]");
+            GameState.Instance!.RequestCardPlay(CardPlay.Swapping(chosen));
+            ClearChoiceRow();
+        });
+    }
+
+    private void AddConfirmButtons(Action onPlay)
+    {
+        var playButton = new Button();
+        playButton.Text = "Play";
+        playButton.Pressed += () => { onPlay(); };
+        _choiceRow.AddChild(playButton);
+
+        var cancelButton = new Button();
+        cancelButton.Text = "Cancel";
+        cancelButton.Pressed += ClearChoiceRow;
+        _choiceRow.AddChild(cancelButton);
+    }
+
+    private void ClearChoiceRow()
+    {
+        // Removed as well as freed: QueueFree only takes effect at the end of the frame, so
+        // a row rebuilt in the same frame would briefly show both sets of controls.
+        foreach (Node child in _choiceRow.GetChildren())
+        {
+            _choiceRow.RemoveChild(child);
+            child.QueueFree();
+        }
+    }
+
+    private static IReadOnlyCollection<CardName> AllKnownCards()
+    {
+        if (CardDatabase.Instance == null)
+        {
+            return Array.Empty<CardName>();
+        }
+
+        return CardDatabase.Instance.LoadedCardNames;
     }
 
     private void OnMatchStarted()
@@ -231,8 +376,12 @@ public partial class MatchDebugUI : Control
 
     private void RefreshHand()
     {
+        // Any open Transform/Swap picker names cards from the hand that just changed.
+        ClearChoiceRow();
+
         foreach (Node child in _handRow.GetChildren())
         {
+            _handRow.RemoveChild(child);
             child.QueueFree();
         }
 
