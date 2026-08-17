@@ -7,10 +7,17 @@ public sealed class SwapEffect : ICardEffect
 {
     public void Validate(CardPlay play, DeckAndHand self)
     {
-        // Checked against a copy: the same card can legitimately appear twice in the list
-        // when the hand holds two of it, but not three times when it holds two.
+        // Checked against the hand as Apply will actually see it, not as it is now:
+        // RoundResolver removes the played card before any effect runs, so the Swap card
+        // itself is already gone and can never be one of the cards going back. Validating
+        // against the pre-removal hand let that through, and Apply then threw partway
+        // through resolution — after both players' cards had left their hands but before
+        // the round was recorded, wedging the match with both sides stuck as "submitted".
         var remaining = new Hand(self.Hand.Cards);
+        remaining.Remove(play.Card);
 
+        // The same card can legitimately appear twice in the list when the hand holds two
+        // of it, but not three times when it holds two.
         foreach (CardName card in play.CardsToReturn)
         {
             if (!remaining.Contains(card))

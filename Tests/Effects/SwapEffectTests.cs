@@ -51,12 +51,15 @@ public class SwapEffectTests
         Assert.Equal(1, opponent.Deck.Count);
     }
 
+    // Every Validate fixture holds the Swap card being played, since that is the only
+    // state Validate is ever called in: RoundResolver.ValidatePlay checks the played card
+    // is in hand before it reaches any effect.
     [Fact]
     public void Validate_accepts_a_duplicate_the_hand_actually_holds_twice()
     {
         var self = new DeckAndHand(
             new Deck(new[] { CardName.Dummy }),
-            new Hand(new[] { CardName.Rock, CardName.Rock }));
+            new Hand(new[] { CardName.Swap, CardName.Rock, CardName.Rock }));
 
         new SwapEffect().Validate(CardPlay.Swapping(new[] { CardName.Rock, CardName.Rock }), self);
     }
@@ -66,7 +69,7 @@ public class SwapEffectTests
     {
         var self = new DeckAndHand(
             new Deck(new[] { CardName.Dummy }),
-            new Hand(new[] { CardName.Rock, CardName.Rock }));
+            new Hand(new[] { CardName.Swap, CardName.Rock, CardName.Rock }));
 
         Assert.Throws<ArgumentException>(
             () => new SwapEffect().Validate(
@@ -78,9 +81,22 @@ public class SwapEffectTests
     {
         var self = new DeckAndHand(
             new Deck(new[] { CardName.Dummy }),
-            new Hand(new[] { CardName.Rock }));
+            new Hand(new[] { CardName.Swap, CardName.Rock }));
 
         Assert.Throws<ArgumentException>(
             () => new SwapEffect().Validate(CardPlay.Swapping(new[] { CardName.Joker }), self));
+    }
+
+    [Fact]
+    public void Validate_rejects_returning_the_swap_card_being_played()
+    {
+        // The played card is removed before any effect runs, so returning it would throw
+        // inside Apply — after resolution had already started mutating both players.
+        var self = new DeckAndHand(
+            new Deck(new[] { CardName.Dummy }),
+            new Hand(new[] { CardName.Swap, CardName.Rock }));
+
+        Assert.Throws<ArgumentException>(
+            () => new SwapEffect().Validate(CardPlay.Swapping(new[] { CardName.Swap }), self));
     }
 }

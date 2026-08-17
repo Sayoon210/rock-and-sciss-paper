@@ -176,6 +176,35 @@ public class MatchSessionTests
         Assert.False(session.HasSubmittedCard(Side.Player1));
     }
 
+    /// <summary>Exactly MULLIGAN_HAND_SIZE cards, so the opening hand is the whole deck and
+    /// holds the one Swap card for certain.</summary>
+    private static List<CardName> OneSwapAndFiveRocks()
+    {
+        var cards = new List<CardName> { CardName.Swap };
+        for (int i = 0; i < 5; i++)
+        {
+            cards.Add(CardName.Rock);
+        }
+
+        return cards;
+    }
+
+    [Fact]
+    public void SubmitCard_rejects_a_swap_that_returns_the_swap_card_itself()
+    {
+        // Resolution removes both played cards from their hands before effects run, so a
+        // play that only fails once resolution is underway leaves both hands short and both
+        // sides still marked as submitted — a match that can never take another round.
+        var session = new MatchSession(OneSwapAndFiveRocks(), Repeated(CardName.Rock, 8), new Random(1));
+
+        Assert.Throws<ArgumentException>(
+            () => session.SubmitCard(Side.Player1, CardPlay.Swapping(new[] { CardName.Swap })));
+
+        Assert.False(session.HasSubmittedCard(Side.Player1));
+        Assert.Equal(MatchSession.MULLIGAN_HAND_SIZE, session.HandOf(Side.Player1).Count);
+        Assert.Equal(1, session.RoundNumber);
+    }
+
     [Fact]
     public void The_same_seed_produces_the_same_opening_hands()
     {
