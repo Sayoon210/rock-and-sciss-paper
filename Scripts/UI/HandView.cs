@@ -101,6 +101,7 @@ public partial class HandView : HBoxContainer
 
         _selectionMode = HandSelectionMode.Play;
         ClearSelection();
+        ResetCardOpacity();
     }
 
     /// <summary>교체: any number of hand cards may be toggled. A no-op if already in this
@@ -115,10 +116,16 @@ public partial class HandView : HBoxContainer
 
         _selectionMode = HandSelectionMode.SelectMultipleForSwap;
         ClearSelection();
+        ResetCardOpacity();
     }
 
     /// <summary>변화: exactly one hand card may be picked as the card to change. Same
-    /// no-op-if-unchanged rule as SetSelectionModeForSwap.</summary>
+    /// no-op-if-unchanged rule as SetSelectionModeForSwap.
+    ///
+    /// Only a 일반카드/더미카드 may ever be a legal source (DESIGN.md, TransformEffect.Validate)
+    /// — anything else in hand is dimmed and does not respond to a click. This is the
+    /// affordance Scripts/CLAUDE.md allows ("greying out is fine, but it is not validation");
+    /// the host still re-checks the choice regardless.</summary>
     public void SetSelectionModeForTransformSource()
     {
         if (_selectionMode == HandSelectionMode.SelectOneForTransform)
@@ -128,6 +135,7 @@ public partial class HandView : HBoxContainer
 
         _selectionMode = HandSelectionMode.SelectOneForTransform;
         ClearSelection();
+        ApplyTransformEligibilityDimming();
     }
 
     /// <summary>The cards currently toggled on in SelectMultipleForSwap mode. Tracked by
@@ -210,9 +218,16 @@ public partial class HandView : HBoxContainer
     }
 
     /// <summary>Clicking a different card moves the pick; clicking the current pick again
-    /// clears it. Only one card can be "the one to change" at a time.</summary>
+    /// clears it. Only one card can be "the one to change" at a time. A card ApplyTransform-
+    /// EligibilityDimming left dimmed does not respond — dimming and click-eligibility are
+    /// kept as one rule so they can never disagree about which cards are pickable.</summary>
     private void SelectTransformSource(CardView cardView)
     {
+        if (!cardView.ShownCard.HasValue || !IsTransformable(cardView.ShownCard.Value))
+        {
+            return;
+        }
+
         if (_selectedForTransform == cardView)
         {
             cardView.SetSelected(false);
@@ -226,6 +241,31 @@ public partial class HandView : HBoxContainer
         }
 
         EmitSignalSelectionChanged();
+    }
+
+    private static bool IsTransformable(CardName card)
+    {
+        CardType type = card.GetCardType();
+        return type == CardType.Normal || type == CardType.Dummy;
+    }
+
+    /// <summary>변화's eligible cards depend on what is actually in hand, unlike the "into"
+    /// palette (MatchScreenUI), which is the same fixed set regardless of hand contents.</summary>
+    private void ApplyTransformEligibilityDimming()
+    {
+        foreach (CardView cardView in _slots)
+        {
+            bool eligible = cardView.ShownCard.HasValue && IsTransformable(cardView.ShownCard.Value);
+            cardView.Modulate = eligible ? Colors.White : new Color(1f, 1f, 1f, 0.35f);
+        }
+    }
+
+    private void ResetCardOpacity()
+    {
+        foreach (CardView cardView in _slots)
+        {
+            cardView.Modulate = Colors.White;
+        }
     }
 
     private void ClearSelection()

@@ -418,7 +418,13 @@ public partial class MatchScreenUI : Control
     }
 
     /// <summary>Built once from CardDatabase rather than a hardcoded roster — the same
-    /// reasoning DeckAssembler follows for the special-card roster applies here.</summary>
+    /// reasoning DeckAssembler follows for the special-card roster applies here.
+    ///
+    /// Only 일반카드/더미카드 are ever a legal 변화 result (DESIGN.md, TransformEffect.Validate),
+    /// and that never depends on hand contents, unlike the source side — so the palette simply
+    /// excludes everything else rather than building and disabling it. MatchDebugUI's own
+    /// picker deliberately stays unfiltered; this one does not need to double as that
+    /// exercise of the host's rejection path.</summary>
     private void BuildTransformTargetPalette()
     {
         if (CardDatabase.Instance == null)
@@ -428,6 +434,12 @@ public partial class MatchScreenUI : Control
 
         foreach (CardName card in CardDatabase.Instance.LoadedCardNames)
         {
+            CardType cardType = card.GetCardType();
+            if (cardType != CardType.Normal && cardType != CardType.Dummy)
+            {
+                continue;
+            }
+
             CardName target = card;
 
             Button button = new Button();
