@@ -56,6 +56,19 @@ public partial class NetworkManager : Node
         Multiplayer.MultiplayerPeer = peer;
     }
 
+    /// <summary>Closes whatever connection is currently open, host or client side. A
+    /// deliberate local disconnect (leaving for the title screen) rather than a drop, so it
+    /// does not itself raise PeerDisconnected/ServerDisconnected here — the caller is the one
+    /// who already knows it is leaving and resets its own state directly.</summary>
+    public void Disconnect()
+    {
+        if (Multiplayer.MultiplayerPeer != null)
+        {
+            Multiplayer.MultiplayerPeer.Close();
+            Multiplayer.MultiplayerPeer = null;
+        }
+    }
+
     private void OnPeerConnected(long id)
     {
         // The generated EmitSignalX helpers are protected (only usable from inside the

@@ -88,11 +88,27 @@ text = "라운드"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="MyPlayedCardView" parent="Rows/MiddleRow/Field" instance=ExtResource("3_cardview")]
+[node name="MyPlayedArea" type="VBoxContainer" parent="Rows/MiddleRow/Field"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="MyPlayedCardView" parent="Rows/MiddleRow/Field/MyPlayedArea" instance=ExtResource("3_cardview")]
 layout_mode = 2
 
-[node name="OpponentPlayedCardView" parent="Rows/MiddleRow/Field" instance=ExtResource("3_cardview")]
+[node name="MyActionLabel" type="Label" parent="Rows/MiddleRow/Field/MyPlayedArea"]
 layout_mode = 2
+horizontal_alignment = 1
+
+[node name="OpponentPlayedArea" type="VBoxContainer" parent="Rows/MiddleRow/Field"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="OpponentPlayedCardView" parent="Rows/MiddleRow/Field/OpponentPlayedArea" instance=ExtResource("3_cardview")]
+layout_mode = 2
+
+[node name="OpponentActionLabel" type="Label" parent="Rows/MiddleRow/Field/OpponentPlayedArea"]
+layout_mode = 2
+horizontal_alignment = 1
 
 [node name="OutcomeLabel" type="Label" parent="Rows/MiddleRow/Field"]
 custom_minimum_size = Vector2(180, 0)
@@ -102,14 +118,27 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="PromptStrip" type="PanelContainer" parent="Rows"]
-custom_minimum_size = Vector2(0, 48)
+custom_minimum_size = Vector2(0, 64)
 layout_mode = 2
 
-[node name="PromptLabel" type="Label" parent="Rows/PromptStrip"]
+[node name="PromptRow" type="HBoxContainer" parent="Rows/PromptStrip"]
 layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="PromptLabel" type="Label" parent="Rows/PromptStrip/PromptRow"]
+layout_mode = 2
+size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 24
-horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="ConfirmButton" type="Button" parent="Rows/PromptStrip/PromptRow"]
+visible = false
+layout_mode = 2
+text = "확인"
+
+[node name="TargetPaletteRow" type="HBoxContainer" parent="Rows/PromptStrip/PromptRow"]
+layout_mode = 2
+theme_override_constants/separation = 6
 
 [node name="MyArea" type="HBoxContainer" parent="Rows"]
 custom_minimum_size = Vector2(0, 280)
@@ -126,3 +155,39 @@ vertical_alignment = 1
 [node name="MyHandView" parent="Rows/MyArea" instance=ExtResource("2_handview")]
 layout_mode = 2
 size_flags_horizontal = 3
+
+[node name="MatchEndOverlay" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Center" type="CenterContainer" parent="MatchEndOverlay"]
+layout_mode = 2
+
+[node name="Box" type="VBoxContainer" parent="MatchEndOverlay/Center"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="ResultLabel" type="Label" parent="MatchEndOverlay/Center/Box"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 48
+horizontal_alignment = 1
+
+[node name="RematchButton" type="Button" parent="MatchEndOverlay/Center/Box"]
+custom_minimum_size = Vector2(300, 56)
+layout_mode = 2
+text = "재대결"
+
+[node name="RematchStatusLabel" type="Label" parent="MatchEndOverlay/Center/Box"]
+visible = false
+layout_mode = 2
+horizontal_alignment = 1
+
+[node name="ReturnToTitleButton" type="Button" parent="MatchEndOverlay/Center/Box"]
+custom_minimum_size = Vector2(300, 44)
+layout_mode = 2
+text = "타이틀로"
