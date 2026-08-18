@@ -41,6 +41,11 @@ public sealed class MatchSession
     private CardName? _player2SubmittedCard;
     private RoundInProgress? _round;
 
+    // Sticky once set — a side that ran out of cards has lost regardless of score, and
+    // score alone can never turn back on. Checked in Winner ahead of the score-based result.
+    private bool _player1Exhausted;
+    private bool _player2Exhausted;
+
     /// <summary>Takes each player's assembled deck. Deck composition is the caller's job —
     /// CardDatabase lives on the Godot side, so this project never decides what goes in.
     ///
@@ -80,11 +85,27 @@ public sealed class MatchSession
         }
     }
 
-    /// <summary>The side that reached ten wins, or null while the match is still running.</summary>
+    /// <summary>The side that won — ten wins, or the other side running out of cards
+    /// (DESIGN.md, "덱 고갈"), whichever happened. Null while the match is still running.
+    ///
+    /// Exhaustion is checked first. If both sides exhaust in the same round, Player 1's
+    /// exhaustion is the one that resolves it — the same "Player 1 first" tie-break this
+    /// codebase already uses for simultaneous Reset and same-priority submissions — so
+    /// Player 2 is declared the winner rather than the match hanging with no result.</summary>
     public Side? Winner
     {
         get
         {
+            if (_player1Exhausted)
+            {
+                return Side.Player2;
+            }
+
+            if (_player2Exhausted)
+            {
+                return Side.Player1;
+            }
+
             if (Player1Score >= WINS_NEEDED_FOR_MATCH)
             {
                 return Side.Player1;
@@ -276,9 +297,9 @@ public sealed class MatchSession
         }
     }
 
-    /// <summary>Closes out a resolved round: records its score and moves the round counter
-    /// on. The rules of the round itself belong to RoundResolver; this only writes the
-    /// outcome into the match.</summary>
+    /// <summary>Closes out a resolved round: records its score, notes whether either deck
+    /// just ran dry, and moves the round counter on. The rules of the round itself belong to
+    /// RoundResolver; this only writes the outcome into the match.</summary>
     private void RecordResolvedRound(RoundResult result)
     {
         if (result.WinLoss == WinLossResult.Player1Win)
@@ -288,6 +309,21 @@ public sealed class MatchSession
         else if (result.WinLoss == WinLossResult.Player2Win)
         {
             Player2Score++;
+        }
+
+        // Checked off the result's counts, not by re-reading the live decks — same reason
+        // RecordResolvedRound already reads everything else off `result` rather than `_player1`
+        // /`_player2` directly. A deck emptied by any draw this round (the guaranteed
+        // per-round draw, or a 교체/리셋/드로우 that ran out partway through) is caught here,
+        // in one place, regardless of which draw was the one that hit zero.
+        if (result.Player1DeckCount == 0)
+        {
+            _player1Exhausted = true;
+        }
+
+        if (result.Player2DeckCount == 0)
+        {
+            _player2Exhausted = true;
         }
 
         if (_log != null)

@@ -13,8 +13,18 @@ public sealed class DeckAndHand
         Hand = hand;
     }
 
-    public CardName Draw()
+    /// <summary>Null when the deck is empty rather than throwing — an empty deck mid-match
+    /// means this player has lost (DESIGN.md, "덱 고갈"), not that the game is broken. Callers
+    /// that draw more than one card in a loop (교체/리셋/드로우) rely on this to stop taking
+    /// cards instead of crashing partway through; MatchSession is what turns an empty deck
+    /// into the match actually ending.</summary>
+    public CardName? Draw()
     {
+        if (Deck.Count == 0)
+        {
+            return null;
+        }
+
         CardName card = Deck.TakeFromTop();
         Hand.Add(card);
         return card;

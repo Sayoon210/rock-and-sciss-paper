@@ -11,11 +11,24 @@ public class DeckAndHandTests
             new Deck(new[] { CardName.Rock, CardName.Paper }),
             new Hand(Array.Empty<CardName>()));
 
-        CardName drawn = deckAndHand.Draw();
+        CardName? drawn = deckAndHand.Draw();
 
         Assert.Equal(CardName.Rock, drawn);
         Assert.Equal(new[] { CardName.Rock }, deckAndHand.Hand.Cards);
         Assert.Equal(1, deckAndHand.Deck.Count);
+    }
+
+    [Fact]
+    public void Draw_from_an_empty_deck_returns_null_instead_of_throwing()
+    {
+        var deckAndHand = new DeckAndHand(
+            new Deck(Array.Empty<CardName>()),
+            new Hand(Array.Empty<CardName>()));
+
+        CardName? drawn = deckAndHand.Draw();
+
+        Assert.Null(drawn);
+        Assert.Empty(deckAndHand.Hand.Cards);
     }
 
     [Fact]

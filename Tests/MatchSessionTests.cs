@@ -408,6 +408,60 @@ public class MatchSessionTests
     }
 
     [Fact]
+    public void Running_out_of_cards_ends_the_match_even_with_a_perfect_score()
+    {
+        // Seven Dummy: mulligan takes six, leaving exactly one in the deck. A Dummy vanishes
+        // instead of returning, so the one card left is drawn at the end of round 1 and the
+        // deck is empty the moment that round is recorded — before either side has a chance
+        // to also win on score.
+        var session = new MatchSession(
+            Repeated(CardName.Dummy, 7),
+            Repeated(CardName.Rock, 20),
+            new Random(1));
+
+        session.SubmitCard(Side.Player1, CardName.Dummy);
+        session.SubmitCard(Side.Player2, CardName.Rock);
+
+        Assert.Equal(0, session.DeckCountOf(Side.Player1));
+        Assert.Equal(Side.Player2, session.Winner);
+    }
+
+    [Fact]
+    public void SubmitCard_throws_once_a_side_has_exhausted_its_deck()
+    {
+        var session = new MatchSession(
+            Repeated(CardName.Dummy, 7),
+            Repeated(CardName.Rock, 20),
+            new Random(1));
+
+        session.SubmitCard(Side.Player1, CardName.Dummy);
+        session.SubmitCard(Side.Player2, CardName.Rock);
+
+        Assert.Throws<InvalidOperationException>(
+            () => session.SubmitCard(Side.Player2, session.HandOf(Side.Player2)[0]));
+    }
+
+    [Fact]
+    public void Simultaneous_exhaustion_resolves_by_the_same_Player_1_first_tie_break_used_elsewhere()
+    {
+        // Both sides run out on the same round. DESIGN.md left this case open; the
+        // implementation picks the same "Player 1 first" convention already used for
+        // simultaneous Reset and same-priority submissions, rather than leaving the match
+        // with no winner at all.
+        var session = new MatchSession(
+            Repeated(CardName.Dummy, 7),
+            Repeated(CardName.Dummy, 7),
+            new Random(1));
+
+        session.SubmitCard(Side.Player1, CardName.Dummy);
+        session.SubmitCard(Side.Player2, CardName.Dummy);
+
+        Assert.Equal(0, session.DeckCountOf(Side.Player1));
+        Assert.Equal(0, session.DeckCountOf(Side.Player2));
+        Assert.Equal(Side.Player2, session.Winner);
+    }
+
+    [Fact]
     public void The_same_seed_produces_the_same_opening_hands()
     {
         var a = new MatchSession(SmallDeck(), SmallDeck(), new Random(99));
