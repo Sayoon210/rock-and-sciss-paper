@@ -226,8 +226,13 @@ public partial class CardView : Control
             && mouseButton.ButtonIndex == MouseButton.Left
             && !mouseButton.Pressed)
         {
-            EndDrag();
+            // Marked handled before the drag is ended, not after: on the host, releasing the
+            // card that completes a round resolves it inside EndDrag, which refreshes the hand
+            // and takes this very node out of the tree. GetViewport() returns null for a node
+            // that is no longer in the tree, so doing this afterwards is a null dereference on
+            // the most ordinary play there is.
             GetViewport().SetInputAsHandled();
+            EndDrag();
         }
     }
 

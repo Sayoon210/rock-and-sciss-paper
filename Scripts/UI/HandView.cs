@@ -74,6 +74,14 @@ public partial class HandView : Control
     /// sliding as it travels.</summary>
     public override void _Process(double delta)
     {
+        // Nothing sensible to lay out against until the containing row has given this node a
+        // width. Skipping is what keeps a card's one-time snap from landing on a position
+        // computed from a zero-width row and then having to slide in from it.
+        if (Size.X <= 0f)
+        {
+            return;
+        }
+
         float weight = 1f - Mathf.Exp(-SETTLE_RATE * (float)delta);
 
         int restingIndex = 0;
@@ -391,12 +399,21 @@ public partial class HandView : Control
     }
 
     /// <summary>Only Play mode drags to submit; the two selection modes pick by click
-    /// instead, so a card must not also start a drag while one of them is active.</summary>
+    /// instead, so a card must not also start a drag while one of them is active.
+    ///
+    /// A card parked on a drop zone is left alone: it has already been handed to the host, and
+    /// switching its dragging back on here would let a submission be picked up again and
+    /// played twice.</summary>
     private void ApplyDragEligibility()
     {
         bool canDrag = _selectionMode == HandSelectionMode.Play;
         foreach (CardView cardView in _slots)
         {
+            if (cardView.DockTarget.HasValue)
+            {
+                continue;
+            }
+
             cardView.CanBeDragged = canDrag;
         }
     }
