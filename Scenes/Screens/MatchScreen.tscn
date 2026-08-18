@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://Scripts/UI/MatchScreenUI.cs" id="1_matchscreenui"]
 [ext_resource type="PackedScene" path="res://Scenes/Match/HandView.tscn" id="2_handview"]
 [ext_resource type="PackedScene" path="res://Scenes/Match/CardView.tscn" id="3_cardview"]
+[ext_resource type="PackedScene" path="res://Scenes/Match/CardDropZone.tscn" id="4_carddropzone"]
 
 [node name="MatchScreen" type="Control"]
 layout_mode = 3
@@ -92,8 +93,25 @@ vertical_alignment = 1
 layout_mode = 2
 theme_override_constants/separation = 4
 
-[node name="MyPlayedCardView" parent="Rows/MiddleRow/Field/MyPlayedArea" instance=ExtResource("3_cardview")]
+[node name="MySubmitSlot" type="Control" parent="Rows/MiddleRow/Field/MyPlayedArea"]
+custom_minimum_size = Vector2(200, 280)
 layout_mode = 2
+
+[node name="MyPlayedCardView" parent="Rows/MiddleRow/Field/MyPlayedArea/MySubmitSlot" instance=ExtResource("3_cardview")]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MySubmitDropZone" parent="Rows/MiddleRow/Field/MyPlayedArea/MySubmitSlot" instance=ExtResource("4_carddropzone")]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="MyActionLabel" type="Label" parent="Rows/MiddleRow/Field/MyPlayedArea"]
 layout_mode = 2
@@ -103,8 +121,17 @@ horizontal_alignment = 1
 layout_mode = 2
 theme_override_constants/separation = 4
 
-[node name="OpponentPlayedCardView" parent="Rows/MiddleRow/Field/OpponentPlayedArea" instance=ExtResource("3_cardview")]
+[node name="OpponentSlot" type="Control" parent="Rows/MiddleRow/Field/OpponentPlayedArea"]
+custom_minimum_size = Vector2(200, 280)
 layout_mode = 2
+
+[node name="OpponentPlayedCardView" parent="Rows/MiddleRow/Field/OpponentPlayedArea/OpponentSlot" instance=ExtResource("3_cardview")]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="OpponentActionLabel" type="Label" parent="Rows/MiddleRow/Field/OpponentPlayedArea"]
 layout_mode = 2

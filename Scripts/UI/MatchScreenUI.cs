@@ -24,6 +24,12 @@ public partial class MatchScreenUI : Control
 
     private const int SCORE_PIP_SIZE = 18;
 
+    /// <summary>How long the revealed cards stay on the field after a round resolves before
+    /// the field is emptied for the next one. It is a delay rather than an immediate clear
+    /// because a round with no choice in it reveals and resolves in the same frame — clearing
+    /// straight away on RoundResolved would mean the reveal is never actually seen.</summary>
+    private const double FIELD_CLEAR_DELAY_SECONDS = 1.5;
+
     private Label _opponentDeckLabel = null!;
     private HandView _opponentHandView = null!;
     private Label _myScoreLabel = null!;
@@ -32,6 +38,7 @@ public partial class MatchScreenUI : Control
     private HBoxContainer _opponentScorePipRow = null!;
     private Label _roundLabel = null!;
     private CardView _myPlayedCardView = null!;
+    private CardDropZone _mySubmitDropZone = null!;
     private Label _myActionLabel = null!;
     private CardView _opponentPlayedCardView = null!;
     private Label _opponentActionLabel = null!;
@@ -46,6 +53,17 @@ public partial class MatchScreenUI : Control
     private Button _rematchButton = null!;
     private Label _rematchStatusLabel = null!;
     private Button _returnToTitleButton = null!;
+    private Timer _fieldClearTimer = null!;
+
+    // True while the field is deliberately empty, between one round's cards being cleared and
+    // the next round's reveal. RefreshField honours it, so an unrelated refresh (a hand
+    // change, a score update) cannot put the old round's cards back on screen.
+    private bool _fieldCleared = true;
+
+    // The card currently sitting on the submit zone, while the host has not answered yet.
+    // Kept only so a rejected submission can be sent back to the hand — nothing else moves
+    // it off the zone.
+    private CardView? _dockedCardView;
 
     private readonly List<ColorRect> _myScorePips = new List<ColorRect>();
     private readonly List<ColorRect> _opponentScorePips = new List<ColorRect>();
@@ -63,9 +81,10 @@ public partial class MatchScreenUI : Control
         _opponentScoreLabel = GetNode<Label>("Rows/MiddleRow/ScoreBoard/OpponentScoreLabel");
         _opponentScorePipRow = GetNode<HBoxContainer>("Rows/MiddleRow/ScoreBoard/OpponentScorePipRow");
         _roundLabel = GetNode<Label>("Rows/MiddleRow/Field/RoundLabel");
-        _myPlayedCardView = GetNode<CardView>("Rows/MiddleRow/Field/MyPlayedArea/MyPlayedCardView");
+        _myPlayedCardView = GetNode<CardView>("Rows/MiddleRow/Field/MyPlayedArea/MySubmitSlot/MyPlayedCardView");
+        _mySubmitDropZone = GetNode<CardDropZone>("Rows/MiddleRow/Field/MyPlayedArea/MySubmitSlot/MySubmitDropZone");
         _myActionLabel = GetNode<Label>("Rows/MiddleRow/Field/MyPlayedArea/MyActionLabel");
-        _opponentPlayedCardView = GetNode<CardView>("Rows/MiddleRow/Field/OpponentPlayedArea/OpponentPlayedCardView");
+        _opponentPlayedCardView = GetNode<CardView>("Rows/MiddleRow/Field/OpponentPlayedArea/OpponentSlot/OpponentPlayedCardView");
         _opponentActionLabel = GetNode<Label>("Rows/MiddleRow/Field/OpponentPlayedArea/OpponentActionLabel");
         _outcomeLabel = GetNode<Label>("Rows/MiddleRow/Field/OutcomeLabel");
         _promptLabel = GetNode<Label>("Rows/PromptStrip/PromptRow/PromptLabel");
@@ -78,6 +97,11 @@ public partial class MatchScreenUI : Control
         _rematchButton = GetNode<Button>("MatchEndOverlay/Center/Box/RematchButton");
         _rematchStatusLabel = GetNode<Label>("MatchEndOverlay/Center/Box/RematchStatusLabel");
         _returnToTitleButton = GetNode<Button>("MatchEndOverlay/Center/Box/ReturnToTitleButton");
+        _fieldClearTimer = new Timer();
+        _fieldClearTimer.OneShot = true;
+        _fieldClearTimer.WaitTime = FIELD_CLEAR_DELAY_SECONDS;
+        _fieldClearTimer.Timeout += OnFieldClearTimeout;
+        AddChild(_fieldClearTimer);
 
         BuildScorePips(_myScorePipRow, _myScorePips);
         BuildScorePips(_opponentScorePipRow, _opponentScorePips);
@@ -85,6 +109,7 @@ public partial class MatchScreenUI : Control
 
         _confirmButton.Pressed += OnConfirmSwapPressed;
         _myHandView.SelectionChanged += OnHandSelectionChanged;
+        _mySubmitDropZone.CardDropped += OnCardDroppedForSubmission;
         _rematchButton.Pressed += OnRematchPressed;
         _returnToTitleButton.Pressed += OnReturnToTitlePressed;
 
@@ -141,6 +166,11 @@ public partial class MatchScreenUI : Control
         // Fires on a rematch too (HostStartsMatch -> MatchStartedRpc on the client), so the
         // overlay from the previous match's end has to be explicitly closed here.
         _matchEndOverlay.Visible = false;
+
+        _fieldClearTimer.Stop();
+        _fieldCleared = true;
+        _dockedCardView = null;
+
         RefreshEverything();
     }
 
@@ -148,6 +178,14 @@ public partial class MatchScreenUI : Control
     /// after this, so the prompt strip is refreshed again by ChoiceRequired.</summary>
     private void OnRoundRevealed()
     {
+        // The card that was sitting on the submit zone is about to be taken out of the hand
+        // by the refresh that follows this, which frees the node — so let go of it here
+        // rather than keeping a reference that is about to dangle.
+        _dockedCardView = null;
+
+        _fieldClearTimer.Stop();
+        _fieldCleared = false;
+
         RefreshField();
         RefreshPromptStrip();
     }
@@ -160,6 +198,17 @@ public partial class MatchScreenUI : Control
     private void OnRoundResolved()
     {
         RefreshEverything();
+
+        // Started rather than cleared outright: this fires in the same frame as the reveal
+        // for a round nobody had to choose in, so the cards need to stay up long enough to
+        // actually be read.
+        _fieldClearTimer.Start();
+    }
+
+    private void OnFieldClearTimeout()
+    {
+        _fieldCleared = true;
+        RefreshField();
     }
 
     /// <summary>On a client this is what actually shows the new 패 — the public round
@@ -184,12 +233,38 @@ public partial class MatchScreenUI : Control
             return;
         }
 
+        // A rejected card is still sitting on the submit zone; nothing else would take it
+        // off. IsInstanceValid because the node is HandView's to free, and a refresh between
+        // the drop and this rejection may already have done so.
+        if (_dockedCardView != null && IsInstanceValid(_dockedCardView))
+        {
+            _dockedCardView.ReturnToHand();
+        }
+
+        _dockedCardView = null;
         _promptLabel.Text = REJECTION_MESSAGE;
     }
 
     private void OnHandSelectionChanged()
     {
         RefreshPromptStrip();
+    }
+
+    /// <summary>A hand card was dropped on the submit zone. Same request HandView's old
+    /// click-to-play used to send directly — no judgment here either, the host still decides
+    /// whether this card may actually be played (Scripts/CLAUDE.md).</summary>
+    private void OnCardDroppedForSubmission(CardView cardView)
+    {
+        if (!cardView.ShownCard.HasValue)
+        {
+            return;
+        }
+
+        // The card has already parked itself on the zone by this point. Remembered so a
+        // rejection can send it back; an accepted one is let go of at the reveal instead.
+        _dockedCardView = cardView;
+
+        GameState.Instance!.RequestCardPlay(cardView.ShownCard.Value);
     }
 
     private void OnConfirmSwapPressed()
@@ -301,6 +376,23 @@ public partial class MatchScreenUI : Control
         MatchView view = GameState.Instance!.View;
 
         _roundLabel.Text = $"{view.RoundNumber} 라운드";
+
+        // Between rounds the field is empty and stays empty: View still holds the last round's
+        // cards (nothing clears them there), so this is what keeps an unrelated refresh from
+        // putting them back on screen. The slots the cards live in are fixed-size, so hiding
+        // them leaves the layout exactly where it was.
+        if (_fieldCleared)
+        {
+            _myPlayedCardView.Visible = false;
+            _opponentPlayedCardView.Visible = false;
+            _myActionLabel.Text = string.Empty;
+            _opponentActionLabel.Text = string.Empty;
+            _outcomeLabel.Text = string.Empty;
+            return;
+        }
+
+        _myPlayedCardView.Visible = true;
+        _opponentPlayedCardView.Visible = true;
 
         // Null before both sides have submitted: nothing is revealed yet, so the field shows
         // backs rather than an empty gap that would shift the row when a card lands.

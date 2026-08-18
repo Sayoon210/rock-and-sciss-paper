@@ -2,10 +2,8 @@
 
 [ext_resource type="Script" path="res://Scripts/UI/HandView.cs" id="1_handview"]
 
-[node name="HandView" type="HBoxContainer"]
+[node name="HandView" type="Control"]
 anchors_preset = 0
 offset_right = 200.0
 offset_bottom = 280.0
-alignment = 1
-theme_override_constants/separation = -40
 script = ExtResource("1_handview")
