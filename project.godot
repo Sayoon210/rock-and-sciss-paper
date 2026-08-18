@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="RockAndScissPaper"
-run/main_scene="res://Scenes/MatchDebugUI.tscn"
+run/main_scene="res://Scenes/Screens/TitleScreen.tscn"
 config/features=PackedStringArray("4.7", "C#", "Forward Plus")
 config/icon="res://icon.svg"
 
@@ -24,6 +24,8 @@ GameState="*res://Scripts/Autoload/GameState.cs"
 
 [display]
 
+window/size/viewport_width=1600
+window/size/viewport_height=1000
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 

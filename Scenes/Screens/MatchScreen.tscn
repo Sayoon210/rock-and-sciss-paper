@@ -1,0 +1,128 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://Scripts/UI/MatchScreenUI.cs" id="1_matchscreenui"]
+[ext_resource type="PackedScene" path="res://Scenes/Match/HandView.tscn" id="2_handview"]
+[ext_resource type="PackedScene" path="res://Scenes/Match/CardView.tscn" id="3_cardview"]
+
+[node name="MatchScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_matchscreenui")
+
+[node name="Rows" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 12.0
+offset_right = -16.0
+offset_bottom = -12.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 10
+
+[node name="OpponentArea" type="HBoxContainer" parent="Rows"]
+custom_minimum_size = Vector2(0, 280)
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="OpponentDeckLabel" type="Label" parent="Rows/OpponentArea"]
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "상대 덱"
+vertical_alignment = 1
+
+[node name="OpponentHandView" parent="Rows/OpponentArea" instance=ExtResource("2_handview")]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="MiddleRow" type="HBoxContainer" parent="Rows"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 16
+
+[node name="ScoreBoard" type="VBoxContainer" parent="Rows/MiddleRow"]
+custom_minimum_size = Vector2(320, 0)
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_constants/separation = 8
+
+[node name="ScoreHeadingLabel" type="Label" parent="Rows/MiddleRow/ScoreBoard"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "10선승"
+
+[node name="MyScoreLabel" type="Label" parent="Rows/MiddleRow/ScoreBoard"]
+layout_mode = 2
+text = "나"
+
+[node name="MyScorePipRow" type="HBoxContainer" parent="Rows/MiddleRow/ScoreBoard"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="OpponentScoreLabel" type="Label" parent="Rows/MiddleRow/ScoreBoard"]
+layout_mode = 2
+text = "상대"
+
+[node name="OpponentScorePipRow" type="HBoxContainer" parent="Rows/MiddleRow/ScoreBoard"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Field" type="HBoxContainer" parent="Rows/MiddleRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+alignment = 1
+theme_override_constants/separation = 24
+
+[node name="RoundLabel" type="Label" parent="Rows/MiddleRow/Field"]
+custom_minimum_size = Vector2(180, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "라운드"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="MyPlayedCardView" parent="Rows/MiddleRow/Field" instance=ExtResource("3_cardview")]
+layout_mode = 2
+
+[node name="OpponentPlayedCardView" parent="Rows/MiddleRow/Field" instance=ExtResource("3_cardview")]
+layout_mode = 2
+
+[node name="OutcomeLabel" type="Label" parent="Rows/MiddleRow/Field"]
+custom_minimum_size = Vector2(180, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 40
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PromptStrip" type="PanelContainer" parent="Rows"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+
+[node name="PromptLabel" type="Label" parent="Rows/PromptStrip"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="MyArea" type="HBoxContainer" parent="Rows"]
+custom_minimum_size = Vector2(0, 280)
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="MyDeckLabel" type="Label" parent="Rows/MyArea"]
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "내 덱"
+vertical_alignment = 1
+
+[node name="MyHandView" parent="Rows/MyArea" instance=ExtResource("2_handview")]
+layout_mode = 2
+size_flags_horizontal = 3

@@ -1,0 +1,66 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/UI/ConnectionScreenUI.cs" id="1_connectionscreenui"]
+
+[node name="ConnectionScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_connectionscreenui")
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="VBoxContainer" parent="CenterContainer"]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="HeadingLabel" type="Label" parent="CenterContainer/Panel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 36
+text = "대전 연결"
+horizontal_alignment = 1
+
+[node name="CreateRoomButton" type="Button" parent="CenterContainer/Panel"]
+custom_minimum_size = Vector2(420, 54)
+layout_mode = 2
+text = "방 만들기"
+
+[node name="AddressRow" type="HBoxContainer" parent="CenterContainer/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="AddressLabel" type="Label" parent="CenterContainer/Panel/AddressRow"]
+layout_mode = 2
+text = "주소"
+vertical_alignment = 1
+
+[node name="AddressField" type="LineEdit" parent="CenterContainer/Panel/AddressRow"]
+custom_minimum_size = Vector2(240, 54)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "127.0.0.1"
+
+[node name="JoinButton" type="Button" parent="CenterContainer/Panel/AddressRow"]
+custom_minimum_size = Vector2(120, 54)
+layout_mode = 2
+text = "참가"
+
+[node name="StartMatchButton" type="Button" parent="CenterContainer/Panel"]
+custom_minimum_size = Vector2(420, 54)
+layout_mode = 2
+disabled = true
+text = "매치 시작"
+
+[node name="StatusLabel" type="Label" parent="CenterContainer/Panel"]
+custom_minimum_size = Vector2(420, 32)
+layout_mode = 2
+horizontal_alignment = 1
