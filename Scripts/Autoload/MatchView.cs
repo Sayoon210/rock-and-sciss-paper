@@ -41,6 +41,22 @@ public sealed class MatchView
 
     public RoundOutcome? LastRoundOutcome { get; set; }
 
+    // The card I still have to choose for this round (교체 or 변화), or null when I owe no
+    // choice. Set from the targeted prompt, so it is never populated on the wrong screen.
+    public CardName? CardIMustChooseFor { get; set; }
+
+    /// <summary>Whether the opponent is still picking. Public information — which card they
+    /// played is already revealed, and the rules say plainly which cards need a choice.</summary>
+    public bool OpponentIsChoosing { get; set; }
+
+    // What each side's choice did, for animating it. Counts and flags only: 교체 and 변화
+    // both leave hand size unchanged, so neither is derivable from the counts above, and
+    // neither of these says which cards were involved.
+    public int MySwappedCardCount { get; set; }
+    public int OpponentSwappedCardCount { get; set; }
+    public bool MyTransformApplied { get; set; }
+    public bool OpponentTransformApplied { get; set; }
+
     public int MyScore { get; set; }
     public int OpponentScore { get; set; }
     public int RoundNumber { get; set; }

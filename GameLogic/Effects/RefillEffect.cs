@@ -3,11 +3,16 @@ namespace RockAndScissPaper.GameLogic;
 /// <summary>보충: adds two Dummy cards to the caster's own deck and shuffles.</summary>
 public sealed class RefillEffect : ICardEffect
 {
-    public void Validate(CardPlay play, DeckAndHand self)
+    public bool RequiresChoice
+    {
+        get { return false; }
+    }
+
+    public void Validate(CardChoice? choice, DeckAndHand self)
     {
     }
 
-    public void Apply(CardPlay play, DeckAndHand self, DeckAndHand opponent, Random rng)
+    public void Apply(CardChoice? choice, DeckAndHand self, DeckAndHand opponent, Random rng)
     {
         self.Deck.AddToBottom(CardName.Dummy);
         self.Deck.AddToBottom(CardName.Dummy);

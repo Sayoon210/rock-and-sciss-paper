@@ -5,11 +5,16 @@ namespace RockAndScissPaper.GameLogic;
 /// touches the opponent.</summary>
 public sealed class ResetEffect : ICardEffect
 {
-    public void Validate(CardPlay play, DeckAndHand self)
+    public bool RequiresChoice
+    {
+        get { return false; }
+    }
+
+    public void Validate(CardChoice? choice, DeckAndHand self)
     {
     }
 
-    public void Apply(CardPlay play, DeckAndHand self, DeckAndHand opponent, Random rng)
+    public void Apply(CardChoice? choice, DeckAndHand self, DeckAndHand opponent, Random rng)
     {
         ResetOne(self, rng);
         ResetOne(opponent, rng);

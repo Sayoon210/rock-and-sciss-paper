@@ -40,7 +40,8 @@ Both sides fill `View` differently — the host copies from its session in-proce
 ## Card presentation
 
 - `CardName` is the only card type that crosses from `GameLogic`. Resolve it to a `CardData` through `CardDatabase` at the point of display.
-- Hand order in `GameLogic` is meaningless; the rules never assign a card a slot. Screen-side slot stability is this layer's business — when the player picks a specific card (Transform, Swap), the node they clicked is already known here, so update that node rather than rebuilding the row.
+- Hand order in `GameLogic` is meaningless; the rules never assign a card a slot. Screen-side slot stability is this layer's business — rebuilding the whole row on every change throws away which node the player was looking at.
+- Playing a card is always a single click, 교체 and 변화 included. Their choice is asked for **after** both cards are revealed, through `GameState.RequestChoice`, and only ever on the screen of the player who owes it. A card node therefore does not need to know whether the card it shows needs a choice.
 
 ## Debug tracing into GameLogic
 

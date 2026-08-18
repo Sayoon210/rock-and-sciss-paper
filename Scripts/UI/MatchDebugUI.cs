@@ -45,7 +45,9 @@ public partial class MatchDebugUI : Control
         {
             GameState.Instance.MatchStarted -= OnMatchStarted;
             GameState.Instance.RoundResolved -= OnRoundResolved;
-            GameState.Instance.SubmissionRejected -= OnSubmissionRejected;
+            GameState.Instance.RequestRejected -= OnRequestRejected;
+            GameState.Instance.RoundRevealed -= OnRoundRevealed;
+            GameState.Instance.ChoiceRequired -= OnChoiceRequired;
             GameState.Instance.MatchEnded -= OnMatchEnded;
             GameState.Instance.OpponentLeft -= OnOpponentLeft;
             GameState.Instance.MyHandChanged -= OnMyHandChanged;
@@ -64,7 +66,9 @@ public partial class MatchDebugUI : Control
     {
         GameState.Instance!.MatchStarted += OnMatchStarted;
         GameState.Instance.RoundResolved += OnRoundResolved;
-        GameState.Instance.SubmissionRejected += OnSubmissionRejected;
+        GameState.Instance.RequestRejected += OnRequestRejected;
+        GameState.Instance.RoundRevealed += OnRoundRevealed;
+        GameState.Instance.ChoiceRequired += OnChoiceRequired;
         GameState.Instance.MatchEnded += OnMatchEnded;
         GameState.Instance.OpponentLeft += OnOpponentLeft;
         GameState.Instance.MyHandChanged += OnMyHandChanged;
@@ -148,26 +152,13 @@ public partial class MatchDebugUI : Control
 
     private void OnCardPressed(CardName card)
     {
-        // Transform and Swap can't be sent from a single click — they carry a choice, and
-        // they are the only two plays whose extra RPC payload CardPlayCodec has to encode,
-        // so being able to make that choice here is what puts those branches on the wire
-        // at all.
-        if (card == CardName.Transform)
-        {
-            ShowTransformChoice();
-            return;
-        }
-
-        if (card == CardName.Swap)
-        {
-            ShowSwapChoice();
-            return;
-        }
-
+        // Every card is a single click now, 교체 and 변화 included — their choice is asked
+        // for after the reveal, by ChoiceRequired, not gathered before submitting.
+        //
         // No judgment here — the harness sends the intent and lets the host rule on it
         // (Scripts/CLAUDE.md: "a node that receives input does not judge it").
         Log($"-> requesting {card}");
-        GameState.Instance!.RequestCardPlay(CardPlay.WithoutChoice(card));
+        GameState.Instance!.RequestCardPlay(card);
     }
 
     /// <summary>Neither picker filters by what the rules allow. The harness holds no rule
@@ -211,15 +202,15 @@ public partial class MatchDebugUI : Control
 
             var from = (CardName)fromPicker.GetItemId(fromPicker.Selected);
             var into = (CardName)intoPicker.GetItemId(intoPicker.Selected);
-            Log($"-> requesting Transform {from} -> {into}");
-            GameState.Instance!.RequestCardPlay(CardPlay.Transforming(from, into));
+            Log($"-> choosing Transform {from} -> {into}");
+            GameState.Instance!.RequestChoice(CardChoice.Transforming(from, into));
             ClearChoiceRow();
         });
     }
 
-    /// <summary>Lists the whole hand, Swap card included — returning the played Swap is
-    /// exactly the play the host now rejects, and being able to send it is how that stays
-    /// checkable from outside the test suite.</summary>
+    /// <summary>Lists the whole hand as the host offered it. The played 교체 card is no
+    /// longer in that hand at all, which is the point — the old "do not return the card you
+    /// just played" special case has nothing left to guard.</summary>
     private void ShowSwapChoice()
     {
         ClearChoiceRow();
@@ -253,8 +244,8 @@ public partial class MatchDebugUI : Control
                 }
             }
 
-            Log($"-> requesting Swap, returning [{string.Join(", ", chosen)}]");
-            GameState.Instance!.RequestCardPlay(CardPlay.Swapping(chosen));
+            Log($"-> choosing Swap, returning [{string.Join(", ", chosen)}]");
+            GameState.Instance!.RequestChoice(CardChoice.Swapping(chosen));
             ClearChoiceRow();
         });
     }
@@ -305,9 +296,37 @@ public partial class MatchDebugUI : Control
         RefreshDisplay();
     }
 
-    private void OnSubmissionRejected(string reason)
+    private void OnRequestRejected(string reason)
     {
-        Log($"submission rejected: {reason}");
+        Log($"rejected: {reason}");
+    }
+
+    /// <summary>Both cards are public now. On the side that owes a choice this arrives
+    /// just before the prompt, so the player sees what they are choosing against.</summary>
+    private void OnRoundRevealed()
+    {
+        MatchView view = GameState.Instance!.View;
+        Log($"revealed — me {view.MyCard} vs opponent {view.OpponentCard}");
+        RefreshStatus();
+    }
+
+    /// <summary>The host is asking me to choose. Nothing here decides what is legal; the
+    /// pickers offer everything and let the host rule on it.</summary>
+    private void OnChoiceRequired()
+    {
+        CardName? card = GameState.Instance!.View.CardIMustChooseFor;
+        if (card == CardName.Transform)
+        {
+            Log("choose: Transform");
+            ShowTransformChoice();
+            return;
+        }
+
+        if (card == CardName.Swap)
+        {
+            Log("choose: Swap");
+            ShowSwapChoice();
+        }
     }
 
     private void OnMatchEnded(bool didIWin)
@@ -371,12 +390,14 @@ public partial class MatchDebugUI : Control
         _statusLabel.Text =
             $"[{DescribeRole()}]  round {view.RoundNumber}   score {view.MyScore}-{view.OpponentScore}\n"
             + $"my deck {view.MyDeckCount}   opponent deck {view.OpponentDeckCount}   opponent hand {view.OpponentHandCount}\n"
-            + $"last round: {DescribeLastRound(view)}";
+            + $"last round: {DescribeLastRound(view)}\n"
+            + $"{DescribeChoiceState(view)}";
     }
 
     private void RefreshHand()
     {
-        // Any open Transform/Swap picker names cards from the hand that just changed.
+        // A picker names cards from a specific hand, and this rebuild means that hand is
+        // gone. The prompt that opened it will have been answered or timed out.
         ClearChoiceRow();
 
         foreach (Node child in _handRow.GetChildren())
@@ -411,6 +432,22 @@ public partial class MatchDebugUI : Control
         }
 
         return "client";
+    }
+
+    private static string DescribeChoiceState(MatchView view)
+    {
+        if (view.CardIMustChooseFor != null)
+        {
+            return $"** waiting on MY choice for {view.CardIMustChooseFor} **";
+        }
+
+        if (view.OpponentIsChoosing)
+        {
+            return "waiting for the opponent to choose...";
+        }
+
+        return $"swapped: me {view.MySwappedCardCount} / opponent {view.OpponentSwappedCardCount}"
+            + $"   transformed: me {view.MyTransformApplied} / opponent {view.OpponentTransformApplied}";
     }
 
     private static string DescribeLastRound(MatchView view)

@@ -14,7 +14,7 @@ public class ResetEffectTests
             new Deck(new[] { CardName.Rock }),
             new Hand(Array.Empty<CardName>()));
 
-        new ResetEffect().Apply(CardPlay.WithoutChoice(CardName.Rock), self, opponent, new Random(1));
+        new ResetEffect().Apply(null, self, opponent, new Random(1));
 
         Assert.Equal(2, self.Hand.Cards.Count);
         Assert.Empty(opponent.Hand.Cards);
@@ -30,7 +30,7 @@ public class ResetEffectTests
             new Deck(new[] { CardName.Scissors, CardName.Dummy }),
             new Hand(new[] { CardName.Joker, CardName.Draw }));
 
-        new ResetEffect().Apply(CardPlay.WithoutChoice(CardName.Rock), self, opponent, new Random(1));
+        new ResetEffect().Apply(null, self, opponent, new Random(1));
 
         Assert.Equal(3, self.Deck.Count + self.Hand.Cards.Count);
         Assert.Equal(4, opponent.Deck.Count + opponent.Hand.Cards.Count);

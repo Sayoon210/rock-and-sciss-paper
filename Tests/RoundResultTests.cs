@@ -16,7 +16,11 @@ public class RoundResultTests
             player1Hand: new[] { CardName.Paper },
             player2Hand: new[] { CardName.Dummy, CardName.Joker },
             player1DeckCount: 12,
-            player2DeckCount: 11);
+            player2DeckCount: 11,
+            player1SwappedCardCount: 2,
+            player2SwappedCardCount: 0,
+            player1TransformApplied: false,
+            player2TransformApplied: true);
 
         Assert.Equal(CardName.Rock, result.Player1Card);
         Assert.Equal(CardName.Scissors, result.Player2Card);
@@ -27,6 +31,10 @@ public class RoundResultTests
         Assert.Equal(new[] { CardName.Dummy, CardName.Joker }, result.Player2Hand);
         Assert.Equal(12, result.Player1DeckCount);
         Assert.Equal(11, result.Player2DeckCount);
+        Assert.Equal(2, result.Player1SwappedCardCount);
+        Assert.Equal(0, result.Player2SwappedCardCount);
+        Assert.False(result.Player1TransformApplied);
+        Assert.True(result.Player2TransformApplied);
     }
 
     [Fact]
@@ -41,7 +49,11 @@ public class RoundResultTests
             player1Hand: Array.Empty<CardName>(),
             player2Hand: Array.Empty<CardName>(),
             player1DeckCount: 0,
-            player2DeckCount: 0);
+            player2DeckCount: 0,
+            player1SwappedCardCount: 0,
+            player2SwappedCardCount: 0,
+            player1TransformApplied: false,
+            player2TransformApplied: false);
 
         Assert.Null(result.WinLoss);
     }
@@ -60,7 +72,11 @@ public class RoundResultTests
             player1Hand: hand.Cards,
             player2Hand: Array.Empty<CardName>(),
             player1DeckCount: 1,
-            player2DeckCount: 1);
+            player2DeckCount: 1,
+            player1SwappedCardCount: 0,
+            player2SwappedCardCount: 0,
+            player1TransformApplied: false,
+            player2TransformApplied: false);
 
         hand.Add(CardName.Joker);
 

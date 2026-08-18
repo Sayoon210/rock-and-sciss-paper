@@ -8,12 +8,22 @@ public enum Side
     Player2,
 }
 
+/// <summary>Where a round currently is. A round only sits in AwaitingChoices when 교체 or
+/// 변화 was played and not blocked by a Joker.</summary>
+public enum RoundPhase
+{
+    AwaitingSubmissions,
+    AwaitingChoices,
+}
+
 /// <summary>One match, from the opening mulligan to a player reaching ten wins.
 /// Instantiated on the host only, once both players are known.
 ///
-/// Rounds are simultaneous: each side submits independently, and nothing resolves until
-/// both have. SubmitCard therefore returns null for the first submission of a round and
-/// the RoundResult for the second.
+/// Rounds are simultaneous: each side submits independently, and nothing is revealed until
+/// both have. SubmitCard therefore returns null for the first submission of a round and a
+/// RoundReveal for the second. If that reveal says nobody owes a choice, it also carries
+/// the finished RoundResult; otherwise the round waits in AwaitingChoices for SubmitChoice
+/// or DeclineChoice from every side that owes one.
 ///
 /// Illegal submissions throw. Callers relay client requests, so GameState is expected to
 /// catch and drop them rather than let a malformed or malicious request reach here twice.</summary>
@@ -27,8 +37,9 @@ public sealed class MatchSession
     private readonly Random _rng;
     private readonly Action<string>? _log;
 
-    private CardPlay? _player1SubmittedCard;
-    private CardPlay? _player2SubmittedCard;
+    private CardName? _player1SubmittedCard;
+    private CardName? _player2SubmittedCard;
+    private RoundInProgress? _round;
 
     /// <summary>Takes each player's assembled deck. Deck composition is the caller's job —
     /// CardDatabase lives on the Godot side, so this project never decides what goes in.
@@ -55,6 +66,19 @@ public sealed class MatchSession
     public int Player1Score { get; private set; }
     public int Player2Score { get; private set; }
     public int RoundNumber { get; private set; } = 1;
+
+    public RoundPhase Phase
+    {
+        get
+        {
+            if (_round == null)
+            {
+                return RoundPhase.AwaitingSubmissions;
+            }
+
+            return RoundPhase.AwaitingChoices;
+        }
+    }
 
     /// <summary>The side that reached ten wins, or null while the match is still running.</summary>
     public Side? Winner
@@ -90,13 +114,40 @@ public sealed class MatchSession
         return SubmittedCardOf(side) != null;
     }
 
-    /// <summary>Records one side's play. Returns null while waiting on the other side, and
-    /// the resolved RoundResult once both have submitted.</summary>
-    public RoundResult? SubmitCard(Side side, CardPlay play)
+    public bool IsAwaitingChoiceFrom(Side side)
+    {
+        if (_round == null)
+        {
+            return false;
+        }
+
+        return _round.ChoiceStatusOf(side) == ChoiceStatus.Awaited;
+    }
+
+    /// <summary>The card this side has to choose for, or null when it owes no choice.
+    /// GameState needs it to tell the player what they are choosing about.</summary>
+    public CardName? CardAwaitingChoiceFrom(Side side)
+    {
+        if (!IsAwaitingChoiceFrom(side))
+        {
+            return null;
+        }
+
+        return _round!.CardOf(side);
+    }
+
+    /// <summary>Records one side's card. Returns null while waiting on the other side, and
+    /// a RoundReveal once both are in.</summary>
+    public RoundReveal? SubmitCard(Side side, CardName card)
     {
         if (Winner != null)
         {
             throw new InvalidOperationException("The match is already over.");
+        }
+
+        if (Phase != RoundPhase.AwaitingSubmissions)
+        {
+            throw new InvalidOperationException("This round is waiting on a choice, not a card.");
         }
 
         if (HasSubmittedCard(side))
@@ -104,48 +155,131 @@ public sealed class MatchSession
             throw new InvalidOperationException($"{side} has already submitted this round.");
         }
 
-        // Validated before it is recorded: a rejected play must leave the round exactly
+        // Validated before it is recorded: a rejected card must leave the round exactly
         // as it was, or the side would be stuck unable to submit again.
-        RoundResolver.ValidatePlay(play, DeckAndHandOf(side));
+        RoundResolver.ValidateSubmission(card, DeckAndHandOf(side));
 
         if (side == Side.Player1)
         {
-            _player1SubmittedCard = play;
+            _player1SubmittedCard = card;
         }
         else
         {
-            _player2SubmittedCard = play;
+            _player2SubmittedCard = card;
         }
 
-        _log?.Invoke($"[submit] round {RoundNumber}: {side} played {play.Card}");
+        _log?.Invoke($"[submit] round {RoundNumber}: {side} played {card}");
 
         if (_player1SubmittedCard == null || _player2SubmittedCard == null)
         {
             return null;
         }
 
-        RoundResult result = RoundResolver.Resolve(
-            _player1SubmittedCard,
-            _player2SubmittedCard,
-            _player1,
-            _player2,
-            _rng);
+        // Read out before anything can finish the round — FinishRoundIfSettled clears both
+        // submitted cards on its way out, so these fields are gone by the time it returns.
+        CardName player1Card = _player1SubmittedCard.Value;
+        CardName player2Card = _player2SubmittedCard.Value;
 
-        AdvanceToNextRound(result);
+        _round = RoundResolver.Reveal(player1Card, player2Card, _player1, _player2, _rng);
 
-        return result;
+        bool player1MustChoose = _round.ChoiceStatusOf(Side.Player1) == ChoiceStatus.Awaited;
+        bool player2MustChoose = _round.ChoiceStatusOf(Side.Player2) == ChoiceStatus.Awaited;
+
+        _log?.Invoke(
+            $"[reveal] round {RoundNumber}: {player1Card} vs {player2Card}"
+            + $" (choices awaited: P1 {player1MustChoose}, P2 {player2MustChoose})");
+
+        RoundResult? result = FinishRoundIfSettled();
+
+        return new RoundReveal(
+            player1Card,
+            player2Card,
+            player1MustChoose,
+            player2MustChoose,
+            result);
     }
 
-    /// <summary>Convenience for the cards that need no choice.</summary>
-    public RoundResult? SubmitCard(Side side, CardName card)
+    /// <summary>Records one side's choice. Returns null until every owed choice is settled
+    /// and the round can finish.</summary>
+    public RoundResult? SubmitChoice(Side side, CardChoice choice)
     {
-        return SubmitCard(side, CardPlay.WithoutChoice(card));
+        if (Winner != null)
+        {
+            throw new InvalidOperationException("The match is already over.");
+        }
+
+        if (_round == null)
+        {
+            throw new InvalidOperationException("No round is waiting on a choice.");
+        }
+
+        if (_round.ChoiceStatusOf(side) != ChoiceStatus.Awaited)
+        {
+            throw new InvalidOperationException($"{side} was not asked to choose this round.");
+        }
+
+        // Validated before it is recorded, for the same reason a card is: a rejected
+        // choice must leave the side still awaited so it can simply try again.
+        RoundResolver.ValidateChoice(_round.CardOf(side), choice, DeckAndHandOf(side));
+        _round.RecordChoice(side, choice);
+
+        _log?.Invoke($"[choice] round {RoundNumber}: {side} chose for {_round.CardOf(side)}");
+
+        return FinishRoundIfSettled();
     }
 
-    /// <summary>Closes out a resolved round: records its score, clears both submitted
-    /// cards, and moves the round counter on. The rules of the round itself belong to
-    /// RoundResolver; this only writes the outcome into the match.</summary>
-    private void AdvanceToNextRound(RoundResult result)
+    /// <summary>Gives up on a side's choice — what a choice timeout calls. The effect
+    /// simply does not run, which for 교체 is indistinguishable from swapping nothing.
+    /// A no-op for a side that owes nothing, so a timer that fires late is harmless.</summary>
+    public RoundResult? DeclineChoice(Side side)
+    {
+        if (!IsAwaitingChoiceFrom(side))
+        {
+            return null;
+        }
+
+        _round!.DeclineChoice(side);
+        _log?.Invoke($"[choice] round {RoundNumber}: {side} declined for {_round.CardOf(side)}");
+
+        return FinishRoundIfSettled();
+    }
+
+    /// <summary>Finishes the round once nobody is still awaited, or returns null.
+    ///
+    /// The finally is the wedge guard: if anything at all throws while the round is being
+    /// finished, the round is still torn down, so both sides can submit again next call.
+    /// An exception here previously left both sides marked as submitted forever, which
+    /// ended the match with no way to tell why.</summary>
+    private RoundResult? FinishRoundIfSettled()
+    {
+        if (_round == null || _round.IsAwaitingAnyChoice)
+        {
+            return null;
+        }
+
+        try
+        {
+            RoundResult result = RoundResolver.Finish(_round, _player1, _player2, _rng);
+            RecordResolvedRound(result);
+            return result;
+        }
+        catch (Exception exception)
+        {
+            _log?.Invoke($"[error]  round {RoundNumber}: resolution failed — {exception.Message}");
+            throw;
+        }
+        finally
+        {
+            _round = null;
+            _player1SubmittedCard = null;
+            _player2SubmittedCard = null;
+        }
+    }
+
+    /// <summary>Closes out a resolved round: records its score and moves the round counter
+    /// on. The rules of the round itself belong to RoundResolver; this only writes the
+    /// outcome into the match.</summary>
+    private void RecordResolvedRound(RoundResult result)
     {
         if (result.WinLoss == WinLossResult.Player1Win)
         {
@@ -172,8 +306,6 @@ public sealed class MatchSession
             _log($"[hands]   P1 {Describe(result.Player1Hand)} (deck {result.Player1DeckCount}) | P2 {Describe(result.Player2Hand)} (deck {result.Player2DeckCount})");
         }
 
-        _player1SubmittedCard = null;
-        _player2SubmittedCard = null;
         RoundNumber++;
 
         if (Winner != null)
@@ -210,7 +342,7 @@ public sealed class MatchSession
         return _player2;
     }
 
-    private CardPlay? SubmittedCardOf(Side side)
+    private CardName? SubmittedCardOf(Side side)
     {
         if (side == Side.Player1)
         {

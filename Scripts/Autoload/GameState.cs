@@ -15,6 +15,10 @@ namespace RockAndScissPaper.Autoload;
 /// authoritative MatchSession on the host and leaves it null on a client — a client that
 /// tried to touch match rules directly fails to compile, not just at runtime.
 ///
+/// A round crosses the network twice now, not once: cards are submitted and revealed, and
+/// if 교체 or 변화 was played the player who played it is prompted to choose before the
+/// round can finish. Only the host ever knows whether a choice is still outstanding.
+///
 /// Reconnection is out of scope for this pass: any disconnect, on either side, ends the
 /// match outright rather than trying to resume it.</summary>
 public partial class GameState : Node
@@ -23,6 +27,13 @@ public partial class GameState : Node
     // plain ints — WinLossResult and Side are both zero-based enums, so -1 is unambiguous.
     private const int NO_WIN_LOSS_RESULT_SENTINEL = -1;
     private const int NO_WINNER_SIDE_SENTINEL = -1;
+
+    /// <summary>How long a player has to answer a choice prompt before the effect is
+    /// skipped. A choice phase blocks the whole match, and by then the player has already
+    /// committed a card and had it revealed, so idling cannot be allowed to freeze the
+    /// game for the opponent. Applies to the host's own choice too — the host is not
+    /// privileged in liveness, and a host who walks away wedges the match just as hard.</summary>
+    private const double CHOICE_TIMEOUT_SECONDS = 30.0;
 
     public static GameState? Instance { get; private set; }
 
@@ -38,19 +49,31 @@ public partial class GameState : Node
     // MatchStartedRpc assigns a side.
     private Side _mySide = Side.Player1;
 
+    // Host only: armed while a choice is outstanding.
+    private Timer? _choiceTimer;
+
     public MatchView View { get; private set; } = new MatchView();
 
     // UI Signals - dont need to distribute side, only my side
     [Signal] public delegate void RoundResolvedEventHandler();
-    [Signal] public delegate void SubmissionRejectedEventHandler(string reason);
+    [Signal] public delegate void RequestRejectedEventHandler(string reason);
     [Signal] public delegate void MatchStartedEventHandler();
     [Signal] public delegate void MatchEndedEventHandler(bool didIWin);
     [Signal] public delegate void OpponentLeftEventHandler();
 
+    /// <summary>Both cards are now public. Fires before any choice prompt, so the screen
+    /// can show what was played before asking the player to pick against it — which is the
+    /// whole reason the choice moved after the reveal.</summary>
+    [Signal] public delegate void RoundRevealedEventHandler();
+
+    /// <summary>I have to choose something before this round can finish. Read
+    /// View.CardIMustChooseFor for which card. Only ever reaches the one player who owes
+    /// the choice.</summary>
+    [Signal] public delegate void ChoiceRequiredEventHandler();
+
     /// <summary>Fires whenever View.MyHand is replaced. Separate from RoundResolved because
-    /// a client's hand arrives in its own targeted RPC *after* the public broadcast — a UI
-    /// that only redrew on RoundResolved would render the previous round's hand and never
-    /// correct it.</summary>
+    /// a client's hand arrives in its own targeted RPC — a UI that only redrew on
+    /// RoundResolved would render the previous round's hand and never correct it.</summary>
     [Signal] public delegate void MyHandChangedEventHandler();
 
     public override void _EnterTree()
@@ -66,6 +89,12 @@ public partial class GameState : Node
             EventBus.Instance.PeerDisconnected += OnPeerDisconnected;
             EventBus.Instance.ServerDisconnected += OnServerDisconnected;
         }
+
+        _choiceTimer = new Timer();
+        _choiceTimer.OneShot = true;
+        _choiceTimer.WaitTime = CHOICE_TIMEOUT_SECONDS;
+        _choiceTimer.Timeout += OnChoiceTimedOut;
+        AddChild(_choiceTimer);
     }
 
     // keep connection, only reset match (session & view)
@@ -73,6 +102,7 @@ public partial class GameState : Node
     {
         _session = null;
         View = new MatchView();
+        StopChoiceTimer();
     }
 
     // reset connection and match
@@ -101,6 +131,7 @@ public partial class GameState : Node
             return;
         }
 
+        ResetMatch();
         _mySide = Side.Player1;
         Side clientSide = _sideByPeerId[clientPeerId.Value];
 
@@ -117,42 +148,50 @@ public partial class GameState : Node
             _session.DeckCountOf(_mySide),
             _session.HandOf(_mySide).Count);
 
-        // Host fills its own View straight from the session it holds.
+        // Host fills its own View straight from the session it holds. Every field is
+        // written before any signal goes out — a handler that does a full redraw must
+        // never see a half-filled View.
         View.MyHand = new List<CardName>(_session.HandOf(_mySide));
-        EmitSignalMyHandChanged();
         View.MyDeckCount = _session.DeckCountOf(_mySide);
         View.OpponentDeckCount = _session.DeckCountOf(clientSide);
         View.OpponentHandCount = _session.HandOf(clientSide).Count;
         View.RoundNumber = _session.RoundNumber;
-        View.MyScore = 0;
-        View.OpponentScore = 0;
-        View.MyCard = null;
-        View.OpponentCard = null;
-        View.MyCardFate = null;
-        View.OpponentCardFate = null;
-        View.LastRoundOutcome = null;
-        View.MatchResult = null;
 
+        EmitSignalMyHandChanged();
         EmitSignalMatchStarted();
     }
 
-    /// <summary>The one entry point for playing a card, identical on both sides. 
+    /// <summary>The one entry point for playing a card, identical on both sides.
     /// On the host it resolves locally;
     /// on a client it becomes an RPC to peer 1.
     /// The caller (a CardController) never branches on host vs. client.</summary>
-    public void RequestCardPlay(CardPlay play)
+    public void RequestCardPlay(CardName card)
     {
         if (Multiplayer.IsServer())
         {
-            HandleSubmission(_mySide, play, null); // handle as local signal
+            HandleSubmission(_mySide, card, null); // handle as local signal
         }
         else
         {
-            CardPlayCodec.EncodedCardPlay encoded = CardPlayCodec.Encode(play);
+            RpcId(1, MethodName.SubmitCardRpc, (int)card);
+        }
+    }
+
+    /// <summary>The one entry point for answering a choice prompt, shaped exactly like
+    /// RequestCardPlay so the UI does not branch on host vs. client here either.</summary>
+    public void RequestChoice(CardChoice choice)
+    {
+        if (Multiplayer.IsServer())
+        {
+            HandleChoice(_mySide, choice, null);
+        }
+        else
+        {
+            CardChoiceCodec.EncodedCardChoice encoded = CardChoiceCodec.Encode(choice);
             RpcId(
                 1,
-                MethodName.SubmitCardRpc,
-                encoded.Card,
+                MethodName.SubmitChoiceRpc,
+                View.RoundNumber,
                 encoded.CardToTransform,
                 encoded.TransformInto,
                 encoded.CardsToReturn);
@@ -196,35 +235,105 @@ public partial class GameState : Node
     /// client must be able to call it; the host is the only one who ever receives it,
     /// since a client only ever calls this via RpcId(1, ...).</summary>
     [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
-    private void SubmitCardRpc(int card, int cardToTransform, int transformInto, int[] cardsToReturn)
+    private void SubmitCardRpc(int card)
     {
         long fromPeerId = Multiplayer.GetRemoteSenderId();
         if (!_sideByPeerId.TryGetValue(fromPeerId, out Side side))
         {
-            RejectSubmission(fromPeerId, "Unknown peer.");
+            RejectRequest(fromPeerId, "Unknown peer.");
             return;
         }
 
-        CardPlay play = CardPlayCodec.Decode(card, cardToTransform, transformInto, cardsToReturn);
-        HandleSubmission(side, play, fromPeerId);
+        HandleSubmission(side, (CardName)card, fromPeerId);
     }
 
-    /// <summary>Host to one peer: that submission was rejected, with a reason.
-    /// Authority-only so a client can never spoof this at another client.</summary>
-    [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
-    private void SubmissionRejectedRpc(string reason)
+    /// <summary>Client to host: "here is my choice." roundNumber stamps which round it was
+    /// meant for, so an answer that arrives after its round already timed out is dropped
+    /// instead of being applied to the next one.</summary>
+    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void SubmitChoiceRpc(int roundNumber, int cardToTransform, int transformInto, int[] cardsToReturn)
     {
-        EmitSignalSubmissionRejected(reason);
+        long fromPeerId = Multiplayer.GetRemoteSenderId();
+        if (!_sideByPeerId.TryGetValue(fromPeerId, out Side side))
+        {
+            RejectRequest(fromPeerId, "Unknown peer.");
+            return;
+        }
+
+        if (_session == null)
+        {
+            RejectRequest(fromPeerId, "No match is running.");
+            return;
+        }
+
+        if (roundNumber != _session.RoundNumber)
+        {
+            // Stale: that round is already over. Silently dropped — telling the client its
+            // choice was rejected would be misleading, since it did nothing wrong.
+            GD.Print($"GameState: dropped a choice for round {roundNumber}, now on {_session.RoundNumber}.");
+            return;
+        }
+
+        CardName? promptedCard = _session.CardAwaitingChoiceFrom(side);
+        if (!promptedCard.HasValue)
+        {
+            RejectRequest(fromPeerId, "You were not asked to choose this round.");
+            return;
+        }
+
+        CardChoice? choice = CardChoiceCodec.Decode(
+            promptedCard.Value, cardToTransform, transformInto, cardsToReturn);
+        if (choice == null)
+        {
+            RejectRequest(fromPeerId, "That choice was incomplete.");
+            return;
+        }
+
+        HandleChoice(side, choice, fromPeerId);
     }
 
-    /// <summary>Host to all: the public part of a resolved round — played cards, fates,
-    /// win/loss, deck counts, and hand *counts* (never contents). Also carries match-end
-    /// info piggybacked on the same message when the match just ended, rather than a
-    /// separate round trip.</summary>
+    /// <summary>Host to one peer: that request was rejected, with a reason. Covers a
+    /// rejected card and a rejected choice alike. Authority-only so a client can never
+    /// spoof this at another client.</summary>
+    [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void RequestRejectedRpc(string reason)
+    {
+        EmitSignalRequestRejected(reason);
+    }
+
+    /// <summary>Host to all: both played cards are now public, and whether each side still
+    /// owes a choice. Sent on every round, including ones that finish immediately, so a
+    /// round always has the same shape on screen. Carries no hidden information — which
+    /// cards need a choice follows from the rules and the revealed cards alone.</summary>
+    [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void RoundRevealedRpc(int player1Card, int player2Card, bool player1IsChoosing, bool player2IsChoosing)
+    {
+        ApplyRevealToView(
+            (CardName)player1Card, (CardName)player2Card, player1IsChoosing, player2IsChoosing);
+        EmitSignalRoundRevealed();
+    }
+
+    /// <summary>Host to one peer: you must choose, and here is the hand to choose from.
+    ///
+    /// This is the one message that would leak an entire hand if it were ever broadcast
+    /// instead of targeted. It carries the recipient's own hand only.</summary>
+    [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void ChoiceRequiredRpc(int card, int[] handToChooseFrom)
+    {
+        View.MyHand = DecodeHand(handToChooseFrom);
+        View.CardIMustChooseFor = (CardName)card;
+
+        EmitSignalMyHandChanged();
+        EmitSignalChoiceRequired();
+    }
+
+    /// <summary>Host to all: the public part of a resolved round — fates, win/loss, deck
+    /// counts, hand *counts* (never contents), and what each side's choice did as a count
+    /// and a flag. The played cards themselves already went out with the reveal. Also
+    /// carries match-end info piggybacked on the same message when the match just ended,
+    /// rather than a separate round trip.</summary>
     [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
     private void RoundResolvedRpc(
-        int player1Card,
-        int player2Card,
         int player1Fate,
         int player2Fate,
         int winLoss,
@@ -232,6 +341,10 @@ public partial class GameState : Node
         int player2DeckCount,
         int player1HandCount,
         int player2HandCount,
+        int player1SwappedCardCount,
+        int player2SwappedCardCount,
+        bool player1TransformApplied,
+        bool player2TransformApplied,
         int player1Score,
         int player2Score,
         int roundNumber,
@@ -250,8 +363,6 @@ public partial class GameState : Node
         }
 
         ApplyRoundResultToView(
-            (CardName)player1Card,
-            (CardName)player2Card,
             (CardFate)player1Fate,
             (CardFate)player2Fate,
             winLossResult,
@@ -259,6 +370,10 @@ public partial class GameState : Node
             player2DeckCount,
             player1HandCount,
             player2HandCount,
+            player1SwappedCardCount,
+            player2SwappedCardCount,
+            player1TransformApplied,
+            player2TransformApplied,
             player1Score,
             player2Score,
             roundNumber,
@@ -285,80 +400,211 @@ public partial class GameState : Node
     [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
     private void MatchStartedRpc(int side, int[] mulliganHand, int myDeckCount, int opponentDeckCount, int opponentHandCount)
     {
+        View = new MatchView();
         _mySide = (Side)side;
+
         View.MyHand = DecodeHand(mulliganHand);
-        EmitSignalMyHandChanged();
         View.MyDeckCount = myDeckCount;
         View.OpponentDeckCount = opponentDeckCount;
         View.OpponentHandCount = opponentHandCount;
         View.RoundNumber = 1;
-        View.MyScore = 0;
-        View.OpponentScore = 0;
-        View.MyCard = null;
-        View.OpponentCard = null;
-        View.MyCardFate = null;
-        View.OpponentCardFate = null;
-        View.LastRoundOutcome = null;
-        View.MatchResult = null;
 
+        EmitSignalMyHandChanged();
         EmitSignalMatchStarted();
     }
 
     // --- Helpers ----------------------------------------------------------------------
 
-    /// <summary>Runs a submission through the session and reacts to the outcome.
+    /// <summary>Runs a submitted card through the session and reacts to the outcome.
     /// remotePeerId is null for the host's own local play (a rejection becomes a local
     /// signal, not an RPC) and non-null for a client's play relayed here by SubmitCardRpc.
     /// MatchSession throws on an illegal or out-of-turn play; that is expected client
     /// behavior to guard against, not a bug, so it is caught here rather than left to
     /// crash the RPC handler.</summary>
-    private void HandleSubmission(Side side, CardPlay play, long? remotePeerId)
+    private void HandleSubmission(Side side, CardName card, long? remotePeerId)
     {
         if (_session == null)
         {
-            RejectSubmission(remotePeerId, "No match is running.");
+            RejectRequest(remotePeerId, "No match is running.");
+            return;
+        }
+
+        RoundReveal? reveal;
+        try
+        {
+            reveal = _session.SubmitCard(side, card);
+        }
+        catch (InvalidOperationException exception)
+        {
+            RejectRequest(remotePeerId, exception.Message);
+            return;
+        }
+        catch (ArgumentException exception)
+        {
+            RejectRequest(remotePeerId, exception.Message);
+            return;
+        }
+
+        if (reveal == null)
+        {
+            // Waiting on the other side's submission — nothing to reveal yet.
+            return;
+        }
+
+        BroadcastReveal(reveal);
+
+        if (reveal.Result != null)
+        {
+            BroadcastRoundResult(reveal.Result);
+            return;
+        }
+
+        PromptChoosers();
+    }
+
+    /// <summary>Runs a choice through the session. A rejected choice deliberately leaves
+    /// the side still awaited, so the player can simply pick again — their hand has not
+    /// changed, so their open picker is still valid.</summary>
+    private void HandleChoice(Side side, CardChoice choice, long? remotePeerId)
+    {
+        if (_session == null)
+        {
+            RejectRequest(remotePeerId, "No match is running.");
             return;
         }
 
         RoundResult? result;
         try
         {
-            result = _session.SubmitCard(side, play);
+            result = _session.SubmitChoice(side, choice);
         }
         catch (InvalidOperationException exception)
         {
-            RejectSubmission(remotePeerId, exception.Message);
+            RejectRequest(remotePeerId, exception.Message);
             return;
         }
         catch (ArgumentException exception)
         {
-            RejectSubmission(remotePeerId, exception.Message);
+            RejectRequest(remotePeerId, exception.Message);
             return;
         }
 
         if (result == null)
         {
-            // Waiting on the other side's submission — nothing to broadcast yet.
+            // The other side is still choosing.
             return;
         }
 
         BroadcastRoundResult(result);
     }
 
-    private void RejectSubmission(long? remotePeerId, string reason)
+    /// <summary>Host only. Gives up on every outstanding choice and lets the round finish.
+    /// Declining is not a penalty — for 교체 it is indistinguishable from swapping nothing,
+    /// and for 변화 there is no neutral pick to make on the player's behalf.</summary>
+    private void OnChoiceTimedOut()
+    {
+        if (_session == null)
+        {
+            return;
+        }
+
+        // Declining Player 1 only finishes the round if Player 2 owed nothing; otherwise
+        // the second call is the one that settles it. Either is a no-op for a side that
+        // was not awaited.
+        RoundResult? result = _session.DeclineChoice(Side.Player1);
+        if (result == null)
+        {
+            result = _session.DeclineChoice(Side.Player2);
+        }
+
+        if (result != null)
+        {
+            BroadcastRoundResult(result);
+        }
+    }
+
+    private void StopChoiceTimer()
+    {
+        if (_choiceTimer != null)
+        {
+            _choiceTimer.Stop();
+        }
+    }
+
+    private void RejectRequest(long? remotePeerId, string reason)
     {
         if (remotePeerId.HasValue)
         {
-            RpcId(remotePeerId.Value, MethodName.SubmissionRejectedRpc, reason);
+            RpcId(remotePeerId.Value, MethodName.RequestRejectedRpc, reason);
         }
         else
         {
-            EmitSignalSubmissionRejected(reason);
+            EmitSignalRequestRejected(reason);
         }
+    }
+
+    private void BroadcastReveal(RoundReveal reveal)
+    {
+        Rpc(
+            MethodName.RoundRevealedRpc,
+            (int)reveal.Player1Card,
+            (int)reveal.Player2Card,
+            reveal.Player1MustChoose,
+            reveal.Player2MustChoose);
+
+        ApplyRevealToView(
+            reveal.Player1Card, reveal.Player2Card, reveal.Player1MustChoose, reveal.Player2MustChoose);
+        EmitSignalRoundRevealed();
+    }
+
+    /// <summary>Host only. Sends each player who owes a choice their own hand to pick from,
+    /// and arms the timeout. Both prompts go out before the timer starts, so neither player
+    /// gets a head start on the other.</summary>
+    private void PromptChoosers()
+    {
+        PromptOneChooser(Side.Player1);
+        PromptOneChooser(Side.Player2);
+
+        if (_choiceTimer != null)
+        {
+            _choiceTimer.Start();
+        }
+    }
+
+    private void PromptOneChooser(Side side)
+    {
+        CardName? card = _session!.CardAwaitingChoiceFrom(side);
+        if (!card.HasValue)
+        {
+            return;
+        }
+
+        if (side == _mySide)
+        {
+            // The host's own prompt never touches the network — same shape as its own
+            // card play resolving in-process.
+            View.CardIMustChooseFor = card.Value;
+            EmitSignalChoiceRequired();
+            return;
+        }
+
+        long? clientPeerId = ClientPeerId();
+        if (!clientPeerId.HasValue)
+        {
+            return;
+        }
+
+        RpcId(
+            clientPeerId.Value,
+            MethodName.ChoiceRequiredRpc,
+            (int)card.Value,
+            EncodeHand(_session.HandOf(side)));
     }
 
     private void BroadcastRoundResult(RoundResult result)
     {
+        StopChoiceTimer();
+
         int winLoss = NO_WIN_LOSS_RESULT_SENTINEL;
         if (result.WinLoss.HasValue)
         {
@@ -374,10 +620,18 @@ public partial class GameState : Node
         int player1HandCount = result.Player1Hand.Count;
         int player2HandCount = result.Player2Hand.Count;
 
+        // The client's hand is private — send it only to that one peer, never broadcast.
+        // Sent before the public result so both sides see MyHandChanged before
+        // RoundResolved; the host fills its own hand in the same order below.
+        long? clientPeerId = ClientPeerId();
+        if (clientPeerId.HasValue)
+        {
+            Side clientSide = _sideByPeerId[clientPeerId.Value];
+            RpcId(clientPeerId.Value, MethodName.PrivateHandRpc, EncodeHand(_session.HandOf(clientSide)));
+        }
+
         Rpc(
             MethodName.RoundResolvedRpc,
-            (int)result.Player1Card,
-            (int)result.Player2Card,
             (int)result.Player1CardFate,
             (int)result.Player2CardFate,
             winLoss,
@@ -385,14 +639,16 @@ public partial class GameState : Node
             result.Player2DeckCount,
             player1HandCount,
             player2HandCount,
+            result.Player1SwappedCardCount,
+            result.Player2SwappedCardCount,
+            result.Player1TransformApplied,
+            result.Player2TransformApplied,
             _session.Player1Score,
             _session.Player2Score,
             _session.RoundNumber,
             winnerSide);
 
         ApplyRoundResultToView(
-            result.Player1Card,
-            result.Player2Card,
             result.Player1CardFate,
             result.Player2CardFate,
             result.WinLoss,
@@ -400,6 +656,10 @@ public partial class GameState : Node
             result.Player2DeckCount,
             player1HandCount,
             player2HandCount,
+            result.Player1SwappedCardCount,
+            result.Player2SwappedCardCount,
+            result.Player1TransformApplied,
+            result.Player2TransformApplied,
             _session.Player1Score,
             _session.Player2Score,
             _session.RoundNumber,
@@ -409,14 +669,6 @@ public partial class GameState : Node
         View.MyHand = new List<CardName>(_session.HandOf(_mySide));
         EmitSignalMyHandChanged();
 
-        // The client's hand is private — send it only to that one peer, never broadcast.
-        long? clientPeerId = ClientPeerId();
-        if (clientPeerId.HasValue)
-        {
-            Side clientSide = _sideByPeerId[clientPeerId.Value];
-            RpcId(clientPeerId.Value, MethodName.PrivateHandRpc, EncodeHand(_session.HandOf(clientSide)));
-        }
-
         EmitSignalRoundResolved();
         if (_session.Winner.HasValue)
         {
@@ -424,13 +676,42 @@ public partial class GameState : Node
         }
     }
 
+    /// <summary>Translates a reveal into me/opponent terms. Clears last round's animation
+    /// facts, since this round has not produced any yet.</summary>
+    private void ApplyRevealToView(
+        CardName player1Card,
+        CardName player2Card,
+        bool player1IsChoosing,
+        bool player2IsChoosing)
+    {
+        if (_mySide == Side.Player1)
+        {
+            View.MyCard = player1Card;
+            View.OpponentCard = player2Card;
+            View.OpponentIsChoosing = player2IsChoosing;
+        }
+        else
+        {
+            View.MyCard = player2Card;
+            View.OpponentCard = player1Card;
+            View.OpponentIsChoosing = player1IsChoosing;
+        }
+
+        View.MyCardFate = null;
+        View.OpponentCardFate = null;
+        View.LastRoundOutcome = null;
+        View.CardIMustChooseFor = null;
+        View.MySwappedCardCount = 0;
+        View.OpponentSwappedCardCount = 0;
+        View.MyTransformApplied = false;
+        View.OpponentTransformApplied = false;
+    }
+
     /// <summary>Fills every View field that is public information, translated from
     /// Player1/Player2 into me/opponent via _mySide. Shared by the host's direct path and
     /// the client's RoundResolvedRpc handler so the translation logic exists exactly once.
     /// Never touches MyHand — hand contents are private and travel separately.</summary>
     private void ApplyRoundResultToView(
-        CardName player1Card,
-        CardName player2Card,
         CardFate player1Fate,
         CardFate player2Fate,
         WinLossResult? winLoss,
@@ -438,6 +719,10 @@ public partial class GameState : Node
         int player2DeckCount,
         int player1HandCount,
         int player2HandCount,
+        int player1SwappedCardCount,
+        int player2SwappedCardCount,
+        bool player1TransformApplied,
+        bool player2TransformApplied,
         int player1Score,
         int player2Score,
         int roundNumber,
@@ -445,31 +730,37 @@ public partial class GameState : Node
     {
         if (_mySide == Side.Player1)
         {
-            View.MyCard = player1Card;
-            View.OpponentCard = player2Card;
             View.MyCardFate = player1Fate;
             View.OpponentCardFate = player2Fate;
             View.MyDeckCount = player1DeckCount;
             View.OpponentDeckCount = player2DeckCount;
             View.OpponentHandCount = player2HandCount;
+            View.MySwappedCardCount = player1SwappedCardCount;
+            View.OpponentSwappedCardCount = player2SwappedCardCount;
+            View.MyTransformApplied = player1TransformApplied;
+            View.OpponentTransformApplied = player2TransformApplied;
             View.MyScore = player1Score;
             View.OpponentScore = player2Score;
         }
         else
         {
-            View.MyCard = player2Card;
-            View.OpponentCard = player1Card;
             View.MyCardFate = player2Fate;
             View.OpponentCardFate = player1Fate;
             View.MyDeckCount = player2DeckCount;
             View.OpponentDeckCount = player1DeckCount;
             View.OpponentHandCount = player1HandCount;
+            View.MySwappedCardCount = player2SwappedCardCount;
+            View.OpponentSwappedCardCount = player1SwappedCardCount;
+            View.MyTransformApplied = player2TransformApplied;
+            View.OpponentTransformApplied = player1TransformApplied;
             View.MyScore = player2Score;
             View.OpponentScore = player1Score;
         }
 
         View.LastRoundOutcome = TranslateOutcome(winLoss, _mySide);
         View.RoundNumber = roundNumber;
+        View.CardIMustChooseFor = null;
+        View.OpponentIsChoosing = false;
 
         if (winner.HasValue)
         {

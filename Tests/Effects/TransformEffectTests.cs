@@ -16,7 +16,7 @@ public class TransformEffectTests
         DeckAndHand opponent = HandOf(CardName.Rock);
 
         new TransformEffect().Apply(
-            CardPlay.Transforming(CardName.Rock, CardName.Paper), self, opponent, new Random(1));
+            CardChoice.Transforming(CardName.Rock, CardName.Paper), self, opponent, new Random(1));
 
         Assert.DoesNotContain(CardName.Rock, self.Hand.Cards);
         Assert.Contains(CardName.Paper, self.Hand.Cards);
@@ -30,7 +30,7 @@ public class TransformEffectTests
         DeckAndHand opponent = HandOf(CardName.Rock);
 
         new TransformEffect().Apply(
-            CardPlay.Transforming(CardName.Rock, CardName.Dummy), self, opponent, new Random(1));
+            CardChoice.Transforming(CardName.Rock, CardName.Dummy), self, opponent, new Random(1));
 
         Assert.Equal(new[] { CardName.Rock, CardName.Dummy }, self.Hand.Cards);
     }
@@ -43,7 +43,7 @@ public class TransformEffectTests
     {
         DeckAndHand self = HandOf(from);
 
-        new TransformEffect().Validate(CardPlay.Transforming(from, into), self);
+        new TransformEffect().Validate(CardChoice.Transforming(from, into), self);
     }
 
     [Theory]
@@ -56,7 +56,7 @@ public class TransformEffectTests
         DeckAndHand self = HandOf(from);
 
         Assert.Throws<ArgumentException>(
-            () => new TransformEffect().Validate(CardPlay.Transforming(from, into), self));
+            () => new TransformEffect().Validate(CardChoice.Transforming(from, into), self));
     }
 
     [Fact]
@@ -66,15 +66,25 @@ public class TransformEffectTests
 
         Assert.Throws<ArgumentException>(
             () => new TransformEffect().Validate(
-                CardPlay.Transforming(CardName.Scissors, CardName.Paper), self));
+                CardChoice.Transforming(CardName.Scissors, CardName.Paper), self));
     }
 
     [Fact]
-    public void Validate_rejects_a_play_that_carries_no_choice()
+    public void Validate_rejects_a_missing_choice()
     {
         DeckAndHand self = HandOf(CardName.Rock);
 
+        Assert.Throws<ArgumentException>(() => new TransformEffect().Validate(null, self));
+    }
+
+    [Fact]
+    public void Validate_rejects_a_choice_shaped_for_a_different_card()
+    {
+        // A client prompted for 변화 that answers with a 교체-shaped payload gets nothing
+        // read out of it, so validation must reject rather than silently transform null.
+        DeckAndHand self = HandOf(CardName.Rock);
+
         Assert.Throws<ArgumentException>(
-            () => new TransformEffect().Validate(CardPlay.WithoutChoice(CardName.Transform), self));
+            () => new TransformEffect().Validate(CardChoice.Swapping(new[] { CardName.Rock }), self));
     }
 }
