@@ -232,6 +232,7 @@ public partial class MatchScreenUI : Control
         // for 매치 시작 — a client has nothing to press here but a status line.
         bool isHost = Multiplayer.IsServer();
         _rematchButton.Visible = isHost;
+        _rematchButton.Disabled = false;
         _rematchStatusLabel.Visible = !isHost;
         _rematchStatusLabel.Text = "호스트가 재대결을 시작하길 기다리는 중...";
 
@@ -250,6 +251,11 @@ public partial class MatchScreenUI : Control
 
     private void OnRematchPressed()
     {
+        // Disabled immediately so a second click before OnMatchStarted hides the overlay
+        // can't fire a second HostStartsMatch() into an already-resetting match. Re-enabled
+        // in OnMatchEnded, the only other place this button becomes visible again.
+        _rematchButton.Disabled = true;
+
         // Same call ConnectionScreenUI's host-only 매치 시작 button makes; it already resets
         // the match (GameState.ResetMatch) before rebuilding it, so no separate reset here.
         GameState.Instance!.HostStartsMatch();
