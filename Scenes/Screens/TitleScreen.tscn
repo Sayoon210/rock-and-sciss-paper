@@ -1,8 +1,8 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3 uid="uid://tardm6qunsle"]
 
-[ext_resource type="Script" path="res://Scripts/UI/TitleScreenUI.cs" id="1_titlescreenui"]
+[ext_resource type="Script" uid="uid://mspey8mcamqv" path="res://Scripts/UI/TitleScreenUI.cs" id="1_titlescreenui"]
 
-[node name="TitleScreen" type="Control"]
+[node name="TitleScreen" type="Control" unique_id=2122772876]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -11,7 +11,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_titlescreenui")
 
-[node name="CenterContainer" type="CenterContainer" parent="."]
+[node name="CenterContainer" type="CenterContainer" parent="." unique_id=205313980]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -19,27 +19,27 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Buttons" type="VBoxContainer" parent="CenterContainer"]
+[node name="Buttons" type="VBoxContainer" parent="CenterContainer" unique_id=841002249]
 layout_mode = 2
 theme_override_constants/separation = 18
 
-[node name="TitleLabel" type="Label" parent="CenterContainer/Buttons"]
+[node name="TitleLabel" type="Label" parent="CenterContainer/Buttons" unique_id=614764356]
 layout_mode = 2
 theme_override_font_sizes/font_size = 56
 text = "RockAndScissPaper"
 horizontal_alignment = 1
 
-[node name="MatchButton" type="Button" parent="CenterContainer/Buttons"]
+[node name="MatchButton" type="Button" parent="CenterContainer/Buttons" unique_id=1116291792]
 custom_minimum_size = Vector2(300, 60)
 layout_mode = 2
 text = "대전"
 
-[node name="QuitButton" type="Button" parent="CenterContainer/Buttons"]
+[node name="QuitButton" type="Button" parent="CenterContainer/Buttons" unique_id=331504956]
 custom_minimum_size = Vector2(300, 60)
 layout_mode = 2
 text = "종료"
 
-[node name="DebugHarnessButton" type="Button" parent="CenterContainer/Buttons"]
+[node name="DebugHarnessButton" type="Button" parent="CenterContainer/Buttons" unique_id=1518153499]
 custom_minimum_size = Vector2(300, 40)
 layout_mode = 2
 text = "디버그 하네스"
