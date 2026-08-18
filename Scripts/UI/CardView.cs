@@ -29,6 +29,7 @@ public partial class CardView : Control
     private ColorRect _faceDownBack = null!;
     private Panel _typeBorder = null!;
     private Label _nameLabel = null!;
+    private Panel _selectionOverlay = null!;
     private StyleBoxFlat _borderStyle = null!;
 
     /// <summary>The card this view is currently showing face up, or null while it is face
@@ -43,6 +44,7 @@ public partial class CardView : Control
         _faceDownBack = GetNode<ColorRect>("FaceDownBack");
         _typeBorder = GetNode<Panel>("TypeBorder");
         _nameLabel = GetNode<Label>("NameLabel");
+        _selectionOverlay = GetNode<Panel>("SelectionOverlay");
 
         // The scene's border stylebox is one resource shared by every instance of the scene,
         // so tinting it in place would repaint every card on screen. Each view takes a copy.
@@ -91,6 +93,12 @@ public partial class CardView : Control
         _nameLabel.Text = displayName;
         _nameLabel.Visible = true;
 
+        // A reused node (Scripts/CLAUDE.md's slot-stability rule) might still be showing a
+        // selection highlight from a choice made before this round's hand arrived; the owner
+        // clears selection state explicitly on a mode change, but this is a second guard for
+        // a node being handed a card for the first time.
+        _selectionOverlay.Visible = false;
+
         TooltipText = description;
         ShownCard = card;
     }
@@ -106,9 +114,17 @@ public partial class CardView : Control
         // The border node stays visible, but neutral. Tinting it by 카드 종류 here would
         // publish exactly the information the back exists to hide.
         _borderStyle.BorderColor = new Color(0.45f, 0.47f, 0.55f);
+        _selectionOverlay.Visible = false;
 
         TooltipText = string.Empty;
         ShownCard = null;
+    }
+
+    /// <summary>Whether this card is highlighted as picked for a 교체/변화 choice. Purely
+    /// visual — the node still does not know or care what "selected" is being used for.</summary>
+    public void SetSelected(bool selected)
+    {
+        _selectionOverlay.Visible = selected;
     }
 
     /// <summary>Reports the click and judges nothing — whether this card may be played is

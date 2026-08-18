@@ -582,8 +582,13 @@ public partial class GameState : Node
         if (side == _mySide)
         {
             // The host's own prompt never touches the network — same shape as its own
-            // card play resolving in-process.
+            // card play resolving in-process. MyHand is refreshed here for the same reason
+            // ChoiceRequiredRpc refreshes it for a client: the played card is already gone
+            // from the real hand (and 리셋 may have replaced it outright), and without this
+            // the host would be offered a picker still showing the card it just played.
+            View.MyHand = new List<CardName>(_session.HandOf(side));
             View.CardIMustChooseFor = card.Value;
+            EmitSignalMyHandChanged();
             EmitSignalChoiceRequired();
             return;
         }
