@@ -30,6 +30,11 @@ public partial class MatchScreenUI : Control
     /// straight away on RoundResolved would mean the reveal is never actually seen.</summary>
     private const double FIELD_CLEAR_DELAY_SECONDS = 1.5;
 
+    /// <summary>How much of the choice phase the gauge spends reddening. It stays calm for
+    /// the rest: a bar that is always partly red says nothing, and a colour that only means
+    /// something once it starts moving is the whole point of a warning.</summary>
+    private const double CHOICE_TIMER_URGENT_FRACTION = 0.4;
+
     private DeckView _opponentDeckView = null!;
     private HandView _opponentHandView = null!;
     private Label _myScoreLabel = null!;
@@ -48,6 +53,7 @@ public partial class MatchScreenUI : Control
     private Label _promptLabel = null!;
     private Button _confirmButton = null!;
     private ProgressBar _choiceTimerBar = null!;
+    private StyleBoxFlat _choiceTimerFillStyle = null!;
     private HBoxContainer _targetPaletteRow = null!;
     private DeckView _myDeckView = null!;
     private HandView _myHandView = null!;
@@ -103,6 +109,11 @@ public partial class MatchScreenUI : Control
         _confirmButton = GetNode<Button>("Rows/PromptStrip/PromptRow/ConfirmButton");
         _choiceTimerBar = GetNode<ProgressBar>("Rows/PromptStrip/PromptRow/ChoiceTimerBar");
         _choiceTimerBar.MaxValue = GameState.CHOICE_TIMEOUT_SECONDS;
+
+        // Mutated in place rather than duplicated first: this stylebox belongs to the one
+        // ChoiceTimerBar in the one MatchScreen, unlike CardView's border, which has to take
+        // a copy because its scene is instanced once per card on screen.
+        _choiceTimerFillStyle = (StyleBoxFlat)_choiceTimerBar.GetThemeStylebox("fill");
         _targetPaletteRow = GetNode<HBoxContainer>("Rows/PromptStrip/PromptRow/TargetPaletteRow");
         _myDeckView = GetNode<DeckView>("Rows/MyArea/MyDeckView");
         _myHandView = GetNode<HandView>("Rows/MyArea/MyHandView");
@@ -154,6 +165,30 @@ public partial class MatchScreenUI : Control
         }
 
         _choiceTimerBar.Value = _choiceSecondsRemaining;
+        _choiceTimerFillStyle.BgColor = ChoiceTimerColorAt(_choiceSecondsRemaining);
+    }
+
+    /// <summary>The gauge's colour with this much of the phase left: unchanged while there is
+    /// still time, then running to red over the last stretch of it.</summary>
+    private static Color ChoiceTimerColorAt(double secondsRemaining)
+    {
+        double reddeningSeconds = GameState.CHOICE_TIMEOUT_SECONDS * CHOICE_TIMER_URGENT_FRACTION;
+        float urgency = 1f - Mathf.Clamp((float)(secondsRemaining / reddeningSeconds), 0f, 1f);
+
+        // By way of amber rather than in one step: green and red are far enough apart in RGB
+        // that the midpoint of a direct blend is a desaturated olive, which reads as a
+        // rendering fault rather than as a warning. Every point of this ramp is a colour
+        // somebody could have picked on purpose.
+        Color calm = new Color(0.36f, 0.72f, 0.46f);
+        Color warning = new Color(0.95f, 0.76f, 0.28f);
+        Color urgent = new Color(0.90f, 0.26f, 0.26f);
+
+        if (urgency < 0.5f)
+        {
+            return calm.Lerp(warning, urgency * 2f);
+        }
+
+        return warning.Lerp(urgent, (urgency - 0.5f) * 2f);
     }
 
     /// <summary>A freed node still connected to a session-lifetime Autoload signal is a
@@ -602,6 +637,7 @@ public partial class MatchScreenUI : Control
         {
             _choiceSecondsRemaining = GameState.CHOICE_TIMEOUT_SECONDS;
             _choiceTimerBar.Value = _choiceSecondsRemaining;
+            _choiceTimerFillStyle.BgColor = ChoiceTimerColorAt(_choiceSecondsRemaining);
         }
     }
 

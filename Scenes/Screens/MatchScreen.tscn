@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://Scripts/UI/MatchScreenUI.cs" id="1_matchscreenui"]
 [ext_resource type="PackedScene" path="res://Scenes/Match/HandView.tscn" id="2_handview"]
@@ -6,6 +6,20 @@
 [ext_resource type="PackedScene" path="res://Scenes/Match/CardDropZone.tscn" id="4_carddropzone"]
 [ext_resource type="PackedScene" path="res://Scenes/Match/DeckView.tscn" id="5_deckview"]
 [ext_resource type="PackedScene" path="res://Scenes/Match/CardVanishParticles.tscn" id="6_vanishparticles"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_choicetimertrack"]
+bg_color = Color(0.14, 0.15, 0.19, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_choicetimerfill"]
+bg_color = Color(0.36, 0.72, 0.46, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
 
 [node name="MatchScreen" type="Control"]
 layout_mode = 3
@@ -172,6 +186,8 @@ visible = false
 custom_minimum_size = Vector2(260, 26)
 layout_mode = 2
 size_flags_vertical = 4
+theme_override_styles/background = SubResource("StyleBoxFlat_choicetimertrack")
+theme_override_styles/fill = SubResource("StyleBoxFlat_choicetimerfill")
 show_percentage = false
 
 [node name="ConfirmButton" type="Button" parent="Rows/PromptStrip/PromptRow"]
