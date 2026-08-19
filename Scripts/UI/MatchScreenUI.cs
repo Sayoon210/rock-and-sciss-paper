@@ -39,8 +39,10 @@ public partial class MatchScreenUI : Control
     private Label _roundLabel = null!;
     private CardView _myPlayedCardView = null!;
     private CardDropZone _mySubmitDropZone = null!;
+    private CpuParticles2D _myVanishParticles = null!;
     private Label _myActionLabel = null!;
     private CardView _opponentPlayedCardView = null!;
+    private CpuParticles2D _opponentVanishParticles = null!;
     private Label _opponentActionLabel = null!;
     private Label _outcomeLabel = null!;
     private Label _promptLabel = null!;
@@ -83,8 +85,10 @@ public partial class MatchScreenUI : Control
         _roundLabel = GetNode<Label>("Rows/MiddleRow/Field/RoundLabel");
         _myPlayedCardView = GetNode<CardView>("Rows/MiddleRow/Field/MyPlayedArea/MySubmitSlot/MyPlayedCardView");
         _mySubmitDropZone = GetNode<CardDropZone>("Rows/MiddleRow/Field/MyPlayedArea/MySubmitSlot/MySubmitDropZone");
+        _myVanishParticles = GetNode<CpuParticles2D>("Rows/MiddleRow/Field/MyPlayedArea/MySubmitSlot/MyVanishParticles");
         _myActionLabel = GetNode<Label>("Rows/MiddleRow/Field/MyPlayedArea/MyActionLabel");
         _opponentPlayedCardView = GetNode<CardView>("Rows/MiddleRow/Field/OpponentPlayedArea/OpponentSlot/OpponentPlayedCardView");
+        _opponentVanishParticles = GetNode<CpuParticles2D>("Rows/MiddleRow/Field/OpponentPlayedArea/OpponentSlot/OpponentVanishParticles");
         _opponentActionLabel = GetNode<Label>("Rows/MiddleRow/Field/OpponentPlayedArea/OpponentActionLabel");
         _outcomeLabel = GetNode<Label>("Rows/MiddleRow/Field/OutcomeLabel");
         _promptLabel = GetNode<Label>("Rows/PromptStrip/PromptRow/PromptLabel");
@@ -236,42 +240,53 @@ public partial class MatchScreenUI : Control
 
     private void OnFieldClearTimeout()
     {
-        ReturnPlayedCardsToTheirDecks();
+        SendPlayedCardsWhereTheyWent();
 
         _fieldCleared = true;
         RefreshField();
     }
 
-    /// <summary>Sends the round's cards home just as the field is emptied. A 일반카드 goes to
-    /// the bottom of its owner's 덱 (DESIGN.md), so it is shown travelling there rather than
-    /// simply being switched off. A 소멸한 카드 has no deck to go back to and still just
-    /// disappears — that one is waiting on a disintegration effect of its own.
+    /// <summary>Sends the round's cards where they actually went, just as the field is
+    /// emptied. A 일반카드 goes to the bottom of its owner's 덱 and a 특수/조커 소멸s
+    /// (DESIGN.md) — two different endings, so they are shown as two different things rather
+    /// than both being switched off.
     ///
-    /// It reads MyCardFate/OpponentCardFate rather than deciding anything: which cards come
+    /// It reads MyCardFate/OpponentCardFate rather than deciding anything: which cards came
     /// back is the host's answer, already in the View by the time the field clears.</summary>
-    private void ReturnPlayedCardsToTheirDecks()
+    private void SendPlayedCardsWhereTheyWent()
     {
         MatchView view = GameState.Instance!.View;
 
-        AbsorbIfReturnedToDeck(view.MyCard, view.MyCardFate, _myPlayedCardView, _myDeckView);
-        AbsorbIfReturnedToDeck(view.OpponentCard, view.OpponentCardFate, _opponentPlayedCardView, _opponentDeckView);
+        SendPlayedCardHome(view.MyCard, view.MyCardFate, _myPlayedCardView, _myDeckView, _myVanishParticles);
+        SendPlayedCardHome(view.OpponentCard, view.OpponentCardFate, _opponentPlayedCardView, _opponentDeckView, _opponentVanishParticles);
     }
 
-    private static void AbsorbIfReturnedToDeck(CardName? card, CardFate? fate, CardView playedCardView, DeckView deckView)
+    private static void SendPlayedCardHome(
+        CardName? card,
+        CardFate? fate,
+        CardView playedCardView,
+        DeckView deckView,
+        CpuParticles2D vanishParticles)
     {
-        if (!card.HasValue || fate != CardFate.ReturnedToDeckBottom)
+        // Nothing to send anywhere from a field that is not currently showing this card — a
+        // round that ended without one being revealed, or a clear that has already happened.
+        if (!card.HasValue || !playedCardView.Visible)
         {
             return;
         }
 
-        // Nothing to fly out of a field that is not currently showing this card — a round that
-        // ended without one being revealed, or a clear that has already happened.
-        if (!playedCardView.Visible)
+        if (fate == CardFate.ReturnedToDeckBottom)
         {
+            deckView.AbsorbCard(card.Value, playedCardView.GlobalPosition);
             return;
         }
 
-        deckView.AbsorbCard(card.Value, playedCardView.GlobalPosition);
+        if (fate == CardFate.Vanished)
+        {
+            // Restart rather than Emitting = true: the burst is one-shot, and a card can
+            // vanish in the very next round on the same slot.
+            vanishParticles.Restart();
+        }
     }
 
     /// <summary>On a client this is what actually shows the new 패 — the public round

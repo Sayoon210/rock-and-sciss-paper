@@ -1,10 +1,11 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://Scripts/UI/MatchScreenUI.cs" id="1_matchscreenui"]
 [ext_resource type="PackedScene" path="res://Scenes/Match/HandView.tscn" id="2_handview"]
 [ext_resource type="PackedScene" path="res://Scenes/Match/CardView.tscn" id="3_cardview"]
 [ext_resource type="PackedScene" path="res://Scenes/Match/CardDropZone.tscn" id="4_carddropzone"]
 [ext_resource type="PackedScene" path="res://Scenes/Match/DeckView.tscn" id="5_deckview"]
+[ext_resource type="PackedScene" path="res://Scenes/Match/CardVanishParticles.tscn" id="6_vanishparticles"]
 
 [node name="MatchScreen" type="Control"]
 layout_mode = 3
@@ -115,6 +116,9 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
+[node name="MyVanishParticles" parent="Rows/MiddleRow/Field/MyPlayedArea/MySubmitSlot" instance=ExtResource("6_vanishparticles")]
+position = Vector2(100, 140)
+
 [node name="MyActionLabel" type="Label" parent="Rows/MiddleRow/Field/MyPlayedArea"]
 layout_mode = 2
 horizontal_alignment = 1
@@ -134,6 +138,9 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+
+[node name="OpponentVanishParticles" parent="Rows/MiddleRow/Field/OpponentPlayedArea/OpponentSlot" instance=ExtResource("6_vanishparticles")]
+position = Vector2(100, 140)
 
 [node name="OpponentActionLabel" type="Label" parent="Rows/MiddleRow/Field/OpponentPlayedArea"]
 layout_mode = 2
