@@ -76,11 +76,13 @@ public partial class HandView : Control
     private readonly List<CardView> _selectedForSwap = new List<CardView>();
     private CardView? _selectedForTransform;
 
-    // The exact card 변화 was asked about, kept from the moment the choice is sent until the
-    // new 패 comes back. A node and not a CardName: the deck holds three of each 일반카드 and
-    // four 더미, so a 패 nearly always has duplicates, and looking the card up by name again
-    // would find whichever copy sits first in the row instead of the one that was clicked.
+    // The exact cards the outstanding choice was made about, kept from the moment it is sent
+    // until the new 패 comes back. Nodes and not CardNames: the deck holds three of each
+    // 일반카드 and four 더미, so a 패 nearly always has duplicates, and going back to names
+    // cannot tell one copy from another — see RememberSwapSelection and
+    // RememberTransformSource for what each of them would otherwise get wrong.
     private CardView? _cardBeingTransformed;
+    private readonly List<CardView> _cardsBeingSwapped = new List<CardView>();
 
     // Where this row's cards come from and go back to. Null until the owner supplies one, in
     // which case cards appear in and vanish from the row exactly as they did before there was
@@ -91,6 +93,49 @@ public partial class HandView : Control
     {
         _cardViewScene = GD.Load<PackedScene>(CARD_VIEW_SCENE_PATH);
         _cardVanishEffectScene = GD.Load<PackedScene>(CARD_VANISH_EFFECT_SCENE_PATH);
+    }
+
+    /// <summary>Take note of which cards 교체 is putting back, while the selection still
+    /// exists. Without this the row is left to work it out from the 패 that comes back, and it
+    /// cannot: a card put into the deck and an identical one drawn in its place cancel out of
+    /// the name matching in ShowFaceUpHand, so two cards swapped for one repeat and one new
+    /// card look like a single card changing. The player counted two.</summary>
+    public void RememberSwapSelection()
+    {
+        _cardsBeingSwapped.Clear();
+        _cardsBeingSwapped.AddRange(_selectedForSwap);
+    }
+
+    /// <summary>Send the cards 교체 put back on their way to the 덱, before the new 패 is shown.
+    /// A no-op when no 교체 is outstanding, so the owner can call it on every refresh.</summary>
+    public void ReturnRememberedSwapCardsToDeck()
+    {
+        foreach (CardView cardView in _cardsBeingSwapped)
+        {
+            // The row may have been rebuilt from under them while the host was answering.
+            if (!IsInstanceValid(cardView))
+            {
+                continue;
+            }
+
+            int slot = _slots.IndexOf(cardView);
+            if (slot < 0)
+            {
+                continue;
+            }
+
+            RemoveSlot(slot);
+        }
+
+        _cardsBeingSwapped.Clear();
+    }
+
+    /// <summary>Let go of both, for a choice that was turned down and will not be coming back
+    /// as a new 패. Left alone, they would be acted on by whatever refresh came next.</summary>
+    public void ForgetRememberedChoiceCards()
+    {
+        _cardsBeingSwapped.Clear();
+        _cardBeingTransformed = null;
     }
 
     /// <summary>Take note of which card 변화 is being asked about, while the selection that

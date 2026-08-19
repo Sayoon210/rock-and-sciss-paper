@@ -253,6 +253,7 @@ public partial class MatchScreenUI : Control
         _fieldCleared = true;
         _dockedCardView = null;
         _pendingTransformTarget = null;
+        _myHandView.ForgetRememberedChoiceCards();
 
         RefreshEverything();
     }
@@ -401,6 +402,7 @@ public partial class MatchScreenUI : Control
 
         _dockedCardView = null;
         _pendingTransformTarget = null;
+        _myHandView.ForgetRememberedChoiceCards();
         _promptLabel.Text = REJECTION_MESSAGE;
     }
 
@@ -429,6 +431,12 @@ public partial class MatchScreenUI : Control
     private void OnConfirmSwapPressed()
     {
         IReadOnlyList<CardName> chosen = _myHandView.SwapSelection;
+
+        // Noted before the request goes out, and before the selection is cleared below: on the
+        // host RequestChoice resolves the whole round in-process, so the new 패 arrives inside
+        // this call. Same ordering rule as OnConfirmTransformTarget.
+        _myHandView.RememberSwapSelection();
+
         GameState.Instance!.RequestChoice(CardChoice.Swapping(chosen));
 
         // Optimistic: assume the host accepts it. If it rejects instead, OnRequestRejected
@@ -791,6 +799,11 @@ public partial class MatchScreenUI : Control
         MatchView view = GameState.Instance!.View;
 
         _myDeckView.ShowCount(view.MyDeckCount);
+
+        // Both of these run before the new 패 reaches the row, so the row is already settled
+        // when the name matching in ShowFaceUpHand runs. Each is a no-op unless that kind of
+        // choice is outstanding.
+        _myHandView.ReturnRememberedSwapCardsToDeck();
 
         // Played before the new 패 reaches the row, so the row is already holding the
         // transformed card when the name matching in ShowFaceUpHand runs — otherwise 변화
