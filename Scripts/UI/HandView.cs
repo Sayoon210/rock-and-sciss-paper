@@ -55,6 +55,11 @@ public partial class HandView : Control
     /// is the difference between that and cards being dealt.</summary>
     private const float ENTRY_STAGGER_SECONDS = 0.08f;
 
+    /// <summary>Extra wait given to every card entering while cards are still on their way back
+    /// into the deck. 리셋 and 교체 are "the old hand goes in, a new one comes out" — without
+    /// this the two halves overlap and read as one shuffle at the deck instead of a sequence.</summary>
+    private const float ENTRY_DELAY_AFTER_RETURN_SECONDS = 0.35f;
+
     /// <summary>Fires whenever the selection changes in either selection mode, so the owner
     /// can update a count or enable a confirm button without polling every frame.</summary>
     [Signal] public delegate void SelectionChangedEventHandler();
@@ -179,7 +184,13 @@ public partial class HandView : Control
             return 0f;
         }
 
-        return ENTRY_STAGGER_SECONDS * indexAmongDrawnCards;
+        float delay = ENTRY_STAGGER_SECONDS * indexAmongDrawnCards;
+        if (_deckView.IsAbsorbingCards)
+        {
+            delay += ENTRY_DELAY_AFTER_RETURN_SECONDS;
+        }
+
+        return delay;
     }
 
     /// <summary>Where the nth card of a row of `count` sits. Centred, and overlapping by a
@@ -517,6 +528,24 @@ public partial class HandView : Control
         if (_selectedForTransform == cardView)
         {
             _selectedForTransform = null;
+        }
+
+        // A face-up card leaving my hand went back to the deck: 교체 and 리셋 are exactly that,
+        // and 변화 swapping one card for another reads the same way. The three cases that are
+        // not are excluded here — a face-down card is the opponent's, and their hand shrinking
+        // usually means they *played* something rather than returned it; a card parked on a
+        // drop zone was likewise played, and the field's own card view shows it from here on;
+        // and a card still under the cursor is not going anywhere the player did not put it.
+        //
+        // The deck flies a stand-in of its own from where this card is right now, so this node
+        // is still disposed of below exactly as it always was — a card in flight is never a
+        // hand card that merely stopped being laid out.
+        if (_deckView != null
+            && cardView.ShownCard.HasValue
+            && !cardView.DockTarget.HasValue
+            && !cardView.IsDragging)
+        {
+            _deckView.AbsorbCard(cardView.ShownCard.Value, cardView.GlobalPosition);
         }
 
         // Removed as well as freed: QueueFree only takes effect at the end of the frame, so a

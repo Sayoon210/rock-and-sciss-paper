@@ -213,8 +213,42 @@ public partial class MatchScreenUI : Control
 
     private void OnFieldClearTimeout()
     {
+        ReturnPlayedCardsToTheirDecks();
+
         _fieldCleared = true;
         RefreshField();
+    }
+
+    /// <summary>Sends the round's cards home just as the field is emptied. A 일반카드 goes to
+    /// the bottom of its owner's 덱 (DESIGN.md), so it is shown travelling there rather than
+    /// simply being switched off. A 소멸한 카드 has no deck to go back to and still just
+    /// disappears — that one is waiting on a disintegration effect of its own.
+    ///
+    /// It reads MyCardFate/OpponentCardFate rather than deciding anything: which cards come
+    /// back is the host's answer, already in the View by the time the field clears.</summary>
+    private void ReturnPlayedCardsToTheirDecks()
+    {
+        MatchView view = GameState.Instance!.View;
+
+        AbsorbIfReturnedToDeck(view.MyCard, view.MyCardFate, _myPlayedCardView, _myDeckView);
+        AbsorbIfReturnedToDeck(view.OpponentCard, view.OpponentCardFate, _opponentPlayedCardView, _opponentDeckView);
+    }
+
+    private static void AbsorbIfReturnedToDeck(CardName? card, CardFate? fate, CardView playedCardView, DeckView deckView)
+    {
+        if (!card.HasValue || fate != CardFate.ReturnedToDeckBottom)
+        {
+            return;
+        }
+
+        // Nothing to fly out of a field that is not currently showing this card — a round that
+        // ended without one being revealed, or a clear that has already happened.
+        if (!playedCardView.Visible)
+        {
+            return;
+        }
+
+        deckView.AbsorbCard(card.Value, playedCardView.GlobalPosition);
     }
 
     /// <summary>On a client this is what actually shows the new 패 — the public round
