@@ -287,6 +287,35 @@ public partial class HandView : Control
         ApplyDragEligibility();
     }
 
+    /// <summary>Put this whole row back into the deck, whichever way up its cards are.
+    /// 리셋 replaces both 패 outright (DESIGN.md), and that is a change neither row can show
+    /// from the hand that arrives afterwards: the opponent's row is only ever a count, so a
+    /// redraw of the same size leaves it identical, and even my own row would sit still if the
+    /// new hand happened to contain the same cards, since a slot whose card is still there is
+    /// deliberately kept.
+    ///
+    /// Cards the player has hold of, or has already played, are left alone — neither is on its
+    /// way to the deck.</summary>
+    public void ReturnWholeHandToDeck()
+    {
+        if (_deckView == null)
+        {
+            return;
+        }
+
+        for (int slot = _slots.Count - 1; slot >= 0; slot--)
+        {
+            CardView cardView = _slots[slot];
+            if (cardView.IsDragging || cardView.DockTarget.HasValue)
+            {
+                continue;
+            }
+
+            _deckView.AbsorbCard(cardView.ShownCard, cardView.GlobalPosition);
+            DiscardSlot(slot);
+        }
+    }
+
     /// <summary>Show the opponent's 패 as backs. A count is all this side is ever told, and
     /// all it is ever allowed to know.</summary>
     public void ShowFaceDownCards(int count)
@@ -519,16 +548,6 @@ public partial class HandView : Control
     private void RemoveSlot(int slot)
     {
         CardView cardView = _slots[slot];
-        _slots.RemoveAt(slot);
-
-        // A card leaving the row (played, swapped away, or simply not this round's hand any
-        // more) must not linger in either selection set — nothing else will remove it once
-        // the node itself is gone.
-        _selectedForSwap.Remove(cardView);
-        if (_selectedForTransform == cardView)
-        {
-            _selectedForTransform = null;
-        }
 
         // A face-up card leaving my hand went back to the deck: 교체 and 리셋 are exactly that,
         // and 변화 swapping one card for another reads the same way. The three cases that are
@@ -546,6 +565,26 @@ public partial class HandView : Control
             && !cardView.IsDragging)
         {
             _deckView.AbsorbCard(cardView.ShownCard.Value, cardView.GlobalPosition);
+        }
+
+        DiscardSlot(slot);
+    }
+
+    /// <summary>Drop a slot and free the node in it, with no animation of any kind — the
+    /// disposal half of RemoveSlot, shared with ReturnWholeHandToDeck, which decides for
+    /// itself where the card is going first.</summary>
+    private void DiscardSlot(int slot)
+    {
+        CardView cardView = _slots[slot];
+        _slots.RemoveAt(slot);
+
+        // A card leaving the row (played, swapped away, or simply not this round's hand any
+        // more) must not linger in either selection set — nothing else will remove it once
+        // the node itself is gone.
+        _selectedForSwap.Remove(cardView);
+        if (_selectedForTransform == cardView)
+        {
+            _selectedForTransform = null;
         }
 
         // Removed as well as freed: QueueFree only takes effect at the end of the frame, so a

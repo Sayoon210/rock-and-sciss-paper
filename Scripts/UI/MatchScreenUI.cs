@@ -203,12 +203,35 @@ public partial class MatchScreenUI : Control
 
     private void OnRoundResolved()
     {
+        ReturnBothHandsToDecksIfReset();
+
         RefreshEverything();
 
         // Started rather than cleared outright: this fires in the same frame as the reveal
         // for a round nobody had to choose in, so the cards need to stay up long enough to
         // actually be read.
         _fieldClearTimer.Start();
+    }
+
+    /// <summary>리셋 puts both whole 패 back into their own decks, shuffles, and deals the
+    /// same number of cards again (DESIGN.md). The refresh that follows cannot show any of
+    /// that on its own — a redraw of the same size leaves the opponent's row, which is only a
+    /// count, looking untouched — so both rows are emptied into their decks first and the
+    /// refresh deals them out again, which is what actually happened.
+    ///
+    /// Reading the round's cards for this is presentation, not a rule: what 리셋 did is
+    /// already settled and in the View by the time this runs.</summary>
+    private void ReturnBothHandsToDecksIfReset()
+    {
+        MatchView view = GameState.Instance!.View;
+
+        if (view.MyCard != CardName.Reset && view.OpponentCard != CardName.Reset)
+        {
+            return;
+        }
+
+        _myHandView.ReturnWholeHandToDeck();
+        _opponentHandView.ReturnWholeHandToDeck();
     }
 
     private void OnFieldClearTimeout()
