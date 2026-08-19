@@ -27,6 +27,7 @@ public partial class CardView : Control
     private ColorRect _placeholderFill = null!;
     private TextureRect _artView = null!;
     private ColorRect _faceDownBack = null!;
+    private TextureRect _backArtView = null!;
     private Panel _typeBorder = null!;
     private Label _nameLabel = null!;
     private Panel _selectionOverlay = null!;
@@ -97,6 +98,7 @@ public partial class CardView : Control
         _placeholderFill = GetNode<ColorRect>("PlaceholderFill");
         _artView = GetNode<TextureRect>("ArtView");
         _faceDownBack = GetNode<ColorRect>("FaceDownBack");
+        _backArtView = GetNode<TextureRect>("BackArtView");
         _typeBorder = GetNode<Panel>("TypeBorder");
         _nameLabel = GetNode<Label>("NameLabel");
         _selectionOverlay = GetNode<Panel>("SelectionOverlay");
@@ -150,7 +152,11 @@ public partial class CardView : Control
         _artView.Visible = art != null;
 
         _faceDownBack.Visible = false;
+        _backArtView.Visible = false;
 
+        // Back on for a node that was last showing a back: the back art carries a frame of
+        // its own, so the 카드 종류 border is switched off rather than drawn over it.
+        _typeBorder.Visible = true;
         _borderStyle.BorderColor = typeColor;
 
         _nameLabel.Text = displayName;
@@ -171,12 +177,18 @@ public partial class CardView : Control
     public void ShowFaceDown()
     {
         _faceDownBack.Visible = true;
+        _backArtView.Visible = true;
         _artView.Visible = false;
         _nameLabel.Visible = false;
 
-        // The border node stays visible, but neutral. Tinting it by 카드 종류 here would
-        // publish exactly the information the back exists to hide.
-        _borderStyle.BorderColor = new Color(0.45f, 0.47f, 0.55f);
+        // One image for every card in the game, which is the point: the back is what hides
+        // which card this is, so it is set in the scene rather than coming from CardData,
+        // where a card could differ from another by its back. Nothing here is ever tinted by
+        // 카드 종류 either — that would publish exactly what the back exists to hide.
+        //
+        // The border node goes away entirely rather than turning neutral: the art has its own
+        // frame, and a second one drawn over it just looks like a mistake.
+        _typeBorder.Visible = false;
         _selectionOverlay.Visible = false;
 
         TooltipText = string.Empty;
