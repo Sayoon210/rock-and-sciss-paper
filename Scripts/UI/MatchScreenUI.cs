@@ -302,13 +302,14 @@ public partial class MatchScreenUI : Control
     /// count, looking untouched — so both rows are emptied into their decks first and the
     /// refresh deals them out again, which is what actually happened.
     ///
-    /// Reading the round's cards for this is presentation, not a rule: what 리셋 did is
-    /// already settled and in the View by the time this runs.</summary>
+    /// It reads ResetApplied rather than looking for a 리셋 among the played cards: a 조커 in
+    /// the round blocks 리셋 outright (DESIGN.md), and nothing about either 패 changes. Asking
+    /// the cards would replay the whole animation over hands that were never touched.</summary>
     private void ReturnBothHandsToDecksIfReset()
     {
         MatchView view = GameState.Instance!.View;
 
-        if (view.MyCard != CardName.Reset && view.OpponentCard != CardName.Reset)
+        if (!view.ResetApplied)
         {
             return;
         }

@@ -63,6 +63,11 @@ public sealed class MatchView
     public bool MyTransformApplied { get; set; }
     public bool OpponentTransformApplied { get; set; }
 
+    /// <summary>Whether 리셋 replaced both 패 this round. Not "a 리셋 was played": a 조커 in
+    /// the round blocks it and nothing changes. The screen animates off this rather than off
+    /// the played cards, so it cannot get the rule wrong on its own.</summary>
+    public bool ResetApplied { get; set; }
+
     public int MyScore { get; set; }
     public int OpponentScore { get; set; }
     public int RoundNumber { get; set; }

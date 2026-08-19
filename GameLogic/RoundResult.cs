@@ -44,6 +44,11 @@ public sealed class RoundResult
     public bool Player1TransformApplied { get; }
     public bool Player2TransformApplied { get; }
 
+    /// <summary>Whether 리셋 replaced both hands this round. False when none was played and
+    /// false when one was but a 조커 blocked it — which is the whole reason this is carried
+    /// rather than read back off the played cards.</summary>
+    public bool ResetApplied { get; }
+
     public RoundResult(
         CardName player1Card,
         CardName player2Card,
@@ -57,7 +62,8 @@ public sealed class RoundResult
         int player1SwappedCardCount,
         int player2SwappedCardCount,
         bool player1TransformApplied,
-        bool player2TransformApplied)
+        bool player2TransformApplied,
+        bool resetApplied)
     {
         Player1Card = player1Card;
         Player2Card = player2Card;
@@ -76,5 +82,6 @@ public sealed class RoundResult
         Player2SwappedCardCount = player2SwappedCardCount;
         Player1TransformApplied = player1TransformApplied;
         Player2TransformApplied = player2TransformApplied;
+        ResetApplied = resetApplied;
     }
 }

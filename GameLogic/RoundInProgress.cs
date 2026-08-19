@@ -31,6 +31,13 @@ public sealed class RoundInProgress
     private CardChoice? _player1Choice;
     private CardChoice? _player2Choice;
 
+    /// <summary>Whether 리셋 actually ran this round. Not the same as one having been played:
+    /// a 조커 in the round blocks it outright (DESIGN.md), and both hands then stay exactly as
+    /// they were. Recorded rather than left to be worked out from the cards, because "a 리셋
+    /// was played" and "the hands were replaced" are different facts and only this side of the
+    /// code knows which happened.</summary>
+    public bool ResetApplied { get; }
+
     public RoundInProgress(
         CardName player1Card,
         CardName player2Card,
@@ -38,13 +45,15 @@ public sealed class RoundInProgress
         CardFate player2CardFate,
         WinLossResult? winLoss,
         bool player1MustChoose,
-        bool player2MustChoose)
+        bool player2MustChoose,
+        bool resetApplied)
     {
         Player1Card = player1Card;
         Player2Card = player2Card;
         Player1CardFate = player1CardFate;
         Player2CardFate = player2CardFate;
         WinLoss = winLoss;
+        ResetApplied = resetApplied;
 
         if (player1MustChoose)
         {

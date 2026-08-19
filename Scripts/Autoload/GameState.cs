@@ -367,6 +367,7 @@ public partial class GameState : Node
         int player2SwappedCardCount,
         bool player1TransformApplied,
         bool player2TransformApplied,
+        bool resetApplied,
         int player1Score,
         int player2Score,
         int roundNumber,
@@ -396,6 +397,7 @@ public partial class GameState : Node
             player2SwappedCardCount,
             player1TransformApplied,
             player2TransformApplied,
+            resetApplied,
             player1Score,
             player2Score,
             roundNumber,
@@ -725,6 +727,7 @@ public partial class GameState : Node
             result.Player2SwappedCardCount,
             result.Player1TransformApplied,
             result.Player2TransformApplied,
+            result.ResetApplied,
             _session.Player1Score,
             _session.Player2Score,
             _session.RoundNumber,
@@ -742,6 +745,7 @@ public partial class GameState : Node
             result.Player2SwappedCardCount,
             result.Player1TransformApplied,
             result.Player2TransformApplied,
+            result.ResetApplied,
             _session.Player1Score,
             _session.Player2Score,
             _session.RoundNumber,
@@ -806,6 +810,7 @@ public partial class GameState : Node
         int player2SwappedCardCount,
         bool player1TransformApplied,
         bool player2TransformApplied,
+        bool resetApplied,
         int player1Score,
         int player2Score,
         int roundNumber,
@@ -840,6 +845,7 @@ public partial class GameState : Node
             View.OpponentScore = player1Score;
         }
 
+        View.ResetApplied = resetApplied;
         View.LastRoundOutcome = TranslateOutcome(winLoss, _mySide);
         View.RoundNumber = roundNumber;
         View.CardIMustChooseFor = null;

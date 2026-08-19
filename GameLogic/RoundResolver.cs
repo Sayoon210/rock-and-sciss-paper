@@ -122,10 +122,11 @@ public static class RoundResolver
 
         bool player1MustChoose = false;
         bool player2MustChoose = false;
+        bool resetApplied = false;
 
         if (runEffects)
         {
-            RunChoicelessEffectsInPriorityOrder(player1Card, player1, player2Card, player2, rng);
+            resetApplied = RunChoicelessEffectsInPriorityOrder(player1Card, player1, player2Card, player2, rng);
 
             // A card blocked by a Joker never reaches here, so its player is never asked
             // to make a choice that would only be thrown away. MustChoose applies the same
@@ -142,7 +143,8 @@ public static class RoundResolver
             player2Fate,
             winLoss,
             player1MustChoose,
-            player2MustChoose);
+            player2MustChoose,
+            resetApplied);
     }
 
     /// <summary>Phase two: apply whatever choices came back, then draw for both sides.
@@ -175,7 +177,8 @@ public static class RoundResolver
             SwappedCardCount(round, Side.Player1),
             SwappedCardCount(round, Side.Player2),
             TransformApplied(round, Side.Player1),
-            TransformApplied(round, Side.Player2));
+            TransformApplied(round, Side.Player2),
+            round.ResetApplied);
     }
 
     private static void ApplyChoiceIfMade(
@@ -246,23 +249,30 @@ public static class RoundResolver
         }
     }
 
-    private static void RunChoicelessEffectsInPriorityOrder(
+    /// <summary>Returns whether 리셋 ran. Only reached when no 조커 is in the round — a 조커
+    /// outranks everything and this is not called at all, which is what makes "a 리셋 was
+    /// played" and "the hands were replaced" two different things.</summary>
+    private static bool RunChoicelessEffectsInPriorityOrder(
         CardName player1Card,
         DeckAndHand player1,
         CardName player2Card,
         DeckAndHand player2,
         Random rng)
     {
+        bool resetApplied = false;
+
         // Reset outranks every other special. If both players played Reset, it runs
         // twice, Player 1's card first, per DESIGN.md.
         if (player1Card == CardName.Reset)
         {
             RunEffect(player1Card, player1, player2, rng);
+            resetApplied = true;
         }
 
         if (player2Card == CardName.Reset)
         {
             RunEffect(player2Card, player2, player1, rng);
+            resetApplied = true;
         }
 
         if (IsChoicelessSpecial(player1Card) && player1Card != CardName.Reset)
@@ -274,6 +284,8 @@ public static class RoundResolver
         {
             RunEffect(player2Card, player2, player1, rng);
         }
+
+        return resetApplied;
     }
 
     private static bool IsChoicelessSpecial(CardName card)

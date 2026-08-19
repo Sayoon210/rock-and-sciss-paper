@@ -211,6 +211,34 @@ public class RoundResolverTests
     }
 
     [Fact]
+    public void A_Joker_blocks_a_Reset_so_neither_hand_is_replaced()
+    {
+        // 조커 outranks 리셋 (DESIGN.md): it destroys whatever the other side played and
+        // blocks its effect outright, so nothing about either 패 changes.
+        var player1 = new DeckAndHand(new Deck(RepeatedCards(CardName.Rock, 20)), new Hand(new[] { CardName.Joker, CardName.Dummy }));
+        var player2 = new DeckAndHand(new Deck(RepeatedCards(CardName.Paper, 20)), new Hand(new[] { CardName.Reset, CardName.Scissors }));
+        var rng = new Random(1);
+
+        RoundInProgress round = RoundResolver.Reveal(CardName.Joker, CardName.Reset, player1, player2, rng);
+
+        Assert.Equal(new[] { CardName.Dummy }, player1.Hand.Cards);
+        Assert.Equal(new[] { CardName.Scissors }, player2.Hand.Cards);
+        Assert.False(round.ResetApplied);
+    }
+
+    [Fact]
+    public void A_Reset_with_no_Joker_in_the_round_is_recorded_as_applied()
+    {
+        var player1 = new DeckAndHand(new Deck(RepeatedCards(CardName.Rock, 20)), new Hand(new[] { CardName.Reset, CardName.Dummy }));
+        var player2 = new DeckAndHand(new Deck(RepeatedCards(CardName.Paper, 20)), new Hand(new[] { CardName.Scissors, CardName.Scissors }));
+        var rng = new Random(1);
+
+        RoundInProgress round = RoundResolver.Reveal(CardName.Reset, CardName.Scissors, player1, player2, rng);
+
+        Assert.True(round.ResetApplied);
+    }
+
+    [Fact]
     public void A_declined_choice_finishes_the_round_with_the_effect_unrun()
     {
         var player1 = new DeckAndHand(new Deck(RepeatedCards(CardName.Rock, 20)), new Hand(new[] { CardName.Swap, CardName.Dummy }));

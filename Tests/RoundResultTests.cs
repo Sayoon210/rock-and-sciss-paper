@@ -20,7 +20,8 @@ public class RoundResultTests
             player1SwappedCardCount: 2,
             player2SwappedCardCount: 0,
             player1TransformApplied: false,
-            player2TransformApplied: true);
+            player2TransformApplied: true,
+            resetApplied: true);
 
         Assert.Equal(CardName.Rock, result.Player1Card);
         Assert.Equal(CardName.Scissors, result.Player2Card);
@@ -35,6 +36,7 @@ public class RoundResultTests
         Assert.Equal(0, result.Player2SwappedCardCount);
         Assert.False(result.Player1TransformApplied);
         Assert.True(result.Player2TransformApplied);
+        Assert.True(result.ResetApplied);
     }
 
     [Fact]
@@ -53,7 +55,8 @@ public class RoundResultTests
             player1SwappedCardCount: 0,
             player2SwappedCardCount: 0,
             player1TransformApplied: false,
-            player2TransformApplied: false);
+            player2TransformApplied: false,
+            resetApplied: false);
 
         Assert.Null(result.WinLoss);
     }
@@ -76,7 +79,8 @@ public class RoundResultTests
             player1SwappedCardCount: 0,
             player2SwappedCardCount: 0,
             player1TransformApplied: false,
-            player2TransformApplied: false);
+            player2TransformApplied: false,
+            resetApplied: false);
 
         hand.Add(CardName.Joker);
 
