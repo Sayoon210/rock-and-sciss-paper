@@ -41,6 +41,12 @@ public sealed class MatchView
 
     public RoundOutcome? LastRoundOutcome { get; set; }
 
+    /// <summary>Whether this round is still taking cards. Kept here rather than derived on
+    /// screen from "no card revealed yet", because both sides need to agree on when the
+    /// submission clock is running and both get told the same thing at the same points — the
+    /// round opening, and the reveal that closes it.</summary>
+    public bool SubmissionPhaseActive { get; set; }
+
     // The card I still have to choose for this round (교체 or 변화), or null when I owe no
     // choice. Set from the targeted prompt, so it is never populated on the wrong screen.
     public CardName? CardIMustChooseFor { get; set; }

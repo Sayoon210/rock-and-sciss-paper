@@ -157,6 +157,46 @@ public sealed class MatchSession
         return _round!.CardOf(side);
     }
 
+    /// <summary>Plays a card for every side that has not submitted yet, drawn at random from
+    /// that side's own hand, and returns the reveal if that completes the round. A no-op, and
+    /// null, once the round is past taking cards.
+    ///
+    /// Random rather than the first card in hand, because hand order carries no meaning here —
+    /// nothing in the rules ever assigns a card a slot, so "the first one" would be an
+    /// arbitrary artefact of insertion order. Random rather than sparing 조커/특수, because a
+    /// rule that protects the cards that vanish would pay a player for not answering.</summary>
+    public RoundReveal? SubmitRandomCardForIdleSides()
+    {
+        if (Winner != null || Phase != RoundPhase.AwaitingSubmissions)
+        {
+            return null;
+        }
+
+        // Player 1 first, the same order this class settles everything else in.
+        RoundReveal? reveal = SubmitRandomCardFor(Side.Player1);
+        RoundReveal? afterPlayer2 = SubmitRandomCardFor(Side.Player2);
+        if (afterPlayer2 != null)
+        {
+            reveal = afterPlayer2;
+        }
+
+        return reveal;
+    }
+
+    private RoundReveal? SubmitRandomCardFor(Side side)
+    {
+        if (HasSubmittedCard(side))
+        {
+            return null;
+        }
+
+        IReadOnlyList<CardName> hand = DeckAndHandOf(side).Hand.Cards;
+        CardName card = hand[_rng.Next(hand.Count)];
+        _log?.Invoke($"[timeout] round {RoundNumber}: {side} did not submit, playing {card}");
+
+        return SubmitCard(side, card);
+    }
+
     /// <summary>Records one side's card. Returns null while waiting on the other side, and
     /// a RoundReveal once both are in.</summary>
     public RoundReveal? SubmitCard(Side side, CardName card)

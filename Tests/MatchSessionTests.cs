@@ -21,6 +21,47 @@ public class MatchSessionTests
     }
 
     [Fact]
+    public void A_timed_out_round_plays_a_card_from_each_hand_that_is_still_empty_handed()
+    {
+        MatchSession session = NewSession();
+
+        RoundReveal? reveal = session.SubmitRandomCardForIdleSides();
+
+        // Neither side acted, so both were played for and the round revealed in one go.
+        Assert.NotNull(reveal);
+        Assert.Equal(MatchSession.MULLIGAN_HAND_SIZE - 1 + 1, session.HandOf(Side.Player1).Count);
+        Assert.Equal(MatchSession.MULLIGAN_HAND_SIZE - 1 + 1, session.HandOf(Side.Player2).Count);
+    }
+
+    [Fact]
+    public void A_timed_out_round_leaves_a_card_that_was_already_played_alone()
+    {
+        MatchSession session = NewSession();
+        CardName played = session.HandOf(Side.Player1)[0];
+        Assert.Null(session.SubmitCard(Side.Player1, played));
+
+        // Only Player 2 is filled in; Player 1's own card stands, and the round completes.
+        RoundReveal? reveal = session.SubmitRandomCardForIdleSides();
+
+        Assert.NotNull(reveal);
+        Assert.Equal(played, reveal!.Player1Card);
+    }
+
+    [Fact]
+    public void A_round_waiting_on_a_choice_is_left_untouched_by_a_submission_timeout()
+    {
+        // Both cards are in and the round has moved on to asking for a 교체 choice. The
+        // submission clock belongs to the phase before this one, so a late firing of it must
+        // not play a card into a round that is past taking them.
+        MatchSession session = SwapVersusPlainSession();
+        session.SubmitCard(Side.Player1, CardName.Swap);
+        session.SubmitCard(Side.Player2, CardName.Rock);
+
+        Assert.Null(session.SubmitRandomCardForIdleSides());
+        Assert.True(session.IsAwaitingChoiceFrom(Side.Player1));
+    }
+
+    [Fact]
     public void Constructor_deals_a_mulligan_hand_to_both_players()
     {
         MatchSession session = NewSession();

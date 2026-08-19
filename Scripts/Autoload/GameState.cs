@@ -39,6 +39,13 @@ public partial class GameState : Node
     /// ticks, so this constant is the only thing keeping the two in agreement.</summary>
     public const double CHOICE_TIMEOUT_SECONDS = 15.0;
 
+    /// <summary>How long a round waits for cards before the host plays for whoever has not
+    /// submitted. Longer than the choice limit because submitting is decided from the whole
+    /// board — both scores, the field, and every card in hand — where a choice is made from
+    /// one already-narrowed set. Public for the same reason CHOICE_TIMEOUT_SECONDS is: the
+    /// screen counts the same number down on its own.</summary>
+    public const double SUBMIT_TIMEOUT_SECONDS = 20.0;
+
     public static GameState? Instance { get; private set; }
 
     // Host only: the authoritative match. Always null on a client.
@@ -55,6 +62,7 @@ public partial class GameState : Node
 
     // Host only: armed while a choice is outstanding.
     private Timer? _choiceTimer;
+    private Timer? _submitTimer;
 
     public MatchView View { get; private set; } = new MatchView();
 
@@ -99,6 +107,12 @@ public partial class GameState : Node
         _choiceTimer.WaitTime = CHOICE_TIMEOUT_SECONDS;
         _choiceTimer.Timeout += OnChoiceTimedOut;
         AddChild(_choiceTimer);
+
+        _submitTimer = new Timer();
+        _submitTimer.OneShot = true;
+        _submitTimer.WaitTime = SUBMIT_TIMEOUT_SECONDS;
+        _submitTimer.Timeout += OnSubmitTimedOut;
+        AddChild(_submitTimer);
     }
 
     // keep connection, only reset match (session & view)
@@ -107,6 +121,7 @@ public partial class GameState : Node
         _session = null;
         View = new MatchView();
         StopChoiceTimer();
+        StopSubmitTimer();
     }
 
     // reset connection and match
@@ -160,9 +175,12 @@ public partial class GameState : Node
         View.OpponentDeckCount = _session.DeckCountOf(clientSide);
         View.OpponentHandCount = _session.HandOf(clientSide).Count;
         View.RoundNumber = _session.RoundNumber;
+        View.SubmissionPhaseActive = true;
 
         EmitSignalMyHandChanged();
         EmitSignalMatchStarted();
+
+        StartSubmitTimer();
     }
 
     /// <summary>The one entry point for playing a card, identical on both sides.
@@ -412,6 +430,7 @@ public partial class GameState : Node
         View.OpponentDeckCount = opponentDeckCount;
         View.OpponentHandCount = opponentHandCount;
         View.RoundNumber = 1;
+        View.SubmissionPhaseActive = true;
 
         EmitSignalMyHandChanged();
         EmitSignalMatchStarted();
@@ -455,6 +474,14 @@ public partial class GameState : Node
             return;
         }
 
+        HandleReveal(reveal);
+    }
+
+    /// <summary>What follows a completed round of submissions, however the cards got there —
+    /// played by a person or filled in by OnSubmitTimedOut. Both must take exactly the same
+    /// route out, or a timed-out round would resolve differently from a played one.</summary>
+    private void HandleReveal(RoundReveal reveal)
+    {
         BroadcastReveal(reveal);
 
         if (reveal.Result != null)
@@ -527,6 +554,41 @@ public partial class GameState : Node
         }
     }
 
+    /// <summary>Host only. Plays for every side that let the clock run out. Not a penalty —
+    /// the card is drawn at random from that player's own hand and the round carries on
+    /// normally, the same shape as a declined choice simply not running its effect.</summary>
+    private void OnSubmitTimedOut()
+    {
+        if (_session == null)
+        {
+            return;
+        }
+
+        RoundReveal? reveal = _session.SubmitRandomCardForIdleSides();
+        if (reveal == null)
+        {
+            return;
+        }
+
+        HandleReveal(reveal);
+    }
+
+    private void StartSubmitTimer()
+    {
+        if (_submitTimer != null)
+        {
+            _submitTimer.Start();
+        }
+    }
+
+    private void StopSubmitTimer()
+    {
+        if (_submitTimer != null)
+        {
+            _submitTimer.Stop();
+        }
+    }
+
     private void StopChoiceTimer()
     {
         if (_choiceTimer != null)
@@ -549,6 +611,9 @@ public partial class GameState : Node
 
     private void BroadcastReveal(RoundReveal reveal)
     {
+        // Both cards are in, whatever brought them — the round is not taking any more.
+        StopSubmitTimer();
+
         Rpc(
             MethodName.RoundRevealedRpc,
             (int)reveal.Player1Card,
@@ -613,6 +678,14 @@ public partial class GameState : Node
     private void BroadcastRoundResult(RoundResult result)
     {
         StopChoiceTimer();
+
+        // The next round opens the moment this one is broadcast, so its clock starts here.
+        // A match that has just been won opens no round, and ApplyRoundResultToView says the
+        // same thing to both screens through SubmissionPhaseActive.
+        if (!_session!.Winner.HasValue)
+        {
+            StartSubmitTimer();
+        }
 
         int winLoss = NO_WIN_LOSS_RESULT_SENTINEL;
         if (result.WinLoss.HasValue)
@@ -710,6 +783,7 @@ public partial class GameState : Node
         View.OpponentCardFate = null;
         View.LastRoundOutcome = null;
         View.CardIMustChooseFor = null;
+        View.SubmissionPhaseActive = false;
         View.MySwappedCardCount = 0;
         View.OpponentSwappedCardCount = 0;
         View.MyTransformApplied = false;
@@ -770,6 +844,7 @@ public partial class GameState : Node
         View.RoundNumber = roundNumber;
         View.CardIMustChooseFor = null;
         View.OpponentIsChoosing = false;
+        View.SubmissionPhaseActive = !winner.HasValue;
 
         if (winner.HasValue)
         {
