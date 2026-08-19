@@ -53,6 +53,28 @@ public static class RoundResolver
         return SpecialEffects[card].RequiresChoice;
     }
 
+    /// <summary>Whether this player is actually going to be asked. A card that needs a choice
+    /// but has none available in this hand is not asked for, the same way a card blocked by a
+    /// 조커 is not: there is nothing to be gained by demanding an answer that could only be
+    /// rejected, and a player staring at a picker with every card greyed out has no way to
+    /// say so.
+    ///
+    /// 리셋 is what makes this reachable rather than theoretical — it replaces the hand during
+    /// Reveal, after 변화 has been played but before its choice is asked for, so the hand the
+    /// picker is built from is not the one the player had when they played the card.
+    ///
+    /// The effect is simply left unrun, which is exactly what a declined choice already
+    /// does.</summary>
+    public static bool MustChoose(CardName card, DeckAndHand player)
+    {
+        if (!RequiresChoice(card))
+        {
+            return false;
+        }
+
+        return SpecialEffects[card].HasAnyLegalChoice(player);
+    }
+
     /// <summary>Phase one: make both cards public, apply their fates, and run everything
     /// that needs no choice. The returned round records who still owes one.</summary>
     public static RoundInProgress Reveal(
@@ -106,9 +128,11 @@ public static class RoundResolver
             RunChoicelessEffectsInPriorityOrder(player1Card, player1, player2Card, player2, rng);
 
             // A card blocked by a Joker never reaches here, so its player is never asked
-            // to make a choice that would only be thrown away.
-            player1MustChoose = RequiresChoice(player1Card);
-            player2MustChoose = RequiresChoice(player2Card);
+            // to make a choice that would only be thrown away. MustChoose applies the same
+            // rule to a card whose choice is possible in principle but not in this hand —
+            // which the 리셋 above may have replaced.
+            player1MustChoose = MustChoose(player1Card, player1);
+            player2MustChoose = MustChoose(player2Card, player2);
         }
 
         return new RoundInProgress(

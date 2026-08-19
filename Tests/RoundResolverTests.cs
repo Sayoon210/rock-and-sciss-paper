@@ -190,6 +190,27 @@ public class RoundResolverTests
     }
 
     [Fact]
+    public void A_Reset_that_leaves_nothing_transformable_asks_for_no_choice_at_all()
+    {
+        // The reachable version of "asked for a choice that cannot be made": 변화 is played,
+        // the opponent's 리셋 runs first and replaces the hand, and what comes back holds no
+        // 일반카드/더미카드. Before this, the player was asked anyway and could only wait out
+        // the timeout with every card in the picker greyed out.
+        var player1 = new DeckAndHand(new Deck(RepeatedCards(CardName.Rock, 20)), new Hand(new[] { CardName.Reset }));
+        var player2 = new DeckAndHand(new Deck(RepeatedCards(CardName.Joker, 20)), new Hand(new[] { CardName.Transform, CardName.Joker }));
+        var rng = new Random(1);
+
+        RoundInProgress round = RoundResolver.Reveal(CardName.Reset, CardName.Transform, player1, player2, rng);
+
+        Assert.False(round.IsAwaitingAnyChoice);
+        Assert.Equal(ChoiceStatus.NotRequired, round.ChoiceStatusOf(Side.Player2));
+
+        // Finishes on its own, with 변화 simply unrun — the same ending a declined choice has.
+        RoundResult result = RoundResolver.Finish(round, player1, player2, rng);
+        Assert.False(result.Player2TransformApplied);
+    }
+
+    [Fact]
     public void A_declined_choice_finishes_the_round_with_the_effect_unrun()
     {
         var player1 = new DeckAndHand(new Deck(RepeatedCards(CardName.Rock, 20)), new Hand(new[] { CardName.Swap, CardName.Dummy }));

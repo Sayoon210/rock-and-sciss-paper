@@ -10,6 +10,28 @@ public class TransformEffectTests
     }
 
     [Fact]
+    public void A_hand_with_a_normal_or_dummy_card_has_a_legal_choice()
+    {
+        Assert.True(new TransformEffect().HasAnyLegalChoice(HandOf(CardName.Joker, CardName.Rock)));
+        Assert.True(new TransformEffect().HasAnyLegalChoice(HandOf(CardName.Reset, CardName.Dummy)));
+    }
+
+    [Fact]
+    public void A_hand_of_only_jokers_and_specials_has_no_legal_choice()
+    {
+        // What 리셋 can deal to someone who has already played 변화 — the picker would
+        // otherwise open with every card greyed out and no way to answer it.
+        Assert.False(new TransformEffect().HasAnyLegalChoice(
+            HandOf(CardName.Joker, CardName.Reset, CardName.Swap)));
+    }
+
+    [Fact]
+    public void An_empty_hand_has_no_legal_choice()
+    {
+        Assert.False(new TransformEffect().HasAnyLegalChoice(HandOf()));
+    }
+
+    [Fact]
     public void Apply_replaces_the_chosen_card_with_the_chosen_replacement()
     {
         DeckAndHand self = HandOf(CardName.Rock, CardName.Scissors);

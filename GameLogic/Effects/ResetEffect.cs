@@ -10,6 +10,11 @@ public sealed class ResetEffect : ICardEffect
         get { return false; }
     }
 
+    public bool HasAnyLegalChoice(DeckAndHand self)
+    {
+        return false;
+    }
+
     public void Validate(CardChoice? choice, DeckAndHand self)
     {
     }

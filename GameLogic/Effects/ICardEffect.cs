@@ -15,6 +15,14 @@ public interface ICardEffect
     /// so a sixth special card slots in without editing the resolver.</summary>
     bool RequiresChoice { get; }
 
+    /// <summary>Whether this hand offers any choice this effect would accept. Separate from
+    /// RequiresChoice, which is a fact about the card and decides both the order effects run
+    /// in and whether Apply may be handed a null choice — that must not depend on a hand.
+    /// This one decides only whether the player is actually asked.
+    ///
+    /// Always false for an effect that needs no choice: there is no choice to be legal.</summary>
+    bool HasAnyLegalChoice(DeckAndHand self);
+
     /// <summary>Rejects a choice this effect cannot carry out, before anything is mutated.
     /// choice is null exactly when RequiresChoice is false.</summary>
     void Validate(CardChoice? choice, DeckAndHand self);

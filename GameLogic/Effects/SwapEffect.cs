@@ -10,6 +10,13 @@ public sealed class SwapEffect : ICardEffect
         get { return true; }
     }
 
+    /// <summary>Any subset of the hand is a legal answer, the empty one included, so the
+    /// only hand with nothing to offer is an empty one.</summary>
+    public bool HasAnyLegalChoice(DeckAndHand self)
+    {
+        return self.Hand.Cards.Count > 0;
+    }
+
     public void Validate(CardChoice? choice, DeckAndHand self)
     {
         if (choice == null)

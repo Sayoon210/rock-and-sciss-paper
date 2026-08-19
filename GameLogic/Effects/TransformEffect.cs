@@ -10,6 +10,23 @@ public sealed class TransformEffect : ICardEffect
         get { return true; }
     }
 
+    /// <summary>Only a 일반카드/더미카드 may be changed, so a hand holding none of either
+    /// offers nothing this effect would accept. Reachable through 리셋: it replaces the hand
+    /// after 변화 has been played but before its choice is asked for, and the hand it deals
+    /// can be all 조커/특수.</summary>
+    public bool HasAnyLegalChoice(DeckAndHand self)
+    {
+        foreach (CardName card in self.Hand.Cards)
+        {
+            if (IsTransformable(card))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public void Validate(CardChoice? choice, DeckAndHand self)
     {
         if (choice == null || choice.CardToTransform == null || choice.TransformInto == null)
