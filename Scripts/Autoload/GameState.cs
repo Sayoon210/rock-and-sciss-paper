@@ -33,7 +33,11 @@ public partial class GameState : Node
     /// committed a card and had it revealed, so idling cannot be allowed to freeze the
     /// game for the opponent. Applies to the host's own choice too — the host is not
     /// privileged in liveness, and a host who walks away wedges the match just as hard.</summary>
-    private const double CHOICE_TIMEOUT_SECONDS = 30.0;
+    /// <summary>How long a choice phase lasts before the host gives up on every outstanding
+    /// choice and lets the round finish. Public because the screen draws a gauge of it and has
+    /// to be counting down the same number — it runs its own clock rather than being sent
+    /// ticks, so this constant is the only thing keeping the two in agreement.</summary>
+    public const double CHOICE_TIMEOUT_SECONDS = 15.0;
 
     public static GameState? Instance { get; private set; }
 

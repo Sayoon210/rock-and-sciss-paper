@@ -47,6 +47,7 @@ public partial class MatchScreenUI : Control
     private Label _outcomeLabel = null!;
     private Label _promptLabel = null!;
     private Button _confirmButton = null!;
+    private ProgressBar _choiceTimerBar = null!;
     private HBoxContainer _targetPaletteRow = null!;
     private DeckView _myDeckView = null!;
     private HandView _myHandView = null!;
@@ -61,6 +62,13 @@ public partial class MatchScreenUI : Control
     // the next round's reveal. RefreshField honours it, so an unrelated refresh (a hand
     // change, a score update) cannot put the old round's cards back on screen.
     private bool _fieldCleared = true;
+
+    // How much of the choice phase is left, and whether one is running at all. The gauge is
+    // restarted on the edge rather than on every refresh, because RefreshPromptStrip is also
+    // re-entered on every selection change — resetting there would hand a player more time
+    // for every card they clicked.
+    private double _choiceSecondsRemaining;
+    private bool _choicePhaseActive;
 
     // The card currently sitting on the submit zone, while the host has not answered yet.
     // Kept only so a rejected submission can be sent back to the hand — nothing else moves
@@ -93,6 +101,8 @@ public partial class MatchScreenUI : Control
         _outcomeLabel = GetNode<Label>("Rows/MiddleRow/Field/OutcomeLabel");
         _promptLabel = GetNode<Label>("Rows/PromptStrip/PromptRow/PromptLabel");
         _confirmButton = GetNode<Button>("Rows/PromptStrip/PromptRow/ConfirmButton");
+        _choiceTimerBar = GetNode<ProgressBar>("Rows/PromptStrip/PromptRow/ChoiceTimerBar");
+        _choiceTimerBar.MaxValue = GameState.CHOICE_TIMEOUT_SECONDS;
         _targetPaletteRow = GetNode<HBoxContainer>("Rows/PromptStrip/PromptRow/TargetPaletteRow");
         _myDeckView = GetNode<DeckView>("Rows/MyArea/MyDeckView");
         _myHandView = GetNode<HandView>("Rows/MyArea/MyHandView");
@@ -123,8 +133,27 @@ public partial class MatchScreenUI : Control
         _rematchButton.Pressed += OnRematchPressed;
         _returnToTitleButton.Pressed += OnReturnToTitlePressed;
 
+        // Only runs while a choice is outstanding; RefreshChoiceTimer switches it on and off.
+        SetProcess(false);
+
         ConnectToAutoloadSignals();
         RefreshEverything();
+    }
+
+    /// <summary>Drains the choice gauge. This is a copy of the host's countdown rather than
+    /// the countdown itself — the host owns the real timer and is the only thing that can end
+    /// a choice phase (GameState.OnChoiceTimedOut). Both sides simply count the same constant
+    /// down locally, which is why a few frames of drift between the bar emptying and the round
+    /// moving on costs nothing: nothing is decided by this number.</summary>
+    public override void _Process(double delta)
+    {
+        _choiceSecondsRemaining -= delta;
+        if (_choiceSecondsRemaining < 0.0)
+        {
+            _choiceSecondsRemaining = 0.0;
+        }
+
+        _choiceTimerBar.Value = _choiceSecondsRemaining;
     }
 
     /// <summary>A freed node still connected to a session-lifetime Autoload signal is a
@@ -528,6 +557,8 @@ public partial class MatchScreenUI : Control
     {
         MatchView view = GameState.Instance!.View;
 
+        RefreshChoiceTimer(view);
+
         if (view.CardIMustChooseFor == CardName.Swap)
         {
             ShowSwapPrompt();
@@ -549,6 +580,29 @@ public partial class MatchScreenUI : Control
         }
 
         _promptLabel.Text = string.Empty;
+    }
+
+    /// <summary>Shows the gauge for as long as either side owes a choice, including while it
+    /// is the opponent who is deciding — the host's timeout covers the whole phase, not one
+    /// player, so a bar that only appeared on my own turn to choose would be describing a
+    /// different clock from the one actually running.</summary>
+    private void RefreshChoiceTimer(MatchView view)
+    {
+        bool choicePhaseActive = view.CardIMustChooseFor.HasValue || view.OpponentIsChoosing;
+        if (choicePhaseActive == _choicePhaseActive)
+        {
+            return;
+        }
+
+        _choicePhaseActive = choicePhaseActive;
+        _choiceTimerBar.Visible = choicePhaseActive;
+        SetProcess(choicePhaseActive);
+
+        if (choicePhaseActive)
+        {
+            _choiceSecondsRemaining = GameState.CHOICE_TIMEOUT_SECONDS;
+            _choiceTimerBar.Value = _choiceSecondsRemaining;
+        }
     }
 
     private void ShowSwapPrompt()
