@@ -4,6 +4,42 @@ namespace RockAndScissPaper.Tests;
 
 public class SwapEffectTests
 {
+    private static DeckAndHand HandOf(params CardName[] cards)
+    {
+        return new DeckAndHand(new Deck(new[] { CardName.Dummy, CardName.Dummy, CardName.Dummy }), new Hand(cards));
+    }
+
+    [Fact]
+    public void Validate_rejects_a_choice_that_puts_back_more_cards_than_the_limit()
+    {
+        DeckAndHand self = HandOf(CardName.Rock, CardName.Rock, CardName.Rock, CardName.Dummy);
+
+        var tooMany = new List<CardName>();
+        for (int card = 0; card <= SwapEffect.MAX_SWAPPED_CARDS; card++)
+        {
+            tooMany.Add(CardName.Rock);
+        }
+
+        Assert.Throws<ArgumentException>(
+            () => new SwapEffect().Validate(CardChoice.Swapping(tooMany), self));
+    }
+
+    [Fact]
+    public void Validate_accepts_a_choice_right_at_the_limit()
+    {
+        // Counted off MAX_SWAPPED_CARDS rather than written as a literal 2, so these two tests
+        // keep testing the limit itself if the number ever changes.
+        DeckAndHand self = HandOf(CardName.Rock, CardName.Rock, CardName.Rock, CardName.Dummy);
+
+        var atLimit = new List<CardName>();
+        for (int card = 0; card < SwapEffect.MAX_SWAPPED_CARDS; card++)
+        {
+            atLimit.Add(CardName.Rock);
+        }
+
+        new SwapEffect().Validate(CardChoice.Swapping(atLimit), self);
+    }
+
     [Fact]
     public void Apply_returns_the_chosen_cards_and_draws_the_same_number_back()
     {

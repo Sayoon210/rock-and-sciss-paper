@@ -1,17 +1,22 @@
 namespace RockAndScissPaper.GameLogic;
 
-/// <summary>교체: puts any number of the caster's hand cards back into their deck,
-/// shuffles, then draws that many again. Which cards go back is chosen after both players'
-/// cards are revealed.</summary>
+/// <summary>교체: puts up to MAX_SWAPPED_CARDS of the caster's hand cards back into their
+/// deck, shuffles, then draws that many again. Which cards go back is chosen after both
+/// players' cards are revealed.</summary>
 public sealed class SwapEffect : ICardEffect
 {
+    /// <summary>The most cards one 교체 may put back. Public because the picker has to stop
+    /// the player at the same number this rejects them at — one constant rather than a limit
+    /// written down twice and free to drift apart.</summary>
+    public const int MAX_SWAPPED_CARDS = 2;
+
     public bool RequiresChoice
     {
         get { return true; }
     }
 
-    /// <summary>Any subset of the hand is a legal answer, the empty one included, so the
-    /// only hand with nothing to offer is an empty one.</summary>
+    /// <summary>Any small enough subset of the hand is a legal answer, the empty one
+    /// included, so the only hand with nothing to offer is an empty one.</summary>
     public bool HasAnyLegalChoice(DeckAndHand self)
     {
         return self.Hand.Cards.Count > 0;
@@ -22,6 +27,13 @@ public sealed class SwapEffect : ICardEffect
         if (choice == null)
         {
             throw new ArgumentException("Swap needs a choice of which cards go back.", nameof(choice));
+        }
+
+        if (choice.CardsToReturn.Count > MAX_SWAPPED_CARDS)
+        {
+            throw new ArgumentException(
+                $"Swap puts back at most {MAX_SWAPPED_CARDS} cards, not {choice.CardsToReturn.Count}.",
+                nameof(choice));
         }
 
         // Checked against a copy so a rejected choice leaves the real hand untouched. The

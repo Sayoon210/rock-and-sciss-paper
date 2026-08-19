@@ -483,7 +483,7 @@ public partial class HandView : Control
 
         _selectionMode = HandSelectionMode.SelectMultipleForSwap;
         ClearSelection();
-        ResetCardOpacity();
+        ApplySwapEligibilityDimming();
         ApplyDragEligibility();
     }
 
@@ -555,7 +555,8 @@ public partial class HandView : Control
     }
 
     /// <summary>Clicking a selected card again deselects it — the whole selection is toggled
-    /// per card, with no separate "clear" control needed.</summary>
+    /// per card, with no separate "clear" control needed. A click that would take the selection
+    /// past what 교체 accepts does nothing; the cards it would apply to are already dimmed.</summary>
     private void ToggleSwapSelection(CardView cardView)
     {
         if (_selectedForSwap.Remove(cardView))
@@ -564,11 +565,32 @@ public partial class HandView : Control
         }
         else
         {
+            if (_selectedForSwap.Count >= SwapEffect.MAX_SWAPPED_CARDS)
+            {
+                return;
+            }
+
             _selectedForSwap.Add(cardView);
             cardView.SetSelected(true);
         }
 
+        ApplySwapEligibilityDimming();
         EmitSignalSelectionChanged();
+    }
+
+    /// <summary>Dims whatever cannot be added to the 교체 selection right now: nothing until
+    /// the limit is reached, then every card not already picked. The same affordance 변화 uses
+    /// for cards it cannot change, and with the same caveat — the host re-checks the choice
+    /// regardless (Scripts/CLAUDE.md).</summary>
+    private void ApplySwapEligibilityDimming()
+    {
+        bool selectionIsFull = _selectedForSwap.Count >= SwapEffect.MAX_SWAPPED_CARDS;
+
+        foreach (CardView cardView in _slots)
+        {
+            bool pickable = !selectionIsFull || _selectedForSwap.Contains(cardView);
+            cardView.Modulate = pickable ? Colors.White : new Color(1f, 1f, 1f, 0.35f);
+        }
     }
 
     /// <summary>Clicking a different card moves the pick; clicking the current pick again

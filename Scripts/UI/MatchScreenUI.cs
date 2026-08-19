@@ -712,7 +712,8 @@ public partial class MatchScreenUI : Control
         SetTargetPaletteVisible(false);
 
         int selectedCount = _myHandView.SwapSelection.Count;
-        _promptLabel.Text = $"교체 — 덱에 넣을 카드를 클릭하세요 ({selectedCount}장 선택됨)";
+        _promptLabel.Text =
+            $"교체 — 덱에 넣을 카드를 클릭하세요 ({selectedCount}/{SwapEffect.MAX_SWAPPED_CARDS}장 선택됨)";
     }
 
     private void ShowTransformPrompt()
