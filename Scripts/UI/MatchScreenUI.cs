@@ -30,10 +30,10 @@ public partial class MatchScreenUI : Control
     /// straight away on RoundResolved would mean the reveal is never actually seen.</summary>
     private const double FIELD_CLEAR_DELAY_SECONDS = 1.5;
 
-    /// <summary>How much of the choice phase the gauge spends reddening. It stays calm for
-    /// the rest: a bar that is always partly red says nothing, and a colour that only means
+    /// <summary>How much of a timed phase the gauge spends reddening. It stays calm for the
+    /// rest: a bar that is always partly red says nothing, and a colour that only means
     /// something once it starts moving is the whole point of a warning.</summary>
-    private const double CHOICE_TIMER_URGENT_FRACTION = 0.4;
+    private const double PHASE_TIMER_URGENT_FRACTION = 0.4;
 
     private DeckView _opponentDeckView = null!;
     private HandView _opponentHandView = null!;
@@ -52,8 +52,8 @@ public partial class MatchScreenUI : Control
     private Label _outcomeLabel = null!;
     private Label _promptLabel = null!;
     private Button _confirmButton = null!;
-    private ProgressBar _choiceTimerBar = null!;
-    private StyleBoxFlat _choiceTimerFillStyle = null!;
+    private ProgressBar _phaseTimerBar = null!;
+    private StyleBoxFlat _phaseTimerFillStyle = null!;
     private HBoxContainer _targetPaletteRow = null!;
     private DeckView _myDeckView = null!;
     private HandView _myHandView = null!;
@@ -69,12 +69,12 @@ public partial class MatchScreenUI : Control
     // change, a score update) cannot put the old round's cards back on screen.
     private bool _fieldCleared = true;
 
-    // How much of the choice phase is left, and whether one is running at all. The gauge is
-    // restarted on the edge rather than on every refresh, because RefreshPromptStrip is also
-    // re-entered on every selection change — resetting there would hand a player more time
-    // for every card they clicked.
-    private double _choiceSecondsRemaining;
-    private bool _choicePhaseActive;
+    // How much of the running phase is left, and how long it was to begin with — zero when
+    // nothing is being timed. The total is kept rather than recomputed because it is also what
+    // identifies the phase: the two have different limits, so a change in this number is
+    // exactly a change of phase.
+    private double _phaseSecondsRemaining;
+    private double _phaseTotalSeconds;
 
     // The card currently sitting on the submit zone, while the host has not answered yet.
     // Kept only so a rejected submission can be sent back to the hand — nothing else moves
@@ -107,13 +107,12 @@ public partial class MatchScreenUI : Control
         _outcomeLabel = GetNode<Label>("Rows/MiddleRow/Field/OutcomeLabel");
         _promptLabel = GetNode<Label>("Rows/PromptStrip/PromptRow/PromptLabel");
         _confirmButton = GetNode<Button>("Rows/PromptStrip/PromptRow/ConfirmButton");
-        _choiceTimerBar = GetNode<ProgressBar>("Rows/PromptStrip/PromptRow/ChoiceTimerBar");
-        _choiceTimerBar.MaxValue = GameState.CHOICE_TIMEOUT_SECONDS;
+        _phaseTimerBar = GetNode<ProgressBar>("Rows/PromptStrip/PromptRow/PhaseTimerBar");
 
         // Mutated in place rather than duplicated first: this stylebox belongs to the one
-        // ChoiceTimerBar in the one MatchScreen, unlike CardView's border, which has to take
-        // a copy because its scene is instanced once per card on screen.
-        _choiceTimerFillStyle = (StyleBoxFlat)_choiceTimerBar.GetThemeStylebox("fill");
+        // PhaseTimerBar in the one MatchScreen, unlike CardView's border, which has to take a
+        // copy because its scene is instanced once per card on screen.
+        _phaseTimerFillStyle = (StyleBoxFlat)_phaseTimerBar.GetThemeStylebox("fill");
         _targetPaletteRow = GetNode<HBoxContainer>("Rows/PromptStrip/PromptRow/TargetPaletteRow");
         _myDeckView = GetNode<DeckView>("Rows/MyArea/MyDeckView");
         _myHandView = GetNode<HandView>("Rows/MyArea/MyHandView");
@@ -144,35 +143,37 @@ public partial class MatchScreenUI : Control
         _rematchButton.Pressed += OnRematchPressed;
         _returnToTitleButton.Pressed += OnReturnToTitlePressed;
 
-        // Only runs while a choice is outstanding; RefreshChoiceTimer switches it on and off.
+        // Only runs while a phase is being timed; RefreshPhaseTimer switches it on and off.
         SetProcess(false);
 
         ConnectToAutoloadSignals();
         RefreshEverything();
     }
 
-    /// <summary>Drains the choice gauge. This is a copy of the host's countdown rather than
-    /// the countdown itself — the host owns the real timer and is the only thing that can end
-    /// a choice phase (GameState.OnChoiceTimedOut). Both sides simply count the same constant
-    /// down locally, which is why a few frames of drift between the bar emptying and the round
-    /// moving on costs nothing: nothing is decided by this number.</summary>
+    /// <summary>Drains the phase gauge. This is a copy of the host's countdown rather than
+    /// the countdown itself — the host owns both real Timers and is the only thing that can
+    /// end a phase (GameState.OnChoiceTimedOut, OnSubmitTimedOut). Both sides simply count the
+    /// same constants down locally, which is why a few frames of drift between the bar
+    /// emptying and the round moving on costs nothing: nothing is decided by this number.</summary>
     public override void _Process(double delta)
     {
-        _choiceSecondsRemaining -= delta;
-        if (_choiceSecondsRemaining < 0.0)
+        _phaseSecondsRemaining -= delta;
+        if (_phaseSecondsRemaining < 0.0)
         {
-            _choiceSecondsRemaining = 0.0;
+            _phaseSecondsRemaining = 0.0;
         }
 
-        _choiceTimerBar.Value = _choiceSecondsRemaining;
-        _choiceTimerFillStyle.BgColor = ChoiceTimerColorAt(_choiceSecondsRemaining);
+        _phaseTimerBar.Value = _phaseSecondsRemaining;
+        _phaseTimerFillStyle.BgColor = PhaseTimerColorAt(_phaseSecondsRemaining, _phaseTotalSeconds);
     }
 
-    /// <summary>The gauge's colour with this much of the phase left: unchanged while there is
-    /// still time, then running to red over the last stretch of it.</summary>
-    private static Color ChoiceTimerColorAt(double secondsRemaining)
+    /// <summary>The gauge's colour with this much of a phase of this length left: unchanged
+    /// while there is still time, then running to red over the last stretch of it. Taken as a
+    /// fraction of the phase rather than as a fixed number of seconds, so the warning arrives
+    /// at the same point of a 20-second submission and a 15-second choice.</summary>
+    private static Color PhaseTimerColorAt(double secondsRemaining, double phaseSeconds)
     {
-        double reddeningSeconds = GameState.CHOICE_TIMEOUT_SECONDS * CHOICE_TIMER_URGENT_FRACTION;
+        double reddeningSeconds = phaseSeconds * PHASE_TIMER_URGENT_FRACTION;
         float urgency = 1f - Mathf.Clamp((float)(secondsRemaining / reddeningSeconds), 0f, 1f);
 
         // By way of amber rather than in one step: green and red are far enough apart in RGB
@@ -592,7 +593,7 @@ public partial class MatchScreenUI : Control
     {
         MatchView view = GameState.Instance!.View;
 
-        RefreshChoiceTimer(view);
+        RefreshPhaseTimer(view);
 
         if (view.CardIMustChooseFor == CardName.Swap)
         {
@@ -617,28 +618,58 @@ public partial class MatchScreenUI : Control
         _promptLabel.Text = string.Empty;
     }
 
-    /// <summary>Shows the gauge for as long as either side owes a choice, including while it
-    /// is the opponent who is deciding — the host's timeout covers the whole phase, not one
-    /// player, so a bar that only appeared on my own turn to choose would be describing a
-    /// different clock from the one actually running.</summary>
-    private void RefreshChoiceTimer(MatchView view)
+    /// <summary>Starts, holds or clears the gauge. One bar serves both timed phases, because
+    /// a round takes cards until it reveals and only asks for choices afterwards — they never
+    /// run at once, and a player watching one clock is never also on another.
+    ///
+    /// It shows through the whole of each phase, including while it is the opponent who is
+    /// still deciding: the host arms one timeout covering the phase rather than one per
+    /// player, so a bar that appeared only on my own turn to act would be drawing a clock that
+    /// is not the one running.
+    ///
+    /// The phase is identified by its own limit, so switching from one to the other restarts
+    /// the gauge simply by being a different number. Restarting on that change rather than on
+    /// every call is what matters here: this method is re-entered on every card the player
+    /// clicks while selecting, and resetting there would hand out more time per click.</summary>
+    private void RefreshPhaseTimer(MatchView view)
     {
-        bool choicePhaseActive = view.CardIMustChooseFor.HasValue || view.OpponentIsChoosing;
-        if (choicePhaseActive == _choicePhaseActive)
+        double phaseSeconds = PhaseTimeoutFor(view);
+        if (phaseSeconds == _phaseTotalSeconds)
         {
             return;
         }
 
-        _choicePhaseActive = choicePhaseActive;
-        _choiceTimerBar.Visible = choicePhaseActive;
-        SetProcess(choicePhaseActive);
+        _phaseTotalSeconds = phaseSeconds;
+        _phaseTimerBar.Visible = phaseSeconds > 0.0;
+        SetProcess(phaseSeconds > 0.0);
 
-        if (choicePhaseActive)
+        if (phaseSeconds <= 0.0)
         {
-            _choiceSecondsRemaining = GameState.CHOICE_TIMEOUT_SECONDS;
-            _choiceTimerBar.Value = _choiceSecondsRemaining;
-            _choiceTimerFillStyle.BgColor = ChoiceTimerColorAt(_choiceSecondsRemaining);
+            return;
         }
+
+        _phaseSecondsRemaining = phaseSeconds;
+        _phaseTimerBar.MaxValue = phaseSeconds;
+        _phaseTimerBar.Value = phaseSeconds;
+        _phaseTimerFillStyle.BgColor = PhaseTimerColorAt(phaseSeconds, phaseSeconds);
+    }
+
+    /// <summary>How long the phase currently running lasts, or zero when none is. Choice is
+    /// tested first because it begins in the same frame the submission phase ends, and this
+    /// order keeps the gauge off a phase that is already over.</summary>
+    private static double PhaseTimeoutFor(MatchView view)
+    {
+        if (view.CardIMustChooseFor.HasValue || view.OpponentIsChoosing)
+        {
+            return GameState.CHOICE_TIMEOUT_SECONDS;
+        }
+
+        if (view.SubmissionPhaseActive)
+        {
+            return GameState.SUBMIT_TIMEOUT_SECONDS;
+        }
+
+        return 0.0;
     }
 
     private void ShowSwapPrompt()

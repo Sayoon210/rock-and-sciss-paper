@@ -7,14 +7,14 @@
 [ext_resource type="PackedScene" path="res://Scenes/Match/DeckView.tscn" id="5_deckview"]
 [ext_resource type="PackedScene" path="res://Scenes/Match/CardVanishParticles.tscn" id="6_vanishparticles"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_choicetimertrack"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_phasetimertrack"]
 bg_color = Color(0.14, 0.15, 0.19, 1)
 corner_radius_top_left = 5
 corner_radius_top_right = 5
 corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_choicetimerfill"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_phasetimerfill"]
 bg_color = Color(0.36, 0.72, 0.46, 1)
 corner_radius_top_left = 5
 corner_radius_top_right = 5
@@ -181,13 +181,13 @@ size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 24
 vertical_alignment = 1
 
-[node name="ChoiceTimerBar" type="ProgressBar" parent="Rows/PromptStrip/PromptRow"]
+[node name="PhaseTimerBar" type="ProgressBar" parent="Rows/PromptStrip/PromptRow"]
 visible = false
 custom_minimum_size = Vector2(260, 26)
 layout_mode = 2
 size_flags_vertical = 4
-theme_override_styles/background = SubResource("StyleBoxFlat_choicetimertrack")
-theme_override_styles/fill = SubResource("StyleBoxFlat_choicetimerfill")
+theme_override_styles/background = SubResource("StyleBoxFlat_phasetimertrack")
+theme_override_styles/fill = SubResource("StyleBoxFlat_phasetimerfill")
 show_percentage = false
 
 [node name="ConfirmButton" type="Button" parent="Rows/PromptStrip/PromptRow"]
