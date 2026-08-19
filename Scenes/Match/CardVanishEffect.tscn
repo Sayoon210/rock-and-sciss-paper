@@ -1,0 +1,31 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Scripts/UI/CardVanishEffect.cs" id="1_cardvanisheffect"]
+
+[sub_resource type="Gradient" id="Gradient_dustfade"]
+offsets = PackedFloat32Array(0, 0.35, 1)
+colors = PackedColorArray(0.92, 0.94, 1, 1, 0.78, 0.8, 0.9, 0.85, 0.55, 0.57, 0.68, 0)
+
+[node name="CardVanishEffect" type="Node2D"]
+script = ExtResource("1_cardvanisheffect")
+
+[node name="DustParticles" type="CPUParticles2D" parent="."]
+emitting = false
+amount = 220
+lifetime = 0.8
+explosiveness = 0.0
+randomness = 0.6
+emission_shape = 3
+emission_rect_extents = Vector2(96, 3)
+direction = Vector2(0, 1)
+spread = 60.0
+gravity = Vector2(0, 260)
+initial_velocity_min = 5.0
+initial_velocity_max = 55.0
+angular_velocity_min = -180.0
+angular_velocity_max = 180.0
+damping_min = 10.0
+damping_max = 40.0
+scale_amount_min = 1.5
+scale_amount_max = 4.0
+color_ramp = SubResource("Gradient_dustfade")

@@ -1,0 +1,23 @@
+[gd_resource type="ShaderMaterial" load_steps=4 format=3]
+
+[ext_resource type="Shader" path="res://Shaders/CardDissolve.gdshader" id="1_carddissolve"]
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_carddissolve"]
+frequency = 0.05
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_carddissolve"]
+width = 256
+height = 256
+seamless = true
+noise = SubResource("FastNoiseLite_carddissolve")
+
+[resource]
+shader = ExtResource("1_carddissolve")
+shader_parameter/progress = 0.0
+shader_parameter/edge_roughness = 0.35
+shader_parameter/crumbling_band = 0.05
+shader_parameter/crumbling_color = Color(0.88, 0.9, 0.97, 1)
+shader_parameter/dim_to = 0.2
+shader_parameter/card_height = 280.0
+shader_parameter/noise_scale = 0.02
+shader_parameter/noise_texture = SubResource("NoiseTexture2D_carddissolve")

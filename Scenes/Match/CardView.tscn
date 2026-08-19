@@ -45,6 +45,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+use_parent_material = true
 color = Color(0.14, 0.24, 0.36, 1)
 
 [node name="ArtView" type="TextureRect" parent="."]
@@ -56,6 +57,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+use_parent_material = true
 expand_mode = 1
 stretch_mode = 6
 
@@ -67,6 +69,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+use_parent_material = true
 color = Color(0.11, 0.13, 0.22, 1)
 
 [node name="BackArtView" type="TextureRect" parent="."]
@@ -77,6 +80,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+use_parent_material = true
 texture = ExtResource("2_cardback")
 expand_mode = 1
 stretch_mode = 6
@@ -89,6 +93,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+use_parent_material = true
 theme_override_styles/panel = SubResource("StyleBoxFlat_typeborder")
 
 [node name="NameLabel" type="Label" parent="."]
@@ -102,6 +107,7 @@ offset_bottom = -14.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+use_parent_material = true
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 8
 theme_override_font_sizes/font_size = 28
@@ -118,4 +124,5 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+use_parent_material = true
 theme_override_styles/panel = SubResource("StyleBoxFlat_selection")

@@ -44,10 +44,10 @@ public partial class MatchScreenUI : Control
     private Label _roundLabel = null!;
     private CardView _myPlayedCardView = null!;
     private CardDropZone _mySubmitDropZone = null!;
-    private CpuParticles2D _myVanishParticles = null!;
+    private CardVanishEffect _myVanishEffect = null!;
     private Label _myActionLabel = null!;
     private CardView _opponentPlayedCardView = null!;
-    private CpuParticles2D _opponentVanishParticles = null!;
+    private CardVanishEffect _opponentVanishEffect = null!;
     private Label _opponentActionLabel = null!;
     private Label _outcomeLabel = null!;
     private Label _promptLabel = null!;
@@ -99,10 +99,10 @@ public partial class MatchScreenUI : Control
         _roundLabel = GetNode<Label>("Rows/MiddleRow/Field/RoundLabel");
         _myPlayedCardView = GetNode<CardView>("Rows/MiddleRow/Field/MyPlayedArea/MySubmitSlot/MyPlayedCardView");
         _mySubmitDropZone = GetNode<CardDropZone>("Rows/MiddleRow/Field/MyPlayedArea/MySubmitSlot/MySubmitDropZone");
-        _myVanishParticles = GetNode<CpuParticles2D>("Rows/MiddleRow/Field/MyPlayedArea/MySubmitSlot/MyVanishParticles");
+        _myVanishEffect = GetNode<CardVanishEffect>("Rows/MiddleRow/Field/MyPlayedArea/MySubmitSlot/MyVanishEffect");
         _myActionLabel = GetNode<Label>("Rows/MiddleRow/Field/MyPlayedArea/MyActionLabel");
         _opponentPlayedCardView = GetNode<CardView>("Rows/MiddleRow/Field/OpponentPlayedArea/OpponentSlot/OpponentPlayedCardView");
-        _opponentVanishParticles = GetNode<CpuParticles2D>("Rows/MiddleRow/Field/OpponentPlayedArea/OpponentSlot/OpponentVanishParticles");
+        _opponentVanishEffect = GetNode<CardVanishEffect>("Rows/MiddleRow/Field/OpponentPlayedArea/OpponentSlot/OpponentVanishEffect");
         _opponentActionLabel = GetNode<Label>("Rows/MiddleRow/Field/OpponentPlayedArea/OpponentActionLabel");
         _outcomeLabel = GetNode<Label>("Rows/MiddleRow/Field/OutcomeLabel");
         _promptLabel = GetNode<Label>("Rows/PromptStrip/PromptRow/PromptLabel");
@@ -258,6 +258,12 @@ public partial class MatchScreenUI : Control
         // rather than keeping a reference that is about to dangle.
         _dockedCardView = null;
 
+        // The field's card views are reused for this round. A dissolve still running from the
+        // last one would open the round with a bite out of the card, so it is given back
+        // whole first.
+        _myVanishEffect.Stop();
+        _opponentVanishEffect.Stop();
+
         _fieldClearTimer.Stop();
         _fieldCleared = false;
 
@@ -322,8 +328,8 @@ public partial class MatchScreenUI : Control
     {
         MatchView view = GameState.Instance!.View;
 
-        SendPlayedCardHome(view.MyCard, view.MyCardFate, _myPlayedCardView, _myDeckView, _myVanishParticles);
-        SendPlayedCardHome(view.OpponentCard, view.OpponentCardFate, _opponentPlayedCardView, _opponentDeckView, _opponentVanishParticles);
+        SendPlayedCardHome(view.MyCard, view.MyCardFate, _myPlayedCardView, _myDeckView, _myVanishEffect);
+        SendPlayedCardHome(view.OpponentCard, view.OpponentCardFate, _opponentPlayedCardView, _opponentDeckView, _opponentVanishEffect);
     }
 
     private static void SendPlayedCardHome(
@@ -331,7 +337,7 @@ public partial class MatchScreenUI : Control
         CardFate? fate,
         CardView playedCardView,
         DeckView deckView,
-        CpuParticles2D vanishParticles)
+        CardVanishEffect vanishEffect)
     {
         // Nothing to send anywhere from a field that is not currently showing this card — a
         // round that ended without one being revealed, or a clear that has already happened.
@@ -348,9 +354,9 @@ public partial class MatchScreenUI : Control
 
         if (fate == CardFate.Vanished)
         {
-            // Restart rather than Emitting = true: the burst is one-shot, and a card can
-            // vanish in the very next round on the same slot.
-            vanishParticles.Restart();
+            // The card stays on screen from here and takes itself off when it has finished
+            // coming apart — see RefreshField, which leaves it alone while that runs.
+            vanishEffect.Play(playedCardView);
         }
     }
 
@@ -526,8 +532,10 @@ public partial class MatchScreenUI : Control
         // them leaves the layout exactly where it was.
         if (_fieldCleared)
         {
-            _myPlayedCardView.Visible = false;
-            _opponentPlayedCardView.Visible = false;
+            // A card being taken apart is still on its way out and hides itself when it gets
+            // there; switching it off here would be cutting the effect off at frame one.
+            _myPlayedCardView.Visible = _myVanishEffect.IsPlaying;
+            _opponentPlayedCardView.Visible = _opponentVanishEffect.IsPlaying;
             _myActionLabel.Text = string.Empty;
             _opponentActionLabel.Text = string.Empty;
             _outcomeLabel.Text = string.Empty;

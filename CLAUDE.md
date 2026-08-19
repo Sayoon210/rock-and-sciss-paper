@@ -5,7 +5,9 @@ Design doc will be added separately later — this document covers tech stack / 
 
 ## Rules
 
-- C# only.
+- C# only, with one exception: shaders. `Shaders/*.gdshader` is Godot Shading Language,
+  which has no C# equivalent — a per-pixel effect cannot be expressed any other way.
+  Keep them to how something is drawn; no game rule ever lives in a shader.
 - All game rule validation (legal plays, shuffling, win/loss) happens on the host only.
 - Hidden information (opponent's hand, deck order) is sent only via targeted RPC to the peer allowed to see it.
 - Card/game data is defined as `Resource`-derived classes (e.g. `CardData : Resource`), one `.tres` file per instance.
