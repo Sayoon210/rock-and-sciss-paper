@@ -1,9 +1,10 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://Scripts/UI/MatchScreenUI.cs" id="1_matchscreenui"]
 [ext_resource type="PackedScene" path="res://Scenes/Match/HandView.tscn" id="2_handview"]
 [ext_resource type="PackedScene" path="res://Scenes/Match/CardView.tscn" id="3_cardview"]
 [ext_resource type="PackedScene" path="res://Scenes/Match/CardDropZone.tscn" id="4_carddropzone"]
+[ext_resource type="PackedScene" path="res://Scenes/Match/DeckView.tscn" id="5_deckview"]
 
 [node name="MatchScreen" type="Control"]
 layout_mode = 3
@@ -32,16 +33,17 @@ custom_minimum_size = Vector2(0, 280)
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="OpponentDeckLabel" type="Label" parent="Rows/OpponentArea"]
-custom_minimum_size = Vector2(220, 0)
+[node name="OpponentDeckView" parent="Rows/OpponentArea" instance=ExtResource("5_deckview")]
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "상대 덱"
-vertical_alignment = 1
 
 [node name="OpponentHandView" parent="Rows/OpponentArea" instance=ExtResource("2_handview")]
 layout_mode = 2
 size_flags_horizontal = 3
+
+[node name="OpponentHandCenteringSpacer" type="Control" parent="Rows/OpponentArea"]
+custom_minimum_size = Vector2(212, 0)
+layout_mode = 2
+mouse_filter = 2
 
 [node name="MiddleRow" type="HBoxContainer" parent="Rows"]
 layout_mode = 2
@@ -172,16 +174,17 @@ custom_minimum_size = Vector2(0, 280)
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="MyDeckLabel" type="Label" parent="Rows/MyArea"]
-custom_minimum_size = Vector2(220, 0)
+[node name="MyHandCenteringSpacer" type="Control" parent="Rows/MyArea"]
+custom_minimum_size = Vector2(212, 0)
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "내 덱"
-vertical_alignment = 1
+mouse_filter = 2
 
 [node name="MyHandView" parent="Rows/MyArea" instance=ExtResource("2_handview")]
 layout_mode = 2
 size_flags_horizontal = 3
+
+[node name="MyDeckView" parent="Rows/MyArea" instance=ExtResource("5_deckview")]
+layout_mode = 2
 
 [node name="MatchEndOverlay" type="PanelContainer" parent="."]
 visible = false

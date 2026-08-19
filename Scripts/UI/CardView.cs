@@ -74,6 +74,16 @@ public partial class CardView : Control
     /// out.</summary>
     public bool NeedsLayoutSnap { get; set; } = true;
 
+    /// <summary>How much longer this card should stay in the deck before it starts moving to
+    /// its place in the row. Another of HandView's layout hints parked on the card, for the
+    /// same reason NeedsLayoutSnap is: it is per-card, and the card is the only thing that
+    /// stays put while the row around it is rebuilt.
+    ///
+    /// It is what makes a 드로우 read as cards coming out of the deck one after another rather
+    /// than a whole hand appearing at once, and what holds a refilled hand back until the old
+    /// one has finished being drawn into the deck.</summary>
+    public float EntryDelaySeconds { get; set; }
+
     /// <summary>Whether the cursor is over this card. HandView reads it to lift the card clear
     /// of the row — the cards overlap, so a hovered one is otherwise partly buried and hard to
     /// read.</summary>

@@ -30,7 +30,7 @@ public partial class MatchScreenUI : Control
     /// straight away on RoundResolved would mean the reveal is never actually seen.</summary>
     private const double FIELD_CLEAR_DELAY_SECONDS = 1.5;
 
-    private Label _opponentDeckLabel = null!;
+    private DeckView _opponentDeckView = null!;
     private HandView _opponentHandView = null!;
     private Label _myScoreLabel = null!;
     private Label _opponentScoreLabel = null!;
@@ -46,7 +46,7 @@ public partial class MatchScreenUI : Control
     private Label _promptLabel = null!;
     private Button _confirmButton = null!;
     private HBoxContainer _targetPaletteRow = null!;
-    private Label _myDeckLabel = null!;
+    private DeckView _myDeckView = null!;
     private HandView _myHandView = null!;
     private PanelContainer _matchEndOverlay = null!;
     private Label _matchEndResultLabel = null!;
@@ -74,7 +74,7 @@ public partial class MatchScreenUI : Control
 
     public override void _Ready()
     {
-        _opponentDeckLabel = GetNode<Label>("Rows/OpponentArea/OpponentDeckLabel");
+        _opponentDeckView = GetNode<DeckView>("Rows/OpponentArea/OpponentDeckView");
         _opponentHandView = GetNode<HandView>("Rows/OpponentArea/OpponentHandView");
         _myScoreLabel = GetNode<Label>("Rows/MiddleRow/ScoreBoard/MyScoreLabel");
         _myScorePipRow = GetNode<HBoxContainer>("Rows/MiddleRow/ScoreBoard/MyScorePipRow");
@@ -90,7 +90,7 @@ public partial class MatchScreenUI : Control
         _promptLabel = GetNode<Label>("Rows/PromptStrip/PromptRow/PromptLabel");
         _confirmButton = GetNode<Button>("Rows/PromptStrip/PromptRow/ConfirmButton");
         _targetPaletteRow = GetNode<HBoxContainer>("Rows/PromptStrip/PromptRow/TargetPaletteRow");
-        _myDeckLabel = GetNode<Label>("Rows/MyArea/MyDeckLabel");
+        _myDeckView = GetNode<DeckView>("Rows/MyArea/MyDeckView");
         _myHandView = GetNode<HandView>("Rows/MyArea/MyHandView");
         _matchEndOverlay = GetNode<PanelContainer>("MatchEndOverlay");
         _matchEndResultLabel = GetNode<Label>("MatchEndOverlay/Center/Box/ResultLabel");
@@ -102,6 +102,12 @@ public partial class MatchScreenUI : Control
         _fieldClearTimer.WaitTime = FIELD_CLEAR_DELAY_SECONDS;
         _fieldClearTimer.Timeout += OnFieldClearTimeout;
         AddChild(_fieldClearTimer);
+
+        // Each row is told which 덱 its cards belong to, and animates 드로우 out of it
+        // and 교체/리셋 back into it from there. Wired here rather than found by either
+        // node, because how this screen is laid out is this script's business alone.
+        _myHandView.SetDeckSource(_myDeckView);
+        _opponentHandView.SetDeckSource(_opponentDeckView);
 
         BuildScorePips(_myScorePipRow, _myScorePips);
         BuildScorePips(_opponentScorePipRow, _opponentScorePips);
@@ -356,7 +362,7 @@ public partial class MatchScreenUI : Control
     {
         MatchView view = GameState.Instance!.View;
 
-        _opponentDeckLabel.Text = $"상대 덱 {view.OpponentDeckCount}";
+        _opponentDeckView.ShowCount(view.OpponentDeckCount);
         _opponentHandView.ShowFaceDownCards(view.OpponentHandCount);
     }
 
@@ -566,7 +572,7 @@ public partial class MatchScreenUI : Control
     {
         MatchView view = GameState.Instance!.View;
 
-        _myDeckLabel.Text = $"내 덱 {view.MyDeckCount}";
+        _myDeckView.ShowCount(view.MyDeckCount);
         _myHandView.ShowFaceUpHand(view.MyHand);
     }
 

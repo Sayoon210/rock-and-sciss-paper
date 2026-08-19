@@ -1,0 +1,62 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Scripts/UI/DeckView.cs" id="1_deckview"]
+[ext_resource type="PackedScene" path="res://Scenes/Match/CardView.tscn" id="2_cardview"]
+
+[node name="DeckView" type="Control"]
+custom_minimum_size = Vector2(212, 280)
+layout_mode = 3
+anchors_preset = 0
+offset_right = 212.0
+offset_bottom = 280.0
+mouse_filter = 2
+script = ExtResource("1_deckview")
+
+[node name="Stack" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="BackCard3" parent="Stack" instance=ExtResource("2_cardview")]
+layout_mode = 1
+offset_left = 12.0
+offset_top = 12.0
+offset_right = 212.0
+offset_bottom = 292.0
+mouse_filter = 2
+
+[node name="BackCard2" parent="Stack" instance=ExtResource("2_cardview")]
+layout_mode = 1
+offset_left = 6.0
+offset_top = 6.0
+offset_right = 206.0
+offset_bottom = 286.0
+mouse_filter = 2
+
+[node name="TopCard" parent="Stack" instance=ExtResource("2_cardview")]
+layout_mode = 1
+offset_right = 200.0
+offset_bottom = 280.0
+mouse_filter = 2
+
+[node name="CountLabel" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_right = -8.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 8
+theme_override_font_sizes/font_size = 28
+text = "덱"
+horizontal_alignment = 1
+vertical_alignment = 2

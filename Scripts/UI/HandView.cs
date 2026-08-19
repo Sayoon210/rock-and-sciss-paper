@@ -50,6 +50,11 @@ public partial class HandView : Control
     // easing carries the card up and back down again.
     private const float HOVER_LIFT = 32f;
 
+    /// <summary>How long each successive card drawn in the same refresh waits before it leaves
+    /// the deck. A whole 멀리건 arriving at once is one blob of six cards; a stagger this small
+    /// is the difference between that and cards being dealt.</summary>
+    private const float ENTRY_STAGGER_SECONDS = 0.08f;
+
     /// <summary>Fires whenever the selection changes in either selection mode, so the owner
     /// can update a count or enable a confirm button without polling every frame.</summary>
     [Signal] public delegate void SelectionChangedEventHandler();
@@ -63,9 +68,22 @@ public partial class HandView : Control
     private readonly List<CardView> _selectedForSwap = new List<CardView>();
     private CardView? _selectedForTransform;
 
+    // Where this row's cards come from and go back to. Null until the owner supplies one, in
+    // which case cards appear in and vanish from the row exactly as they did before there was
+    // a deck on screen at all.
+    private DeckView? _deckView;
+
     public override void _Ready()
     {
         _cardViewScene = GD.Load<PackedScene>(CARD_VIEW_SCENE_PATH);
+    }
+
+    /// <summary>Point this row at the 덱 its cards belong to. Supplied by the owner rather than
+    /// looked up here, like everything else about this row — MatchScreenUI is the one script in
+    /// the scene that knows how the screen is put together.</summary>
+    public void SetDeckSource(DeckView deckView)
+    {
+        _deckView = deckView;
     }
 
     /// <summary>Eases every card toward where it currently belongs. Run every frame rather
@@ -114,15 +132,54 @@ public partial class HandView : Control
                 }
             }
 
+            // A new card starts on the deck and eases out of it, which is the whole of the
+            // 드로우 animation — the easing every other card is already under does the moving.
+            // Done here rather than when the card was created because this method is the thing
+            // that refuses to run until the row has a real width, so reaching it is also what
+            // guarantees the deck has been laid out and has a real position to start from.
             if (cardView.NeedsLayoutSnap)
             {
                 cardView.NeedsLayoutSnap = false;
-                cardView.Position = target;
+                cardView.Position = DeckLocalPosition() ?? target;
+            }
+
+            // Still in the deck. Its place in the row is already being held open above, so the
+            // rest of the hand spreads first and the card then slides into the gap.
+            if (cardView.EntryDelaySeconds > 0f)
+            {
+                cardView.EntryDelaySeconds -= (float)delta;
                 continue;
             }
 
             cardView.Position = cardView.Position.Lerp(target, weight);
         }
+    }
+
+    /// <summary>Where the top of the deck is in this row's own coordinates, or null when no
+    /// deck was supplied. The deck is a sibling of this row rather than a child, so the
+    /// conversion goes through screen coordinates; it is read every frame rather than cached
+    /// because a window resize moves both of them.</summary>
+    private Vector2? DeckLocalPosition()
+    {
+        if (_deckView == null)
+        {
+            return null;
+        }
+
+        return _deckView.TopCardGlobalPosition - GlobalPosition;
+    }
+
+    /// <summary>When the nth card drawn in this refresh should leave the deck. Zero when there
+    /// is no deck to leave from — holding the card back would then just be a pause with nothing
+    /// happening in it.</summary>
+    private float EntryDelayFor(int indexAmongDrawnCards)
+    {
+        if (_deckView == null)
+        {
+            return 0f;
+        }
+
+        return ENTRY_STAGGER_SECONDS * indexAmongDrawnCards;
     }
 
     /// <summary>Where the nth card of a row of `count` sits. Centred, and overlapping by a
@@ -206,10 +263,13 @@ public partial class HandView : Control
             RemoveSlot(slot);
         }
 
+        int drawnIndex = 0;
         foreach (CardName card in arrived)
         {
             CardView cardView = AddSlot();
             cardView.ShowFaceUp(card);
+            cardView.EntryDelaySeconds = EntryDelayFor(drawnIndex);
+            drawnIndex++;
             cardView.Clicked += () => { OnCardClicked(cardView); };
         }
 
@@ -225,10 +285,13 @@ public partial class HandView : Control
             RemoveSlot(_slots.Count - 1);
         }
 
+        int drawnIndex = 0;
         while (_slots.Count < count)
         {
             CardView cardView = AddSlot();
             cardView.ShowFaceDown();
+            cardView.EntryDelaySeconds = EntryDelayFor(drawnIndex);
+            drawnIndex++;
         }
     }
 
