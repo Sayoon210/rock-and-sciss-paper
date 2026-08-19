@@ -76,6 +76,13 @@ public partial class MatchScreenUI : Control
     private double _phaseSecondsRemaining;
     private double _phaseTotalSeconds;
 
+    // What the 변화 this side has sent turns its card into, or null when none is outstanding.
+    // Held because the hand that comes back says only what is in it, not that one card became
+    // another — and those two look identical as lists of card names. Which card is changing is
+    // HandView's to remember, since only it can tell two copies of the same card apart.
+    // Cleared either by the hand arriving or by a rejection.
+    private CardName? _pendingTransformTarget;
+
     // The card currently sitting on the submit zone, while the host has not answered yet.
     // Kept only so a rejected submission can be sent back to the hand — nothing else moves
     // it off the zone.
@@ -245,6 +252,7 @@ public partial class MatchScreenUI : Control
         _fieldClearTimer.Stop();
         _fieldCleared = true;
         _dockedCardView = null;
+        _pendingTransformTarget = null;
 
         RefreshEverything();
     }
@@ -391,6 +399,7 @@ public partial class MatchScreenUI : Control
         }
 
         _dockedCardView = null;
+        _pendingTransformTarget = null;
         _promptLabel.Text = REJECTION_MESSAGE;
     }
 
@@ -438,6 +447,13 @@ public partial class MatchScreenUI : Control
             // guarded rather than trusted, per the project's own rule about client input.
             return;
         }
+
+        // Both noted before the request goes out, and in this order: on the host, RequestChoice
+        // resolves the whole round in-process and the answer comes back inside the call below,
+        // so anything set afterwards would be set too late. Optimistic in the same way
+        // OnConfirmSwapPressed is — a rejection clears it again.
+        _pendingTransformTarget = target;
+        _myHandView.RememberTransformSource();
 
         GameState.Instance!.RequestChoice(CardChoice.Transforming(source.Value, target));
 
@@ -774,6 +790,17 @@ public partial class MatchScreenUI : Control
         MatchView view = GameState.Instance!.View;
 
         _myDeckView.ShowCount(view.MyDeckCount);
+
+        // Played before the new 패 reaches the row, so the row is already holding the
+        // transformed card when the name matching in ShowFaceUpHand runs — otherwise 변화
+        // looks like 교체: the old card flying off to the 덱 and the new one dealt out of it,
+        // neither of which happened.
+        if (_pendingTransformTarget.HasValue)
+        {
+            _myHandView.TransformRememberedCardInto(_pendingTransformTarget.Value);
+            _pendingTransformTarget = null;
+        }
+
         _myHandView.ShowFaceUpHand(view.MyHand);
     }
 

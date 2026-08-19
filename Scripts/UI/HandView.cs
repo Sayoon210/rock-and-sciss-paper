@@ -35,6 +35,7 @@ public enum HandSelectionMode
 public partial class HandView : Control
 {
     private const string CARD_VIEW_SCENE_PATH = "res://Scenes/Match/CardView.tscn";
+    private const string CARD_VANISH_EFFECT_SCENE_PATH = "res://Scenes/Match/CardVanishEffect.tscn";
 
     // Cards overlap by this much when the row is full enough to need it; a hand that fits
     // keeps them at this spacing rather than spreading across the whole width.
@@ -65,13 +66,21 @@ public partial class HandView : Control
     [Signal] public delegate void SelectionChangedEventHandler();
 
     private PackedScene _cardViewScene = null!;
+    private PackedScene _cardVanishEffectScene = null!;
 
-    // Parallel to this node's children, in the same order.
+    // The row, in order. Not every child is in here — a card being taken apart by 변화 stays a
+    // child so it can still be drawn, but is out of this list so nothing lays it out.
     private readonly List<CardView> _slots = new List<CardView>();
 
     private HandSelectionMode _selectionMode = HandSelectionMode.Play;
     private readonly List<CardView> _selectedForSwap = new List<CardView>();
     private CardView? _selectedForTransform;
+
+    // The exact card 변화 was asked about, kept from the moment the choice is sent until the
+    // new 패 comes back. A node and not a CardName: the deck holds three of each 일반카드 and
+    // four 더미, so a 패 nearly always has duplicates, and looking the card up by name again
+    // would find whichever copy sits first in the row instead of the one that was clicked.
+    private CardView? _cardBeingTransformed;
 
     // Where this row's cards come from and go back to. Null until the owner supplies one, in
     // which case cards appear in and vanish from the row exactly as they did before there was
@@ -81,6 +90,73 @@ public partial class HandView : Control
     public override void _Ready()
     {
         _cardViewScene = GD.Load<PackedScene>(CARD_VIEW_SCENE_PATH);
+        _cardVanishEffectScene = GD.Load<PackedScene>(CARD_VANISH_EFFECT_SCENE_PATH);
+    }
+
+    /// <summary>Take note of which card 변화 is being asked about, while the selection that
+    /// names it still exists. The answer only comes back from the host after the selection has
+    /// been cleared, so without this there is nothing left pointing at the card the player
+    /// actually clicked — only its name, which several cards in the row may share.</summary>
+    public void RememberTransformSource()
+    {
+        _cardBeingTransformed = _selectedForTransform;
+    }
+
+    /// <summary>변화: show the remembered card becoming another one, in place. The card that
+    /// arrives is put down first, in the slot the old one was holding, and the old one is left
+    /// lying on top of it to come apart — so what the player sees is the old card crumbling off
+    /// the new one, rather than a card leaving and an unrelated one turning up.
+    ///
+    /// Call it before handing the new 패 to ShowFaceUpHand. By then the old card is out of the
+    /// row and the new one already holds the slot, so the name matching there keeps it — which
+    /// is also what stops the old card being flown to the 덱 and the new one dealt out of it.
+    /// 변화 never touches the deck, so that is the wrong picture as well as the wrong feel.</summary>
+    public void TransformRememberedCardInto(CardName target)
+    {
+        CardView? remembered = _cardBeingTransformed;
+        _cardBeingTransformed = null;
+
+        // Nothing remembered, or the row was rebuilt from under it before the answer arrived.
+        if (remembered == null || !IsInstanceValid(remembered))
+        {
+            return;
+        }
+
+        int slot = _slots.IndexOf(remembered);
+        if (slot < 0)
+        {
+            return;
+        }
+
+        CardView oldCard = _slots[slot];
+        Vector2 slotPosition = oldCard.Position;
+        DetachSlot(slot);
+
+        // Into the same place in the row, not onto the end of it: the transformed card has not
+        // moved, and appending would send it sliding across to the far side.
+        CardView newCard = AddSlotAt(slot);
+        newCard.ShowFaceUp(target);
+        newCard.Clicked += () => { OnCardClicked(newCard); };
+        newCard.NeedsLayoutSnap = false;
+        newCard.Position = slotPosition;
+
+        // Hung on the new card rather than left lying beside it. The row re-centres itself the
+        // moment the round's draw lands — every card slides across — and a card that has been
+        // taken out of the layout would stay behind while the card replacing it walked off,
+        // which is exactly what it looked like. As a child it is carried along for free, and a
+        // node is drawn after its parent, so it also covers the card it is coming off.
+        RemoveChild(oldCard);
+        newCard.AddChild(oldCard);
+        oldCard.Position = Vector2.Zero;
+
+        // The new card takes the child position its slot has, because the row's cards overlap
+        // and it is child order that decides which of two neighbours is on top. Appended, the
+        // transformed card would be drawn over both and appear to jump forward in the fan.
+        MoveChild(newCard, slot);
+
+        CardVanishEffect effect = _cardVanishEffectScene.Instantiate<CardVanishEffect>();
+        AddChild(effect);
+        effect.PlayAndFreeAfterwards(oldCard);
     }
 
     /// <summary>Point this row at the 덱 its cards belong to. Supplied by the owner rather than
@@ -536,12 +612,17 @@ public partial class HandView : Control
 
     private CardView AddSlot()
     {
+        return AddSlotAt(_slots.Count);
+    }
+
+    private CardView AddSlotAt(int slot)
+    {
         CardView cardView = _cardViewScene.Instantiate<CardView>();
 
         // Added before it is told what to show: _Ready is what wires up its own children,
         // and AddChild is what runs it.
         AddChild(cardView);
-        _slots.Add(cardView);
+        _slots.Insert(slot, cardView);
         return cardView;
     }
 
@@ -570,22 +651,35 @@ public partial class HandView : Control
         DiscardSlot(slot);
     }
 
-    /// <summary>Drop a slot and free the node in it, with no animation of any kind — the
-    /// disposal half of RemoveSlot, shared with ReturnWholeHandToDeck, which decides for
-    /// itself where the card is going first.</summary>
-    private void DiscardSlot(int slot)
+    /// <summary>Take a card out of the row without disposing of it, for a caller that has its
+    /// own plans for the node. It stops being laid out, stops answering the mouse, and is out
+    /// of both selection sets — everything DiscardSlot does except the disposal.</summary>
+    private CardView DetachSlot(int slot)
     {
         CardView cardView = _slots[slot];
         _slots.RemoveAt(slot);
 
-        // A card leaving the row (played, swapped away, or simply not this round's hand any
-        // more) must not linger in either selection set — nothing else will remove it once
-        // the node itself is gone.
+        // A card leaving the row (played, swapped away, transformed, or simply not this
+        // round's hand any more) must not linger in either selection set — nothing else will
+        // remove it once the node is out of the row.
         _selectedForSwap.Remove(cardView);
         if (_selectedForTransform == cardView)
         {
             _selectedForTransform = null;
         }
+
+        cardView.CanBeDragged = false;
+        cardView.MouseFilter = MouseFilterEnum.Ignore;
+
+        return cardView;
+    }
+
+    /// <summary>Drop a slot and free the node in it, with no animation of any kind — the
+    /// disposal half of RemoveSlot, shared with ReturnWholeHandToDeck, which decides for
+    /// itself where the card is going first.</summary>
+    private void DiscardSlot(int slot)
+    {
+        CardView cardView = DetachSlot(slot);
 
         // Removed as well as freed: QueueFree only takes effect at the end of the frame, so a
         // row rebuilt in the same frame would briefly lay out the leaving card too.
