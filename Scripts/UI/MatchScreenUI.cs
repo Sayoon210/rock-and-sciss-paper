@@ -18,7 +18,7 @@ public partial class MatchScreenUI : Control
     /// <summary>What a rejected request says on screen. RequestRejected carries the host's
     /// own exception text, which names internal rules and English card identifiers — useful
     /// in the log, not on a player's screen.</summary>
-    private const string REJECTION_MESSAGE = "낼 수 없는 카드입니다.";
+    private const string REJECTION_MESSAGE = "You cannot play that card.";
 
     private const string TITLE_SCENE_PATH = "res://Scenes/Screens/TitleScreen.tscn";
 
@@ -444,7 +444,7 @@ public partial class MatchScreenUI : Control
         // clear.
         _myHandView.SetSelectionModeNone();
         _confirmButton.Visible = false;
-        _promptLabel.Text = "선택을 보냈습니다...";
+        _promptLabel.Text = "Choice sent...";
     }
 
     private void OnConfirmTransformTarget(CardName target)
@@ -468,14 +468,14 @@ public partial class MatchScreenUI : Control
 
         _myHandView.SetSelectionModeNone();
         SetTargetPaletteVisible(false);
-        _promptLabel.Text = "선택을 보냈습니다...";
+        _promptLabel.Text = "Choice sent...";
     }
 
     private void OnMatchEnded(bool didIWin)
     {
         RefreshScoreBoard();
 
-        _matchEndResultLabel.Text = didIWin ? "매치 승리" : "매치 패배";
+        _matchEndResultLabel.Text = didIWin ? "You win the match" : "You lose the match";
 
         // Rematch is host-initiated only, the same asymmetry ConnectionScreenUI already uses
         // for 매치 시작 — a client has nothing to press here but a status line.
@@ -483,7 +483,7 @@ public partial class MatchScreenUI : Control
         _rematchButton.Visible = isHost;
         _rematchButton.Disabled = false;
         _rematchStatusLabel.Visible = !isHost;
-        _rematchStatusLabel.Text = "호스트가 재대결을 시작하길 기다리는 중...";
+        _rematchStatusLabel.Text = "Waiting for the host to start a rematch...";
 
         _matchEndOverlay.Visible = true;
     }
@@ -492,7 +492,7 @@ public partial class MatchScreenUI : Control
     {
         // Reconnection is out of scope (Scripts/Autoload/GameState.cs), so a rematch here has
         // nothing to reconnect to — only the door back to the title screen makes sense.
-        _matchEndResultLabel.Text = "상대가 나갔습니다.";
+        _matchEndResultLabel.Text = "Your opponent left.";
         _rematchButton.Visible = false;
         _rematchStatusLabel.Visible = false;
         _matchEndOverlay.Visible = true;
@@ -538,8 +538,8 @@ public partial class MatchScreenUI : Control
     {
         MatchView view = GameState.Instance!.View;
 
-        _myScoreLabel.Text = $"나 {view.MyScore} / {MatchSession.WINS_NEEDED_FOR_MATCH}";
-        _opponentScoreLabel.Text = $"상대 {view.OpponentScore} / {MatchSession.WINS_NEEDED_FOR_MATCH}";
+        _myScoreLabel.Text = string.Format(Tr("Me {0} / {1}"), view.MyScore, MatchSession.WINS_NEEDED_FOR_MATCH);
+        _opponentScoreLabel.Text = string.Format(Tr("Opponent {0} / {1}"), view.OpponentScore, MatchSession.WINS_NEEDED_FOR_MATCH);
 
         PaintScorePips(_myScorePips, view.MyScore, new Color(0.36f, 0.72f, 0.46f));
         PaintScorePips(_opponentScorePips, view.OpponentScore, new Color(0.85f, 0.42f, 0.40f));
@@ -549,7 +549,7 @@ public partial class MatchScreenUI : Control
     {
         MatchView view = GameState.Instance!.View;
 
-        _roundLabel.Text = $"{view.RoundNumber} 라운드";
+        _roundLabel.Text = string.Format(Tr("Round {0}"), view.RoundNumber);
 
         // Between rounds the field is empty and stays empty: View still holds the last round's
         // cards (nothing clears them there), so this is what keeps an unrelated refresh from
@@ -603,12 +603,12 @@ public partial class MatchScreenUI : Control
     {
         if (transformApplied)
         {
-            return "변화 적용";
+            return "Transformed";
         }
 
         if (swappedCardCount > 0)
         {
-            return $"교체 {swappedCardCount}장";
+            return string.Format(TranslationServer.Translate("Swapped {0}"), swappedCardCount);
         }
 
         return string.Empty;
@@ -644,7 +644,7 @@ public partial class MatchScreenUI : Control
 
         if (view.OpponentIsChoosing)
         {
-            _promptLabel.Text = "상대가 선택하는 중입니다...";
+            _promptLabel.Text = "Your opponent is choosing...";
             return;
         }
 
@@ -712,8 +712,10 @@ public partial class MatchScreenUI : Control
         SetTargetPaletteVisible(false);
 
         int selectedCount = _myHandView.SwapSelection.Count;
-        _promptLabel.Text =
-            $"교체 — 덱에 넣을 카드를 클릭하세요 ({selectedCount}/{SwapEffect.MAX_SWAPPED_CARDS}장 선택됨)";
+        _promptLabel.Text = string.Format(
+            Tr("Swap — click the cards to put back in your deck ({0}/{1} selected)"),
+            selectedCount,
+            SwapEffect.MAX_SWAPPED_CARDS);
     }
 
     private void ShowTransformPrompt()
@@ -727,11 +729,13 @@ public partial class MatchScreenUI : Control
 
         if (!source.HasValue)
         {
-            _promptLabel.Text = "변화 — 바꿀 카드를 패에서 클릭하세요";
+            _promptLabel.Text = "Transform — click a card in your hand to change";
         }
         else
         {
-            _promptLabel.Text = $"변화 — {DisplayNameOf(source.Value)}을(를) 무엇으로 바꿀까요?";
+            _promptLabel.Text = string.Format(
+                Tr("Transform — change {0} into what?"),
+                Tr(DisplayNameOf(source.Value)));
         }
     }
 
@@ -845,20 +849,20 @@ public partial class MatchScreenUI : Control
         if (view.LastRoundOutcome == null)
         {
             // 특수/더미/조커가 낀 라운드는 승패 자체가 없다 (DESIGN.md).
-            return "승패 없음";
+            return "No result";
         }
 
         if (view.LastRoundOutcome == RoundOutcome.MyWin)
         {
-            return "승";
+            return "Win";
         }
 
         if (view.LastRoundOutcome == RoundOutcome.OpponentWin)
         {
-            return "패";
+            return "Loss";
         }
 
-        return "무승부";
+        return "Tie";
     }
 
     private static string DisplayNameOf(CardName card)

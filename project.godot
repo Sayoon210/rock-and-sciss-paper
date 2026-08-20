@@ -37,6 +37,11 @@ project/assembly_name="RockAndScissPaper"
 
 theme/custom="res://Assets/Fonts/DefaultTheme.tres"
 
+[internationalization]
+
+locale/translations=PackedStringArray("res://Data/Translations/strings.ko.translation")
+locale/fallback="en"
+
 [physics]
 
 3d/physics_engine="Jolt Physics"

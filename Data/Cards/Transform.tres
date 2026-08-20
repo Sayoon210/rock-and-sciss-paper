@@ -5,5 +5,5 @@
 [resource]
 script = ExtResource("1_transform")
 CardName = 7
-DisplayName = "변화"
-Description = "패에 있는 일반 카드 또는 더미 카드 1장을 원하는 카드(일반 카드 또는 더미 카드)로 바꾼다. 효과 발동 후 소멸한다."
+DisplayName = "Transform"
+Description = "Change one normal or dummy card in your hand into any normal or dummy card. Vanishes after use."

@@ -74,11 +74,11 @@ theme_override_constants/separation = 8
 [node name="ScoreHeadingLabel" type="Label" parent="Rows/MiddleRow/ScoreBoard"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "10선승"
+text = "First to 10"
 
 [node name="MyScoreLabel" type="Label" parent="Rows/MiddleRow/ScoreBoard"]
 layout_mode = 2
-text = "나"
+text = "Me"
 
 [node name="MyScorePipRow" type="HBoxContainer" parent="Rows/MiddleRow/ScoreBoard"]
 layout_mode = 2
@@ -86,7 +86,7 @@ theme_override_constants/separation = 6
 
 [node name="OpponentScoreLabel" type="Label" parent="Rows/MiddleRow/ScoreBoard"]
 layout_mode = 2
-text = "상대"
+text = "Opponent"
 
 [node name="OpponentScorePipRow" type="HBoxContainer" parent="Rows/MiddleRow/ScoreBoard"]
 layout_mode = 2
@@ -102,7 +102,7 @@ theme_override_constants/separation = 24
 custom_minimum_size = Vector2(180, 0)
 layout_mode = 2
 theme_override_font_sizes/font_size = 28
-text = "라운드"
+text = "Round"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -191,7 +191,7 @@ show_percentage = false
 [node name="ConfirmButton" type="Button" parent="Rows/PromptStrip/PromptRow"]
 visible = false
 layout_mode = 2
-text = "확인"
+text = "Confirm"
 
 [node name="TargetPaletteRow" type="HBoxContainer" parent="Rows/PromptStrip/PromptRow"]
 layout_mode = 2
@@ -238,7 +238,7 @@ horizontal_alignment = 1
 [node name="RematchButton" type="Button" parent="MatchEndOverlay/Center/Box"]
 custom_minimum_size = Vector2(300, 56)
 layout_mode = 2
-text = "재대결"
+text = "Rematch"
 
 [node name="RematchStatusLabel" type="Label" parent="MatchEndOverlay/Center/Box"]
 visible = false
@@ -248,4 +248,4 @@ horizontal_alignment = 1
 [node name="ReturnToTitleButton" type="Button" parent="MatchEndOverlay/Center/Box"]
 custom_minimum_size = Vector2(300, 44)
 layout_mode = 2
-text = "타이틀로"
+text = "Title Screen"

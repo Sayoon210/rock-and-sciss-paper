@@ -32,14 +32,14 @@ horizontal_alignment = 1
 [node name="MatchButton" type="Button" parent="CenterContainer/Buttons" unique_id=1116291792]
 custom_minimum_size = Vector2(300, 60)
 layout_mode = 2
-text = "대전"
+text = "Play"
 
 [node name="QuitButton" type="Button" parent="CenterContainer/Buttons" unique_id=331504956]
 custom_minimum_size = Vector2(300, 60)
 layout_mode = 2
-text = "종료"
+text = "Quit"
 
 [node name="DebugHarnessButton" type="Button" parent="CenterContainer/Buttons" unique_id=1518153499]
 custom_minimum_size = Vector2(300, 40)
 layout_mode = 2
-text = "디버그 하네스"
+text = "Debug Harness"

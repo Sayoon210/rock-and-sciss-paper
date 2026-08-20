@@ -5,5 +5,5 @@
 [resource]
 script = ExtResource("1_joker")
 CardName = 4
-DisplayName = "조커"
-Description = "다른 카드 효과보다 먼저 처리되는 최우선 소멸 카드. 상대가 이번 라운드에 제출한 카드를 소멸시키고 그 효과 발동을 막는다. 조커 자신도 사용 후 함께 소멸한다."
+DisplayName = "Joker"
+Description = "Resolves before every other card. Vanishes the card your opponent played this round and blocks its effect. Vanishes itself as well."

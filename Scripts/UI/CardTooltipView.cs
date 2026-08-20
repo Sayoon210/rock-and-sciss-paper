@@ -61,16 +61,16 @@ public partial class CardTooltipView : PanelContainer
         switch (cardType)
         {
             case CardType.Normal:
-                return "일반카드";
+                return "Normal Card";
 
             case CardType.Dummy:
-                return "더미카드";
+                return "Dummy Card";
 
             case CardType.Joker:
-                return "조커카드";
+                return "Joker Card";
 
             case CardType.Special:
-                return "특수카드";
+                return "Special Card";
 
             default:
                 return string.Empty;

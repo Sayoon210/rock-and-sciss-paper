@@ -6,6 +6,6 @@
 [resource]
 script = ExtResource("1_scissors")
 CardName = 2
-DisplayName = "가위"
-Description = "보를 이기는 일반 카드. 승패와 관계없이 사용 후 덱 바닥으로 복귀한다."
+DisplayName = "Scissors"
+Description = "A normal card. Beats Paper. Returns to the bottom of your deck after use, win or lose."
 CardArt = ExtResource("2_art")

@@ -12,6 +12,43 @@ Subfolders: `Autoload/` (global services, see [its own CLAUDE.md](Autoload/CLAUD
 
 It does not decide whether a play is legal, who won a round, or what a card does. If a script here is answering one of those, the logic belongs in `GameLogic` instead.
 
+## Text the player reads
+
+**English in source, Korean as a translation.** Godot picks the locale from the player's OS
+(`internationalization/locale/fallback="en"`), so a Korean player gets Korean and everyone else
+gets the English that is already sitting in the file. There is no language switcher and none is
+needed.
+
+`Data/Translations/strings.csv` is the whole translation, two columns — `keys,ko`. **The key is
+the English string itself.** There is no `en` column and there should not be one: with no entry
+for the current locale, `tr()` returns the key unchanged, which is already the text to show.
+
+Adding or changing a string means three things, and skipping the third is silent:
+
+1. Write the English in the source file — the `.tscn`, the card's `.tres`, or the literal.
+2. Add a row to the CSV.
+3. Re-import, so Godot regenerates `strings.ko.translation` beside the CSV:
+   `godot --headless --path . --import`. That file is committed; `project.godot` names it.
+
+### Where the translation actually happens
+
+`Node.AutoTranslateMode` is `Always` on the root and inherited everywhere below, so a `Label` or
+`Button` translates its own text — whether the text was authored in the scene or assigned from
+code. Two rules follow:
+
+- **A plain string: just assign it.** `_promptLabel.Text = "Choice sent...";` is already
+  translated. Wrapping it in `Tr()` does nothing except make it look like the ones that need it.
+- **A string with a value in it: translate the template, then fill it.**
+  `string.Format(Tr("Round {0}"), n)`. The composed string is not a key, so leaving it to
+  auto-translation means it is never looked up. In a `static` method use
+  `TranslationServer.Translate(...)`, which is what `Tr()`'s own docs point to.
+
+### The one hazard of English-as-key
+
+Two strings that mean different things must not be the same English word, because they would
+share one CSV row and one Korean translation. This is not hypothetical: 무승부 (a tied round) and
+드로우 (the card) both wanted "Draw". The round outcome is **"Tie"** for exactly that reason.
+
 ## Input
 
 - Input handling lives in the node that owns it — `CardController` for a card, the relevant `Control` for a button. There is no central `InputManager`; Godot's `InputMap` and node-tree input routing already do that job.

@@ -71,7 +71,7 @@ public partial class DeckView : Control
 
     public void ShowCount(int count)
     {
-        _countLabel.Text = $"덱 {count}";
+        _countLabel.Text = string.Format(Tr("Deck {0}"), count);
 
         // An empty deck with a full stack of backs still drawn on it would be showing the
         // count and the picture as two different numbers. Made transparent rather than

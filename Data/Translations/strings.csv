@@ -1,0 +1,62 @@
+keys,ko
+Rock,바위
+"A normal card. Beats Scissors. Returns to the bottom of your deck after use, win or lose.",가위를 이기는 일반 카드. 승패와 관계없이 사용 후 덱 바닥으로 복귀한다.
+Paper,보
+"A normal card. Beats Rock. Returns to the bottom of your deck after use, win or lose.",바위를 이기는 일반 카드. 승패와 관계없이 사용 후 덱 바닥으로 복귀한다.
+Scissors,가위
+"A normal card. Beats Paper. Returns to the bottom of your deck after use, win or lose.",보를 이기는 일반 카드. 승패와 관계없이 사용 후 덱 바닥으로 복귀한다.
+Dummy,더미
+Vanishes with no effect. A scouting card: it shows you what your opponent played this round without spending anything that matters.,"효과 없이 소멸하는 카드. 내 카드를 소모하지 않으면서 상대가 이번 라운드에 뭘 냈는지 확인하는 ""패 까기""용 카드."
+Joker,조커
+Resolves before every other card. Vanishes the card your opponent played this round and blocks its effect. Vanishes itself as well.,다른 카드 효과보다 먼저 처리되는 최우선 소멸 카드. 상대가 이번 라운드에 제출한 카드를 소멸시키고 그 효과 발동을 막는다. 조커 자신도 사용 후 함께 소멸한다.
+Reset,리셋
+Both players shuffle their hand into their deck and draw back up to the same number. The only card that reaches across the table. Vanishes after use.,"나와 상대 둘 다 패를 덱에 넣고 셔플한 뒤, 각자 원래 패 수만큼 다시 드로우한다. 유일하게 상대에게도 영향을 주는 카드. 효과 발동 후 소멸한다."
+Swap,교체
+"Shuffle up to 2 cards from your hand into your deck, then draw that many. Vanishes after use.","패에서 최대 2장까지 덱에 넣고 셔플한 뒤, 그만큼 다시 드로우한다. 효과 발동 후 소멸한다."
+Transform,변화
+Change one normal or dummy card in your hand into any normal or dummy card. Vanishes after use.,패에 있는 일반 카드 또는 더미 카드 1장을 원하는 카드(일반 카드 또는 더미 카드)로 바꾼다. 효과 발동 후 소멸한다.
+Draw,드로우
+Draw 2 cards. Vanishes after use.,카드 2장을 뽑는다. 효과 발동 후 소멸한다.
+Play,대전
+Quit,종료
+Debug Harness,디버그 하네스
+Connect,대전 연결
+Create Room,방 만들기
+Address,주소
+Join,참가
+Start Match,매치 시작
+Could not create the room.,방을 만들지 못했습니다.
+Waiting for an opponent...,상대를 기다리는 중...
+Could not start connecting.,접속을 시작하지 못했습니다.
+Connecting to {0}...,{0} 에 접속하는 중...
+Connected to your opponent.,상대와 연결되었습니다.
+Could not connect.,접속에 실패했습니다.
+The connection dropped.,연결이 끊겼습니다.
+First to 10,10선승
+Confirm,확인
+Rematch,재대결
+Title Screen,타이틀로
+Me {0} / {1},나 {0} / {1}
+Opponent {0} / {1},상대 {0} / {1}
+Round {0},{0} 라운드
+Deck {0},덱 {0}
+No result,승패 없음
+Win,승
+Loss,패
+Tie,무승부
+Transformed,변화 적용
+Swapped {0},교체 {0}장
+You cannot play that card.,낼 수 없는 카드입니다.
+Choice sent...,선택을 보냈습니다...
+Your opponent is choosing...,상대가 선택하는 중입니다...
+Swap — click the cards to put back in your deck ({0}/{1} selected),교체 — 덱에 넣을 카드를 클릭하세요 ({0}/{1}장 선택됨)
+Transform — click a card in your hand to change,변화 — 바꿀 카드를 패에서 클릭하세요
+Transform — change {0} into what?,변화 — {0}을(를) 무엇으로 바꿀까요?
+You win the match,매치 승리
+You lose the match,매치 패배
+Waiting for the host to start a rematch...,호스트가 재대결을 시작하길 기다리는 중...
+Your opponent left.,상대가 나갔습니다.
+Normal Card,일반카드
+Dummy Card,더미카드
+Joker Card,조커카드
+Special Card,특수카드

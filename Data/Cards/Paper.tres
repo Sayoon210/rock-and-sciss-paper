@@ -6,6 +6,6 @@
 [resource]
 script = ExtResource("1_paper")
 CardName = 1
-DisplayName = "보"
-Description = "바위를 이기는 일반 카드. 승패와 관계없이 사용 후 덱 바닥으로 복귀한다."
+DisplayName = "Paper"
+Description = "A normal card. Beats Rock. Returns to the bottom of your deck after use, win or lose."
 CardArt = ExtResource("2_art")

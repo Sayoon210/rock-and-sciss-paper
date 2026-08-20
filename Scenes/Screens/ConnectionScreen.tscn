@@ -26,13 +26,13 @@ theme_override_constants/separation = 18
 [node name="HeadingLabel" type="Label" parent="CenterContainer/Panel"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 36
-text = "대전 연결"
+text = "Connect"
 horizontal_alignment = 1
 
 [node name="CreateRoomButton" type="Button" parent="CenterContainer/Panel"]
 custom_minimum_size = Vector2(420, 54)
 layout_mode = 2
-text = "방 만들기"
+text = "Create Room"
 
 [node name="AddressRow" type="HBoxContainer" parent="CenterContainer/Panel"]
 layout_mode = 2
@@ -40,7 +40,7 @@ theme_override_constants/separation = 10
 
 [node name="AddressLabel" type="Label" parent="CenterContainer/Panel/AddressRow"]
 layout_mode = 2
-text = "주소"
+text = "Address"
 vertical_alignment = 1
 
 [node name="AddressField" type="LineEdit" parent="CenterContainer/Panel/AddressRow"]
@@ -52,13 +52,13 @@ text = "127.0.0.1"
 [node name="JoinButton" type="Button" parent="CenterContainer/Panel/AddressRow"]
 custom_minimum_size = Vector2(120, 54)
 layout_mode = 2
-text = "참가"
+text = "Join"
 
 [node name="StartMatchButton" type="Button" parent="CenterContainer/Panel"]
 custom_minimum_size = Vector2(420, 54)
 layout_mode = 2
 disabled = true
-text = "매치 시작"
+text = "Start Match"
 
 [node name="StatusLabel" type="Label" parent="CenterContainer/Panel"]
 custom_minimum_size = Vector2(420, 32)

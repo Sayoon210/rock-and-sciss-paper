@@ -66,13 +66,13 @@ public partial class ConnectionScreenUI : Control
         NetworkManager.Instance!.StartHost();
         if (Multiplayer.MultiplayerPeer == null)
         {
-            _statusLabel.Text = "방을 만들지 못했습니다.";
+            _statusLabel.Text = "Could not create the room.";
             return;
         }
 
         LockConnectionControls();
         _startMatchButton.Visible = true;
-        _statusLabel.Text = "상대를 기다리는 중...";
+        _statusLabel.Text = "Waiting for an opponent...";
     }
 
     private void OnJoinPressed()
@@ -80,12 +80,12 @@ public partial class ConnectionScreenUI : Control
         NetworkManager.Instance!.JoinHost(_addressField.Text);
         if (Multiplayer.MultiplayerPeer == null)
         {
-            _statusLabel.Text = "접속을 시작하지 못했습니다.";
+            _statusLabel.Text = "Could not start connecting.";
             return;
         }
 
         LockConnectionControls();
-        _statusLabel.Text = $"{_addressField.Text} 에 접속하는 중...";
+        _statusLabel.Text = string.Format(Tr("Connecting to {0}..."), _addressField.Text);
     }
 
     private void OnStartMatchPressed()
@@ -95,7 +95,7 @@ public partial class ConnectionScreenUI : Control
 
     private void OnPeerConnected(long peerId)
     {
-        _statusLabel.Text = "상대와 연결되었습니다.";
+        _statusLabel.Text = "Connected to your opponent.";
 
         // Harmless on the client, where the button is invisible — which is why this needs no
         // host/client branch of its own.
@@ -104,13 +104,13 @@ public partial class ConnectionScreenUI : Control
 
     private void OnConnectionFailed()
     {
-        _statusLabel.Text = "접속에 실패했습니다.";
+        _statusLabel.Text = "Could not connect.";
         UnlockConnectionControls();
     }
 
     private void OnServerDisconnected()
     {
-        _statusLabel.Text = "연결이 끊겼습니다.";
+        _statusLabel.Text = "The connection dropped.";
         UnlockConnectionControls();
     }
 
