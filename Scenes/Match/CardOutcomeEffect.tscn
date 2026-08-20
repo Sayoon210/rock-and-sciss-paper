@@ -1,0 +1,23 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://Scripts/UI/CardOutcomeEffect.cs" id="1_cardoutcomeeffect"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_outcomehalo"]
+bg_color = Color(0.16, 0.55, 0.22, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+shadow_color = Color(0.24, 0.85, 0.34, 0.7)
+shadow_size = 46
+
+[sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_additive"]
+blend_mode = 1
+
+[node name="CardOutcomeEffect" type="Node2D"]
+script = ExtResource("1_cardoutcomeeffect")
+
+[node name="Halo" type="Panel" parent="."]
+material = SubResource("CanvasItemMaterial_additive")
+visible = false
+theme_override_styles/panel = SubResource("StyleBoxFlat_outcomehalo")

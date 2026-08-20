@@ -78,6 +78,13 @@ public partial class GameState : Node
     /// whole reason the choice moved after the reveal.</summary>
     [Signal] public delegate void RoundRevealedEventHandler();
 
+    /// <summary>The opponent's card is in; mine is not yet, so there is nothing to reveal.
+    /// Carries no card identity — that a side has submitted is public the moment it happens,
+    /// but which card only becomes public at RoundRevealed (Scripts/CLAUDE.md's hidden-
+    /// information rule). Never fires for my own submission; the screen already knows about
+    /// that from the drag that caused it.</summary>
+    [Signal] public delegate void OpponentSubmittedEventHandler();
+
     /// <summary>I have to choose something before this round can finish. Read
     /// View.CardIMustChooseFor for which card. Only ever reaches the one player who owes
     /// the choice.</summary>
@@ -323,6 +330,13 @@ public partial class GameState : Node
         EmitSignalRequestRejected(reason);
     }
 
+    /// <summary>Host to one peer: the other side's card is in. See NotifyOpponentSubmitted.</summary>
+    [Rpc(MultiplayerApi.RpcMode.Authority, TransferMode = MultiplayerPeer.TransferModeEnum.Reliable)]
+    private void OpponentSubmittedRpc()
+    {
+        EmitSignalOpponentSubmitted();
+    }
+
     /// <summary>Host to all: both played cards are now public, and whether each side still
     /// owes a choice. Sent on every round, including ones that finish immediately, so a
     /// round always has the same shape on screen. Carries no hidden information — which
@@ -472,11 +486,33 @@ public partial class GameState : Node
 
         if (reveal == null)
         {
-            // Waiting on the other side's submission — nothing to reveal yet.
+            // Waiting on the other side's submission — nothing to reveal yet, but the side
+            // still deciding should know theirs is in.
+            NotifyOpponentSubmitted(side);
             return;
         }
 
         HandleReveal(reveal);
+    }
+
+    /// <summary>Host only. Tells whichever side has not submitted yet that the other side's
+    /// card is in, without saying what it is. Mirrors PromptOneChooser's shape: a local
+    /// signal for the host's own screen, an RPC for the client's.</summary>
+    private void NotifyOpponentSubmitted(Side submittedSide)
+    {
+        Side sideToNotify = submittedSide == Side.Player1 ? Side.Player2 : Side.Player1;
+
+        if (sideToNotify == _mySide)
+        {
+            EmitSignalOpponentSubmitted();
+            return;
+        }
+
+        long? clientPeerId = ClientPeerId();
+        if (clientPeerId.HasValue)
+        {
+            RpcId(clientPeerId.Value, MethodName.OpponentSubmittedRpc);
+        }
     }
 
     /// <summary>What follows a completed round of submissions, however the cards got there —

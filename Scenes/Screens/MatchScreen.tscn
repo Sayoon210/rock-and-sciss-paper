@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" path="res://Scenes/Match/CardDropZone.tscn" id="4_carddropzone"]
 [ext_resource type="PackedScene" path="res://Scenes/Match/DeckView.tscn" id="5_deckview"]
 [ext_resource type="PackedScene" path="res://Scenes/Match/CardVanishEffect.tscn" id="6_vanisheffect"]
+[ext_resource type="PackedScene" path="res://Scenes/Match/CardOutcomeEffect.tscn" id="7_outcomeeffect"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_phasetimertrack"]
 bg_color = Color(0.14, 0.15, 0.19, 1)
@@ -114,6 +115,8 @@ theme_override_constants/separation = 4
 custom_minimum_size = Vector2(200, 280)
 layout_mode = 2
 
+[node name="MyOutcomeEffect" parent="Rows/MiddleRow/Field/MyPlayedArea/MySubmitSlot" instance=ExtResource("7_outcomeeffect")]
+
 [node name="MyPlayedCardView" parent="Rows/MiddleRow/Field/MyPlayedArea/MySubmitSlot" instance=ExtResource("3_cardview")]
 layout_mode = 1
 anchors_preset = 15
@@ -143,6 +146,8 @@ theme_override_constants/separation = 4
 [node name="OpponentSlot" type="Control" parent="Rows/MiddleRow/Field/OpponentPlayedArea"]
 custom_minimum_size = Vector2(200, 280)
 layout_mode = 2
+
+[node name="OpponentOutcomeEffect" parent="Rows/MiddleRow/Field/OpponentPlayedArea/OpponentSlot" instance=ExtResource("7_outcomeeffect")]
 
 [node name="OpponentPlayedCardView" parent="Rows/MiddleRow/Field/OpponentPlayedArea/OpponentSlot" instance=ExtResource("3_cardview")]
 layout_mode = 1

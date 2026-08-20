@@ -24,11 +24,18 @@ public partial class MatchScreenUI : Control
 
     private const int SCORE_PIP_SIZE = 18;
 
-    /// <summary>How long the revealed cards stay on the field after a round resolves before
-    /// the field is emptied for the next one. It is a delay rather than an immediate clear
-    /// because a round with no choice in it reveals and resolves in the same frame — clearing
-    /// straight away on RoundResolved would mean the reveal is never actually seen.</summary>
+    /// <summary>How long the revealed cards stay on the field after the round's outcome
+    /// effects begin (the win/loss states, or nothing on a 무승부) before the field is
+    /// emptied for the next round.</summary>
     private const double FIELD_CLEAR_DELAY_SECONDS = 1.5;
+
+    /// <summary>How long the opponent's card sits face-down before it turns over. Short
+    /// enough to still feel like part of the same beat as the reveal, not a separate wait.</summary>
+    private const double PRE_FLIP_PAUSE_SECONDS = 0.25;
+
+    /// <summary>How long the field holds still, opponent's card now face-up, before the two
+    /// cards take on their win/loss state.</summary>
+    private const double POST_FLIP_PAUSE_SECONDS = 0.35;
 
     /// <summary>How much of a timed phase the gauge spends reddening. It stays calm for the
     /// rest: a bar that is always partly red says nothing, and a colour that only means
@@ -46,9 +53,13 @@ public partial class MatchScreenUI : Control
     private CardView _myPlayedCardView = null!;
     private CardDropZone _mySubmitDropZone = null!;
     private CardVanishEffect _myVanishEffect = null!;
+    private CardOutcomeEffect _myOutcomeEffect = null!;
     private Label _myActionLabel = null!;
     private CardView _opponentPlayedCardView = null!;
     private CardVanishEffect _opponentVanishEffect = null!;
+    private CardFlipEffect _opponentCardFlip = null!;
+    private CardSlideInEffect _opponentCardSlideIn = null!;
+    private CardOutcomeEffect _opponentOutcomeEffect = null!;
     private Label _opponentActionLabel = null!;
     private Label _outcomeLabel = null!;
     private Label _promptLabel = null!;
@@ -64,11 +75,26 @@ public partial class MatchScreenUI : Control
     private Label _rematchStatusLabel = null!;
     private Button _returnToTitleButton = null!;
     private Timer _fieldClearTimer = null!;
+    private Timer _preFlipPauseTimer = null!;
+    private Timer _postFlipPauseTimer = null!;
 
     // True while the field is deliberately empty, between one round's cards being cleared and
     // the next round's reveal. RefreshField honours it, so an unrelated refresh (a hand
     // change, a score update) cannot put the old round's cards back on screen.
     private bool _fieldCleared = true;
+
+    // True from the moment a round is revealed until the opponent's card has finished
+    // turning face-up. RefreshField honours it the same way it honours _fieldCleared — an
+    // unrelated refresh firing mid-turn must not stomp the card back to a flat
+    // ShowFaceUp/ShowFaceDown call, since CardFlipEffect owns that card's face and Scale
+    // until it finishes.
+    private bool _opponentCardFlipPending;
+
+    // Whether OnRoundResolved has already run for the round currently on the field. Set
+    // false at each reveal, true the moment resolution actually happens -- kept as its own
+    // flag rather than inferred from View.LastRoundOutcome being non-null, since a round can
+    // resolve with no winner at all (Joker, or any round without two normal cards to judge).
+    private bool _roundAlreadyResolved;
 
     // How much of the running phase is left, and how long it was to begin with — zero when
     // nothing is being timed. The total is kept rather than recomputed because it is also what
@@ -109,9 +135,16 @@ public partial class MatchScreenUI : Control
         _myPlayedCardView = GetNode<CardView>("Rows/MiddleRow/Field/MyPlayedArea/MySubmitSlot/MyPlayedCardView");
         _mySubmitDropZone = GetNode<CardDropZone>("Rows/MiddleRow/Field/MyPlayedArea/MySubmitSlot/MySubmitDropZone");
         _myVanishEffect = GetNode<CardVanishEffect>("Rows/MiddleRow/Field/MyPlayedArea/MySubmitSlot/MyVanishEffect");
+        _myOutcomeEffect = GetNode<CardOutcomeEffect>("Rows/MiddleRow/Field/MyPlayedArea/MySubmitSlot/MyOutcomeEffect");
         _myActionLabel = GetNode<Label>("Rows/MiddleRow/Field/MyPlayedArea/MyActionLabel");
         _opponentPlayedCardView = GetNode<CardView>("Rows/MiddleRow/Field/OpponentPlayedArea/OpponentSlot/OpponentPlayedCardView");
         _opponentVanishEffect = GetNode<CardVanishEffect>("Rows/MiddleRow/Field/OpponentPlayedArea/OpponentSlot/OpponentVanishEffect");
+        _opponentCardFlip = new CardFlipEffect();
+        _opponentCardFlip.Finished += OnOpponentCardFlipFinished;
+        AddChild(_opponentCardFlip);
+        _opponentCardSlideIn = new CardSlideInEffect();
+        AddChild(_opponentCardSlideIn);
+        _opponentOutcomeEffect = GetNode<CardOutcomeEffect>("Rows/MiddleRow/Field/OpponentPlayedArea/OpponentSlot/OpponentOutcomeEffect");
         _opponentActionLabel = GetNode<Label>("Rows/MiddleRow/Field/OpponentPlayedArea/OpponentActionLabel");
         _outcomeLabel = GetNode<Label>("Rows/MiddleRow/Field/OutcomeLabel");
         _promptLabel = GetNode<Label>("Rows/PromptStrip/PromptRow/PromptLabel");
@@ -135,6 +168,18 @@ public partial class MatchScreenUI : Control
         _fieldClearTimer.WaitTime = FIELD_CLEAR_DELAY_SECONDS;
         _fieldClearTimer.Timeout += OnFieldClearTimeout;
         AddChild(_fieldClearTimer);
+
+        _preFlipPauseTimer = new Timer();
+        _preFlipPauseTimer.OneShot = true;
+        _preFlipPauseTimer.WaitTime = PRE_FLIP_PAUSE_SECONDS;
+        _preFlipPauseTimer.Timeout += OnPreFlipPauseTimeout;
+        AddChild(_preFlipPauseTimer);
+
+        _postFlipPauseTimer = new Timer();
+        _postFlipPauseTimer.OneShot = true;
+        _postFlipPauseTimer.WaitTime = POST_FLIP_PAUSE_SECONDS;
+        _postFlipPauseTimer.Timeout += OnPostFlipPauseTimeout;
+        AddChild(_postFlipPauseTimer);
 
         // Each row is told which 덱 its cards belong to, and animates 드로우 out of it
         // and 교체/리셋 back into it from there. Wired here rather than found by either
@@ -212,6 +257,7 @@ public partial class MatchScreenUI : Control
 
         GameState.Instance.MatchStarted -= OnMatchStarted;
         GameState.Instance.RoundRevealed -= OnRoundRevealed;
+        GameState.Instance.OpponentSubmitted -= OnOpponentSubmitted;
         GameState.Instance.ChoiceRequired -= OnChoiceRequired;
         GameState.Instance.RoundResolved -= OnRoundResolved;
         GameState.Instance.MyHandChanged -= OnMyHandChanged;
@@ -224,6 +270,7 @@ public partial class MatchScreenUI : Control
     {
         GameState.Instance!.MatchStarted += OnMatchStarted;
         GameState.Instance.RoundRevealed += OnRoundRevealed;
+        GameState.Instance.OpponentSubmitted += OnOpponentSubmitted;
         GameState.Instance.ChoiceRequired += OnChoiceRequired;
         GameState.Instance.RoundResolved += OnRoundResolved;
         GameState.Instance.MyHandChanged += OnMyHandChanged;
@@ -252,6 +299,13 @@ public partial class MatchScreenUI : Control
         _matchEndOverlay.Visible = false;
 
         _fieldClearTimer.Stop();
+        _preFlipPauseTimer.Stop();
+        _postFlipPauseTimer.Stop();
+        _opponentCardFlip.Stop();
+        _opponentCardSlideIn.Stop();
+        _myOutcomeEffect.Stop();
+        _opponentOutcomeEffect.Stop();
+        _opponentCardFlipPending = false;
         _fieldCleared = true;
         _dockedCardView = null;
         _pendingTransformTarget = null;
@@ -260,8 +314,21 @@ public partial class MatchScreenUI : Control
         RefreshEverything();
     }
 
-    /// <summary>Both cards are public. On the host the choice prompt is set immediately
-    /// after this, so the prompt strip is refreshed again by ChoiceRequired.</summary>
+    /// <summary>The opponent's card is in, but mine is not yet — nothing is revealed by this,
+    /// only that they are no longer still deciding. Shown face-down in their field slot, and
+    /// eased in from above so it reads as having just left their 패 rather than appearing out
+    /// of nowhere.</summary>
+    private void OnOpponentSubmitted()
+    {
+        _opponentPlayedCardView.Visible = true;
+        _opponentPlayedCardView.ShowFaceDown();
+        _opponentCardSlideIn.Play(_opponentPlayedCardView);
+    }
+
+    /// <summary>Both cards are public, but the opponent's is shown face-down for one more
+    /// beat before CardFlipEffect turns it over — see OnPreFlipPauseTimeout. On the host the
+    /// choice prompt is set immediately after this, so the prompt strip is refreshed again
+    /// by ChoiceRequired.</summary>
     private void OnRoundRevealed()
     {
         // The card that was sitting on the submit zone is about to be taken out of the hand
@@ -269,17 +336,80 @@ public partial class MatchScreenUI : Control
         // rather than keeping a reference that is about to dangle.
         _dockedCardView = null;
 
-        // The field's card views are reused for this round. A dissolve still running from the
-        // last one would open the round with a bite out of the card, so it is given back
-        // whole first.
+        // The field's card views are reused for this round. A dissolve, or a win/loss state
+        // still held from the last one, would open the round mid-effect — so every one of
+        // them is given back whole first.
         _myVanishEffect.Stop();
         _opponentVanishEffect.Stop();
+        _myOutcomeEffect.Stop();
+        _opponentOutcomeEffect.Stop();
+        _preFlipPauseTimer.Stop();
+        _postFlipPauseTimer.Stop();
+        _opponentCardFlip.Stop();
+        _opponentCardSlideIn.Stop();
 
         _fieldClearTimer.Stop();
         _fieldCleared = false;
 
+        // Reset to a known face-down state regardless of whether OpponentSubmitted already
+        // got here first this round -- the pause-then-turn choreography below needs a fixed
+        // starting point, not "whatever it happened to already look like."
+        _opponentCardFlipPending = true;
+        _roundAlreadyResolved = false;
+        _opponentPlayedCardView.Visible = true;
+        _opponentPlayedCardView.ShowFaceDown();
+
         RefreshField();
         RefreshPromptStrip();
+
+        _preFlipPauseTimer.Start();
+    }
+
+    /// <summary>The pause before the opponent's card turns over.</summary>
+    private void OnPreFlipPauseTimeout()
+    {
+        CardName? opponentCard = GameState.Instance!.View.OpponentCard;
+        if (!opponentCard.HasValue)
+        {
+            // Defensive only -- a reveal always sets both cards, so this timer should never
+            // fire without one. Leaves the flag clear rather than the field stuck mid-turn.
+            _opponentCardFlipPending = false;
+            return;
+        }
+
+        _opponentCardFlip.Play(_opponentPlayedCardView, opponentCard.Value);
+    }
+
+    /// <summary>The turn finished; RefreshField is free to touch this card again. If the
+    /// round has already resolved (no choice was owed), the win/loss pause starts right
+    /// here -- OnRoundResolved already ran in the same frame as the reveal and found this
+    /// flag still set, so it left starting that pause to this instead.
+    ///
+    /// Reads _roundAlreadyResolved rather than LastRoundOutcome != null: a Joker (or any
+    /// round without two normal cards to compare) resolves with no winner at all, which is a
+    /// null outcome that still needs the field cleared and the vanish effects played --
+    /// treating null as "not resolved yet" left those rounds' field-clear timer never
+    /// starting, so a Joker's vanish animation silently never played.</summary>
+    private void OnOpponentCardFlipFinished()
+    {
+        _opponentCardFlipPending = false;
+
+        if (_roundAlreadyResolved)
+        {
+            _postFlipPauseTimer.Start();
+        }
+    }
+
+    /// <summary>The pause after the reveal (the opponent's turn included) before the two
+    /// cards take on their win/loss state.</summary>
+    private void OnPostFlipPauseTimeout()
+    {
+        PlayRoundOutcomeEffects();
+
+        // Started here rather than the moment the round resolves: the field needs to stay up
+        // through the reveal's own pauses and turn, not just for FIELD_CLEAR_DELAY_SECONDS
+        // after an outcome nobody has seen yet.
+        _fieldClearTimer.Start();
     }
 
     private void OnChoiceRequired()
@@ -287,16 +417,48 @@ public partial class MatchScreenUI : Control
         RefreshPromptStrip();
     }
 
+    /// <summary>For a round with no choice in it, this fires in the same frame as
+    /// RoundRevealed — the opponent's card is still sitting face-down, waiting on
+    /// _preFlipPauseTimer, and _opponentCardFlipPending is still true. Rather than race that
+    /// choreography, this leaves the win/loss pause to OnOpponentCardFlipFinished,
+    /// which checks _roundAlreadyResolved once the turn is done and starts it there instead.
+    /// For a round that needed a choice, the turn finished long ago and the flag is already
+    /// clear, so the pause starts here right away.</summary>
     private void OnRoundResolved()
     {
         ReturnBothHandsToDecksIfReset();
 
         RefreshEverything();
 
-        // Started rather than cleared outright: this fires in the same frame as the reveal
-        // for a round nobody had to choose in, so the cards need to stay up long enough to
-        // actually be read.
-        _fieldClearTimer.Start();
+        _roundAlreadyResolved = true;
+
+        if (!_opponentCardFlipPending)
+        {
+            _postFlipPauseTimer.Start();
+        }
+    }
+
+    /// <summary>Marks the round's winner and loser on the cards RefreshEverything already put
+    /// on the field — the winner brightens green and grows, the loser darkens and shrinks. A
+    /// 무승부 gets neither: no card won, so nothing should look like it did.
+    ///
+    /// Reads LastRoundOutcome rather than comparing the two cards itself: which side won is a
+    /// GameLogic decision (Joker/Reset/ability precedence included) already resolved into the
+    /// View, not something this screen should be re-deriving from card identities.</summary>
+    private void PlayRoundOutcomeEffects()
+    {
+        RoundOutcome? outcome = GameState.Instance!.View.LastRoundOutcome;
+
+        if (outcome == RoundOutcome.MyWin)
+        {
+            _myOutcomeEffect.PlayWin(_myPlayedCardView);
+            _opponentOutcomeEffect.PlayLoss(_opponentPlayedCardView);
+        }
+        else if (outcome == RoundOutcome.OpponentWin)
+        {
+            _opponentOutcomeEffect.PlayWin(_opponentPlayedCardView);
+            _myOutcomeEffect.PlayLoss(_myPlayedCardView);
+        }
     }
 
     /// <summary>리셋 puts both whole 패 back into their own decks, shuffles, and deals the
@@ -323,6 +485,13 @@ public partial class MatchScreenUI : Control
 
     private void OnFieldClearTimeout()
     {
+        // The round's cards are leaving, and their win/loss state goes with them — 진 카드가
+        // 어두운 것은 덱에 들어가기 전까지다. Released before the cards are sent home, both
+        // so a 소멸 plays on a card at its own size and brightness, and so the winner's glow
+        // is never left hanging over a slot the card has already left.
+        _myOutcomeEffect.Stop();
+        _opponentOutcomeEffect.Stop();
+
         SendPlayedCardsWhereTheyWent();
 
         _fieldCleared = true;
@@ -587,13 +756,20 @@ public partial class MatchScreenUI : Control
             _myPlayedCardView.ShowFaceDown();
         }
 
-        if (view.OpponentCard.HasValue)
+        // While the flip choreography is running, it owns this card's face and Scale --
+        // OnRoundRevealed already set it face-down as that choreography's starting point,
+        // and an unrelated refresh landing mid-turn (a hand change, a score update) must not
+        // stomp it back to a flat ShowFaceUp/ShowFaceDown call.
+        if (!_opponentCardFlipPending)
         {
-            _opponentPlayedCardView.ShowFaceUp(view.OpponentCard.Value);
-        }
-        else
-        {
-            _opponentPlayedCardView.ShowFaceDown();
+            if (view.OpponentCard.HasValue)
+            {
+                _opponentPlayedCardView.ShowFaceUp(view.OpponentCard.Value);
+            }
+            else
+            {
+                _opponentPlayedCardView.ShowFaceDown();
+            }
         }
 
         // Counts and flags only — never which cards were involved (Scripts/CLAUDE.md's
