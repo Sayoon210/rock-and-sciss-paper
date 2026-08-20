@@ -5,5 +5,5 @@
 [resource]
 script = ExtResource("1_swap")
 CardName = 6
-DisplayName = "Swap"
-Description = "Shuffle up to 2 cards from your hand into your deck, then draw that many. Vanishes after use."
+DisplayName = "CARD_SWAP_NAME"
+Description = "CARD_SWAP_DESCRIPTION"

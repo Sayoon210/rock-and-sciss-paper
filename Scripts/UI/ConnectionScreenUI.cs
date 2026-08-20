@@ -66,13 +66,13 @@ public partial class ConnectionScreenUI : Control
         NetworkManager.Instance!.StartHost();
         if (Multiplayer.MultiplayerPeer == null)
         {
-            _statusLabel.Text = "Could not create the room.";
+            _statusLabel.Text = "CONNECT_STATUS_ROOM_FAILED";
             return;
         }
 
         LockConnectionControls();
         _startMatchButton.Visible = true;
-        _statusLabel.Text = "Waiting for an opponent...";
+        _statusLabel.Text = "CONNECT_STATUS_WAITING";
     }
 
     private void OnJoinPressed()
@@ -80,12 +80,12 @@ public partial class ConnectionScreenUI : Control
         NetworkManager.Instance!.JoinHost(_addressField.Text);
         if (Multiplayer.MultiplayerPeer == null)
         {
-            _statusLabel.Text = "Could not start connecting.";
+            _statusLabel.Text = "CONNECT_STATUS_START_FAILED";
             return;
         }
 
         LockConnectionControls();
-        _statusLabel.Text = string.Format(Tr("Connecting to {0}..."), _addressField.Text);
+        _statusLabel.Text = string.Format(Tr("CONNECT_STATUS_CONNECTING"), _addressField.Text);
     }
 
     private void OnStartMatchPressed()
@@ -95,7 +95,7 @@ public partial class ConnectionScreenUI : Control
 
     private void OnPeerConnected(long peerId)
     {
-        _statusLabel.Text = "Connected to your opponent.";
+        _statusLabel.Text = "CONNECT_STATUS_CONNECTED";
 
         // Harmless on the client, where the button is invisible — which is why this needs no
         // host/client branch of its own.
@@ -104,13 +104,13 @@ public partial class ConnectionScreenUI : Control
 
     private void OnConnectionFailed()
     {
-        _statusLabel.Text = "Could not connect.";
+        _statusLabel.Text = "CONNECT_STATUS_FAILED";
         UnlockConnectionControls();
     }
 
     private void OnServerDisconnected()
     {
-        _statusLabel.Text = "The connection dropped.";
+        _statusLabel.Text = "CONNECT_STATUS_DROPPED";
         UnlockConnectionControls();
     }
 

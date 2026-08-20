@@ -5,5 +5,5 @@
 [resource]
 script = ExtResource("1_transform")
 CardName = 7
-DisplayName = "Transform"
-Description = "Change one normal or blank card in your hand into any normal or blank card. Vanishes after use."
+DisplayName = "CARD_TRANSFORM_NAME"
+Description = "CARD_TRANSFORM_DESCRIPTION"

@@ -61,16 +61,16 @@ public partial class CardTooltipView : PanelContainer
         switch (cardType)
         {
             case CardType.Normal:
-                return "Normal Card";
+                return "CARD_TYPE_NORMAL";
 
             case CardType.Blank:
-                return "Blank Card";
+                return "CARD_TYPE_BLANK";
 
             case CardType.Joker:
-                return "Joker Card";
+                return "CARD_TYPE_JOKER";
 
             case CardType.Ability:
-                return "Ability Card";
+                return "CARD_TYPE_ABILITY";
 
             default:
                 return string.Empty;

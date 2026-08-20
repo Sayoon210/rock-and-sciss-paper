@@ -18,7 +18,7 @@ public partial class MatchScreenUI : Control
     /// <summary>What a rejected request says on screen. RequestRejected carries the host's
     /// own exception text, which names internal rules and English card identifiers — useful
     /// in the log, not on a player's screen.</summary>
-    private const string REJECTION_MESSAGE = "You cannot play that card.";
+    private const string REJECTION_MESSAGE = "MATCH_PROMPT_REJECTED";
 
     private const string TITLE_SCENE_PATH = "res://Scenes/Screens/TitleScreen.tscn";
 
@@ -37,6 +37,7 @@ public partial class MatchScreenUI : Control
 
     private DeckView _opponentDeckView = null!;
     private HandView _opponentHandView = null!;
+    private Label _scoreHeadingLabel = null!;
     private Label _myScoreLabel = null!;
     private Label _opponentScoreLabel = null!;
     private HBoxContainer _myScorePipRow = null!;
@@ -99,6 +100,7 @@ public partial class MatchScreenUI : Control
     {
         _opponentDeckView = GetNode<DeckView>("Rows/OpponentArea/OpponentDeckView");
         _opponentHandView = GetNode<HandView>("Rows/OpponentArea/OpponentHandView");
+        _scoreHeadingLabel = GetNode<Label>("Rows/MiddleRow/ScoreBoard/ScoreHeadingLabel");
         _myScoreLabel = GetNode<Label>("Rows/MiddleRow/ScoreBoard/MyScoreLabel");
         _myScorePipRow = GetNode<HBoxContainer>("Rows/MiddleRow/ScoreBoard/MyScorePipRow");
         _opponentScoreLabel = GetNode<Label>("Rows/MiddleRow/ScoreBoard/OpponentScoreLabel");
@@ -444,7 +446,7 @@ public partial class MatchScreenUI : Control
         // clear.
         _myHandView.SetSelectionModeNone();
         _confirmButton.Visible = false;
-        _promptLabel.Text = "Choice sent...";
+        _promptLabel.Text = "MATCH_PROMPT_CHOICE_SENT";
     }
 
     private void OnConfirmTransformTarget(CardName target)
@@ -468,14 +470,14 @@ public partial class MatchScreenUI : Control
 
         _myHandView.SetSelectionModeNone();
         SetTargetPaletteVisible(false);
-        _promptLabel.Text = "Choice sent...";
+        _promptLabel.Text = "MATCH_PROMPT_CHOICE_SENT";
     }
 
     private void OnMatchEnded(bool didIWin)
     {
         RefreshScoreBoard();
 
-        _matchEndResultLabel.Text = didIWin ? "You win the match" : "You lose the match";
+        _matchEndResultLabel.Text = didIWin ? "MATCH_END_WIN" : "MATCH_END_LOSS";
 
         // Rematch is host-initiated only, the same asymmetry ConnectionScreenUI already uses
         // for 매치 시작 — a client has nothing to press here but a status line.
@@ -483,7 +485,7 @@ public partial class MatchScreenUI : Control
         _rematchButton.Visible = isHost;
         _rematchButton.Disabled = false;
         _rematchStatusLabel.Visible = !isHost;
-        _rematchStatusLabel.Text = "Waiting for the host to start a rematch...";
+        _rematchStatusLabel.Text = "MATCH_END_WAITING_REMATCH";
 
         _matchEndOverlay.Visible = true;
     }
@@ -492,7 +494,7 @@ public partial class MatchScreenUI : Control
     {
         // Reconnection is out of scope (Scripts/Autoload/GameState.cs), so a rematch here has
         // nothing to reconnect to — only the door back to the title screen makes sense.
-        _matchEndResultLabel.Text = "Your opponent left.";
+        _matchEndResultLabel.Text = "MATCH_END_OPPONENT_LEFT";
         _rematchButton.Visible = false;
         _rematchStatusLabel.Visible = false;
         _matchEndOverlay.Visible = true;
@@ -538,8 +540,12 @@ public partial class MatchScreenUI : Control
     {
         MatchView view = GameState.Instance!.View;
 
-        _myScoreLabel.Text = string.Format(Tr("Me {0} / {1}"), view.MyScore, MatchSession.WINS_NEEDED_FOR_MATCH);
-        _opponentScoreLabel.Text = string.Format(Tr("Opponent {0} / {1}"), view.OpponentScore, MatchSession.WINS_NEEDED_FOR_MATCH);
+        // The win target used to be written into the heading's words, where changing
+        // WINS_NEEDED_FOR_MATCH would leave the screen saying something untrue.
+        _scoreHeadingLabel.Text = string.Format(Tr("MATCH_WINS_NEEDED"), MatchSession.WINS_NEEDED_FOR_MATCH);
+
+        _myScoreLabel.Text = string.Format(Tr("MATCH_MY_SCORE"), view.MyScore, MatchSession.WINS_NEEDED_FOR_MATCH);
+        _opponentScoreLabel.Text = string.Format(Tr("MATCH_OPPONENT_SCORE"), view.OpponentScore, MatchSession.WINS_NEEDED_FOR_MATCH);
 
         PaintScorePips(_myScorePips, view.MyScore, new Color(0.36f, 0.72f, 0.46f));
         PaintScorePips(_opponentScorePips, view.OpponentScore, new Color(0.85f, 0.42f, 0.40f));
@@ -549,7 +555,7 @@ public partial class MatchScreenUI : Control
     {
         MatchView view = GameState.Instance!.View;
 
-        _roundLabel.Text = string.Format(Tr("Round {0}"), view.RoundNumber);
+        _roundLabel.Text = string.Format(Tr("MATCH_ROUND"), view.RoundNumber);
 
         // Between rounds the field is empty and stays empty: View still holds the last round's
         // cards (nothing clears them there), so this is what keeps an unrelated refresh from
@@ -603,12 +609,12 @@ public partial class MatchScreenUI : Control
     {
         if (transformApplied)
         {
-            return "Transformed";
+            return "MATCH_ACTION_TRANSFORMED";
         }
 
         if (swappedCardCount > 0)
         {
-            return string.Format(TranslationServer.Translate("Swapped {0}"), swappedCardCount);
+            return string.Format(TranslationServer.Translate("MATCH_ACTION_SWAPPED"), swappedCardCount);
         }
 
         return string.Empty;
@@ -644,7 +650,7 @@ public partial class MatchScreenUI : Control
 
         if (view.OpponentIsChoosing)
         {
-            _promptLabel.Text = "Your opponent is choosing...";
+            _promptLabel.Text = "MATCH_PROMPT_OPPONENT_CHOOSING";
             return;
         }
 
@@ -713,7 +719,7 @@ public partial class MatchScreenUI : Control
 
         int selectedCount = _myHandView.SwapSelection.Count;
         _promptLabel.Text = string.Format(
-            Tr("Swap — click the cards to put back in your deck ({0}/{1} selected)"),
+            Tr("MATCH_PROMPT_SWAP"),
             selectedCount,
             SwapEffect.MAX_SWAPPED_CARDS);
     }
@@ -729,12 +735,12 @@ public partial class MatchScreenUI : Control
 
         if (!source.HasValue)
         {
-            _promptLabel.Text = "Transform — click a card in your hand to change";
+            _promptLabel.Text = "MATCH_PROMPT_TRANSFORM_SOURCE";
         }
         else
         {
             _promptLabel.Text = string.Format(
-                Tr("Transform — change {0} into what?"),
+                Tr("MATCH_PROMPT_TRANSFORM_TARGET"),
                 Tr(DisplayNameOf(source.Value)));
         }
     }
@@ -849,20 +855,20 @@ public partial class MatchScreenUI : Control
         if (view.LastRoundOutcome == null)
         {
             // 능력/공백/조커가 낀 라운드는 승패 자체가 없다 (DESIGN.md).
-            return "No result";
+            return "MATCH_OUTCOME_NONE";
         }
 
         if (view.LastRoundOutcome == RoundOutcome.MyWin)
         {
-            return "Win";
+            return "MATCH_OUTCOME_WIN";
         }
 
         if (view.LastRoundOutcome == RoundOutcome.OpponentWin)
         {
-            return "Loss";
+            return "MATCH_OUTCOME_LOSS";
         }
 
-        return "Tie";
+        return "MATCH_OUTCOME_TIE";
     }
 
     private static string DisplayNameOf(CardName card)

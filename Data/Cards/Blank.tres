@@ -5,5 +5,5 @@
 [resource]
 script = ExtResource("1_blank")
 CardName = 3
-DisplayName = "Blank"
-Description = "Vanishes with no effect. A scouting card: it shows you what your opponent played this round without spending anything that matters."
+DisplayName = "CARD_BLANK_NAME"
+Description = "CARD_BLANK_DESCRIPTION"

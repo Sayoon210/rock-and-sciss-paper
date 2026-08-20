@@ -5,5 +5,5 @@
 [resource]
 script = ExtResource("1_draw")
 CardName = 8
-DisplayName = "Draw"
-Description = "Draw 2 cards. Vanishes after use."
+DisplayName = "CARD_DRAW_NAME"
+Description = "CARD_DRAW_DESCRIPTION"

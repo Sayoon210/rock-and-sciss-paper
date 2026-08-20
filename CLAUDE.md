@@ -11,7 +11,7 @@ Design doc will be added separately later — this document covers tech stack / 
 - All game rule validation (legal plays, shuffling, win/loss) happens on the host only.
 - Hidden information (opponent's hand, deck order) is sent only via targeted RPC to the peer allowed to see it.
 - Card/game data is defined as `Resource`-derived classes (e.g. `CardData : Resource`), one `.tres` file per instance.
-- **Anything the player reads is written in English in source** — `.tscn` text, `CardData` `.tres`, string literals. Korean is a translation, in `Data/Translations/strings.csv`. See [Scripts/CLAUDE.md](Scripts/CLAUDE.md) for how to add one.
+- **Anything the player reads is a symbol in source, never a sentence** — `text = "TITLE_PLAY"`, `DisplayName = "CARD_JOKER_NAME"`, `Tr("MATCH_ROUND")`. Both languages live in `Data/Translations/strings.csv`. See [Scripts/CLAUDE.md](Scripts/CLAUDE.md) for the naming scheme and how to add one.
 - That is about the *product's* language, not the codebase's. Identifiers, comments and [DESIGN.md](DESIGN.md) keep the Korean game vocabulary (교체, 리셋, 패, 소멸) — the rule below is unchanged.
 - Spell every name out in full. No initialisms (`Rps`, `Mgr`, `Cfg`, `Btn`).
 - Name a type after what it holds or does, not a vague category (`WinLossRules`, not `Helper`).

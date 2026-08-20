@@ -6,6 +6,6 @@
 [resource]
 script = ExtResource("1_scissors")
 CardName = 2
-DisplayName = "Scissors"
-Description = "A normal card. Beats Paper. Returns to the bottom of your deck after use, win or lose."
+DisplayName = "CARD_SCISSORS_NAME"
+Description = "CARD_SCISSORS_DESCRIPTION"
 CardArt = ExtResource("2_art")

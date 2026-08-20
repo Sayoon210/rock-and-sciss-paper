@@ -5,5 +5,5 @@
 [resource]
 script = ExtResource("1_reset")
 CardName = 5
-DisplayName = "Reset"
-Description = "Both players shuffle their hand into their deck and draw back up to the same number. The only card that reaches across the table. Vanishes after use."
+DisplayName = "CARD_RESET_NAME"
+Description = "CARD_RESET_DESCRIPTION"

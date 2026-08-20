@@ -74,7 +74,7 @@ theme_override_constants/separation = 8
 [node name="ScoreHeadingLabel" type="Label" parent="Rows/MiddleRow/ScoreBoard"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "First to 10"
+text = "First to N"
 
 [node name="MyScoreLabel" type="Label" parent="Rows/MiddleRow/ScoreBoard"]
 layout_mode = 2
@@ -191,7 +191,7 @@ show_percentage = false
 [node name="ConfirmButton" type="Button" parent="Rows/PromptStrip/PromptRow"]
 visible = false
 layout_mode = 2
-text = "Confirm"
+text = "MATCH_CONFIRM"
 
 [node name="TargetPaletteRow" type="HBoxContainer" parent="Rows/PromptStrip/PromptRow"]
 layout_mode = 2
@@ -238,7 +238,7 @@ horizontal_alignment = 1
 [node name="RematchButton" type="Button" parent="MatchEndOverlay/Center/Box"]
 custom_minimum_size = Vector2(300, 56)
 layout_mode = 2
-text = "Rematch"
+text = "MATCH_END_REMATCH"
 
 [node name="RematchStatusLabel" type="Label" parent="MatchEndOverlay/Center/Box"]
 visible = false
@@ -248,4 +248,4 @@ horizontal_alignment = 1
 [node name="ReturnToTitleButton" type="Button" parent="MatchEndOverlay/Center/Box"]
 custom_minimum_size = Vector2(300, 44)
 layout_mode = 2
-text = "Title Screen"
+text = "MATCH_END_TITLE_SCREEN"

@@ -14,21 +14,33 @@ It does not decide whether a play is legal, who won a round, or what a card does
 
 ## Text the player reads
 
-**English in source, Korean as a translation.** Godot picks the locale from the player's OS
-(`internationalization/locale/fallback="en"`), so a Korean player gets Korean and everyone else
-gets the English that is already sitting in the file. There is no language switcher and none is
-needed.
+**No source file contains a sentence a player reads.** Source carries a symbol —
+`text = "TITLE_PLAY"`, `DisplayName = "CARD_JOKER_NAME"` — and `Data/Translations/strings.csv`
+carries every language, `keys,en,ko`. English is a translation like any other; it has no
+privileged position in the files.
 
-`Data/Translations/strings.csv` is the whole translation, two columns — `keys,ko`. **The key is
-the English string itself.** There is no `en` column and there should not be one: with no entry
-for the current locale, `tr()` returns the key unchanged, which is already the text to show.
+Godot picks the locale from the player's OS, and `internationalization/locale/fallback="en"`
+catches everything else — a French player gets the English column, not a screen full of
+`TITLE_PLAY`. There is no language switcher and none is needed.
+
+### The symbols
+
+`AREA_THING`, SCREAMING_SNAKE_CASE, words spelled out (`_DESCRIPTION`, never `_DESC`). Five
+areas: `CARD_` (a card's own name and rules text), `CARD_TYPE_` (the 카드 종류 badge), `TITLE_`,
+`CONNECT_`, `MATCH_`. The `MATCH_` group subdivides — `MATCH_PROMPT_`, `MATCH_OUTCOME_`,
+`MATCH_ACTION_`, `MATCH_END_`.
+
+The two halves cost very different amounts to change, which is the point of doing it this way:
+
+- **The English or Korean wording** is one cell in the CSV. Nothing recompiles. Reword freely.
+- **A symbol** is a rename across source. Worth getting right when it is added.
 
 Adding or changing a string means three things, and skipping the third is silent:
 
-1. Write the English in the source file — the `.tscn`, the card's `.tres`, or the literal.
-2. Add a row to the CSV.
-3. Re-import, so Godot regenerates `strings.ko.translation` beside the CSV:
-   `godot --headless --path . --import`. That file is committed; `project.godot` names it.
+1. Put the symbol in the source file — the `.tscn`, the card's `.tres`, or the literal.
+2. Add a row to the CSV with both languages.
+3. Re-import, so Godot regenerates the `.translation` files beside the CSV:
+   `godot --headless --path . --import`. Both are committed; `project.godot` names both.
 
 ### Where the translation actually happens
 
@@ -43,11 +55,17 @@ code. Two rules follow:
   auto-translation means it is never looked up. In a `static` method use
   `TranslationServer.Translate(...)`, which is what `Tr()`'s own docs point to.
 
-### The one hazard of English-as-key
+### When a symbol is missing
 
-Two strings that mean different things must not be the same English word, because they would
-share one CSV row and one Korean translation. This is not hypothetical: 무승부 (a tied round) and
-드로우 (the card) both wanted "Draw". The round outcome is **"Tie"** for exactly that reason.
+A symbol with no CSV row shows up on screen as the symbol itself — `MATCH_PROMPT_SWAPP` in
+capitals, impossible to miss. That is the whole reason this is better than keying on the English
+text, where a typo produced a screen that looked perfectly fine in English and silently stopped
+translating.
+
+Placeholder text in a scene is the one exception to "no sentences in source". `MyScoreLabel`
+says `Me` and the tooltip's `DescriptionLabel` says `Card description`; code overwrites both
+before a player ever sees them. They are there so the Godot editor shows a laid-out screen
+instead of a column of capitals, and they are deliberately not symbols and not in the CSV.
 
 ## Input
 

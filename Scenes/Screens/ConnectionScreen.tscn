@@ -26,13 +26,13 @@ theme_override_constants/separation = 18
 [node name="HeadingLabel" type="Label" parent="CenterContainer/Panel"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 36
-text = "Connect"
+text = "CONNECT_HEADING"
 horizontal_alignment = 1
 
 [node name="CreateRoomButton" type="Button" parent="CenterContainer/Panel"]
 custom_minimum_size = Vector2(420, 54)
 layout_mode = 2
-text = "Create Room"
+text = "CONNECT_CREATE_ROOM"
 
 [node name="AddressRow" type="HBoxContainer" parent="CenterContainer/Panel"]
 layout_mode = 2
@@ -40,7 +40,7 @@ theme_override_constants/separation = 10
 
 [node name="AddressLabel" type="Label" parent="CenterContainer/Panel/AddressRow"]
 layout_mode = 2
-text = "Address"
+text = "CONNECT_ADDRESS"
 vertical_alignment = 1
 
 [node name="AddressField" type="LineEdit" parent="CenterContainer/Panel/AddressRow"]
@@ -52,13 +52,13 @@ text = "127.0.0.1"
 [node name="JoinButton" type="Button" parent="CenterContainer/Panel/AddressRow"]
 custom_minimum_size = Vector2(120, 54)
 layout_mode = 2
-text = "Join"
+text = "CONNECT_JOIN"
 
 [node name="StartMatchButton" type="Button" parent="CenterContainer/Panel"]
 custom_minimum_size = Vector2(420, 54)
 layout_mode = 2
 disabled = true
-text = "Start Match"
+text = "CONNECT_START_MATCH"
 
 [node name="StatusLabel" type="Label" parent="CenterContainer/Panel"]
 custom_minimum_size = Vector2(420, 32)

@@ -5,5 +5,5 @@
 [resource]
 script = ExtResource("1_joker")
 CardName = 4
-DisplayName = "Joker"
-Description = "Resolves before every other card. Vanishes the card your opponent played this round and blocks its effect. Vanishes itself as well."
+DisplayName = "CARD_JOKER_NAME"
+Description = "CARD_JOKER_DESCRIPTION"
