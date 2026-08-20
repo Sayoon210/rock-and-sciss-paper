@@ -32,6 +32,7 @@ horizontal_alignment = 1
 [node name="CreateRoomButton" type="Button" parent="CenterContainer/Panel"]
 custom_minimum_size = Vector2(420, 54)
 layout_mode = 2
+theme_override_font_sizes/font_size = 24
 text = "CONNECT_CREATE_ROOM"
 
 [node name="AddressRow" type="HBoxContainer" parent="CenterContainer/Panel"]
@@ -52,12 +53,14 @@ text = "127.0.0.1"
 [node name="JoinButton" type="Button" parent="CenterContainer/Panel/AddressRow"]
 custom_minimum_size = Vector2(120, 54)
 layout_mode = 2
+theme_override_font_sizes/font_size = 24
 text = "CONNECT_JOIN"
 
 [node name="StartMatchButton" type="Button" parent="CenterContainer/Panel"]
 custom_minimum_size = Vector2(420, 54)
 layout_mode = 2
 disabled = true
+theme_override_font_sizes/font_size = 24
 text = "CONNECT_START_MATCH"
 
 [node name="StatusLabel" type="Label" parent="CenterContainer/Panel"]
