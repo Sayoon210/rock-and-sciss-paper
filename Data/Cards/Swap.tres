@@ -6,4 +6,4 @@
 script = ExtResource("1_swap")
 CardName = 6
 DisplayName = "교체"
-Description = "패에서 원하는 만큼 카드를 덱에 넣고 셔플한 뒤, 그만큼 다시 드로우한다. 효과 발동 후 소멸한다."
+Description = "패에서 최대 2장까지 덱에 넣고 셔플한 뒤, 그만큼 다시 드로우한다. 효과 발동 후 소멸한다."
