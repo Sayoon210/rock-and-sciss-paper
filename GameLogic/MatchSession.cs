@@ -30,7 +30,7 @@ public enum RoundPhase
 public sealed class MatchSession
 {
     public const int WINS_NEEDED_FOR_MATCH = 10;
-    public const int MULLIGAN_HAND_SIZE = 6;
+    public const int MULLIGAN_HAND_SIZE = 3;
 
     private readonly DeckAndHand _player1;
     private readonly DeckAndHand _player2;

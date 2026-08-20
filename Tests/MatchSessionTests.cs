@@ -4,7 +4,10 @@ namespace RockAndScissPaper.Tests;
 
 public class MatchSessionTests
 {
-    /// <summary>Twelve cards, enough to mulligan six and keep playing for a while.</summary>
+    private const int SMALL_DECK_SIZE = 12;
+
+    /// <summary>Twelve cards — comfortably more than a mulligan, with enough left over to
+    /// keep playing for a while.</summary>
     private static IEnumerable<CardName> SmallDeck()
     {
         return new[]
@@ -68,8 +71,8 @@ public class MatchSessionTests
 
         Assert.Equal(MatchSession.MULLIGAN_HAND_SIZE, session.HandOf(Side.Player1).Count);
         Assert.Equal(MatchSession.MULLIGAN_HAND_SIZE, session.HandOf(Side.Player2).Count);
-        Assert.Equal(6, session.DeckCountOf(Side.Player1));
-        Assert.Equal(6, session.DeckCountOf(Side.Player2));
+        Assert.Equal(SMALL_DECK_SIZE - MatchSession.MULLIGAN_HAND_SIZE, session.DeckCountOf(Side.Player1));
+        Assert.Equal(SMALL_DECK_SIZE - MatchSession.MULLIGAN_HAND_SIZE, session.DeckCountOf(Side.Player2));
     }
 
     [Fact]
@@ -195,12 +198,21 @@ public class MatchSessionTests
         Assert.Throws<ArgumentException>(() => session.SubmitCard(Side.Player1, CardName.Joker));
     }
 
-    /// <summary>Ten cards, five of each. A six-card mulligan can hold at most five of one
-    /// kind, so it always contains at least one of both — no seed hunting required.</summary>
-    private static List<CardName> FiveEachOf(CardName first, CardName second)
+    /// <summary>A deck whose mulligan always holds at least one of each card, whatever the
+    /// shuffle does — no seed hunting.
+    ///
+    /// One short of the mulligan for each kind is the largest deck that can promise that: with
+    /// only MULLIGAN_HAND_SIZE - 1 of a kind, a hand of MULLIGAN_HAND_SIZE cannot be made of
+    /// that kind alone. Counted off the constant rather than written out, because the promise
+    /// is arithmetic about the hand size and quietly stops holding when it changes — which is
+    /// what a fixed "five of each" did when the mulligan went from six cards to three.
+    ///
+    /// The deck this leaves behind is short by design. These sessions exist to exercise the
+    /// choice phase, not to play out many rounds.</summary>
+    private static List<CardName> MulliganHoldsBoth(CardName first, CardName second)
     {
         var cards = new List<CardName>();
-        for (int i = 0; i < 5; i++)
+        for (int i = 0; i < MatchSession.MULLIGAN_HAND_SIZE - 1; i++)
         {
             cards.Add(first);
             cards.Add(second);
@@ -212,7 +224,7 @@ public class MatchSessionTests
     private static MatchSession SwapVersusPlainSession()
     {
         return new MatchSession(
-            FiveEachOf(CardName.Swap, CardName.Dummy),
+            MulliganHoldsBoth(CardName.Swap, CardName.Dummy),
             Repeated(CardName.Rock, 20),
             new Random(1));
     }
@@ -364,7 +376,7 @@ public class MatchSessionTests
         // The whole point of asking after the reveal: a card the Joker destroyed never
         // prompts, instead of prompting and then throwing the answer away.
         var session = new MatchSession(
-            FiveEachOf(choiceCard, CardName.Dummy),
+            MulliganHoldsBoth(choiceCard, CardName.Dummy),
             Repeated(CardName.Joker, 20),
             new Random(1));
 
@@ -386,8 +398,8 @@ public class MatchSessionTests
         // applies. Choosing before the reveal — the old flow — let 리셋 invalidate a choice
         // that had already been validated, which threw partway through resolution.
         var session = new MatchSession(
-            FiveEachOf(CardName.Reset, CardName.Rock),
-            FiveEachOf(CardName.Transform, CardName.Dummy),
+            MulliganHoldsBoth(CardName.Reset, CardName.Rock),
+            MulliganHoldsBoth(CardName.Transform, CardName.Dummy),
             new Random(3));
 
         session.SubmitCard(Side.Player1, CardName.Reset);
@@ -423,8 +435,8 @@ public class MatchSessionTests
     private static RoundResult ResolveBothChoices(bool chooseForPlayer1First)
     {
         var session = new MatchSession(
-            FiveEachOf(CardName.Swap, CardName.Dummy),
-            FiveEachOf(CardName.Swap, CardName.Rock),
+            MulliganHoldsBoth(CardName.Swap, CardName.Dummy),
+            MulliganHoldsBoth(CardName.Swap, CardName.Rock),
             new Random(5));
 
         session.SubmitCard(Side.Player1, CardName.Swap);
@@ -451,12 +463,12 @@ public class MatchSessionTests
     [Fact]
     public void Running_out_of_cards_ends_the_match_even_with_a_perfect_score()
     {
-        // Seven Dummy: mulligan takes six, leaving exactly one in the deck. A Dummy vanishes
-        // instead of returning, so the one card left is drawn at the end of round 1 and the
-        // deck is empty the moment that round is recorded — before either side has a chance
-        // to also win on score.
+        // One Dummy more than the mulligan, so exactly one is left in the deck. A Dummy
+        // vanishes instead of returning, so that last card is drawn at the end of round 1 and
+        // the deck is empty the moment that round is recorded — before either side has a
+        // chance to also win on score.
         var session = new MatchSession(
-            Repeated(CardName.Dummy, 7),
+            Repeated(CardName.Dummy, MatchSession.MULLIGAN_HAND_SIZE + 1),
             Repeated(CardName.Rock, 20),
             new Random(1));
 
@@ -471,7 +483,7 @@ public class MatchSessionTests
     public void SubmitCard_throws_once_a_side_has_exhausted_its_deck()
     {
         var session = new MatchSession(
-            Repeated(CardName.Dummy, 7),
+            Repeated(CardName.Dummy, MatchSession.MULLIGAN_HAND_SIZE + 1),
             Repeated(CardName.Rock, 20),
             new Random(1));
 
@@ -490,8 +502,8 @@ public class MatchSessionTests
         // simultaneous Reset and same-priority submissions, rather than leaving the match
         // with no winner at all.
         var session = new MatchSession(
-            Repeated(CardName.Dummy, 7),
-            Repeated(CardName.Dummy, 7),
+            Repeated(CardName.Dummy, MatchSession.MULLIGAN_HAND_SIZE + 1),
+            Repeated(CardName.Dummy, MatchSession.MULLIGAN_HAND_SIZE + 1),
             new Random(1));
 
         session.SubmitCard(Side.Player1, CardName.Dummy);
