@@ -44,7 +44,6 @@ theme/custom="res://Assets/Fonts/DefaultTheme.tres"
 [internationalization]
 
 locale/translations=PackedStringArray("res://Data/Translations/strings.en.translation", "res://Data/Translations/strings.ko.translation")
-locale/fallback="en"
 
 [physics]
 

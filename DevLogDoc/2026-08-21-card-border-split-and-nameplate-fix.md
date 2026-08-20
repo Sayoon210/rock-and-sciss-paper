@@ -49,6 +49,20 @@ Debug → Customize Run Instances로 로컬 실행 인자(`--resolution ...`)를
 설정이라 [Scripts/CLAUDE.md](../Scripts/CLAUDE.md)의 로컬라이제이션 규칙이 실제로
 지켜지려면 있어야 하는 줄이다. 다시 넣었다.
 
+### 정정 — 위 판단이 틀렸다
+
+그 줄은 다음 저장에서 또 사라졌다. 이번엔 헤드리스로 직접 확인했다:
+
+```gdscript
+print(ProjectSettings.get_setting("internationalization/locale/fallback", "<<ABSENT>>"))
+# → "en"
+```
+
+줄이 아예 없어도 Godot 엔진 자체 기본값이 `"en"`이다. 즉 에디터가 지운 건 버그가
+아니라 "기본값과 같은 값은 저장하지 않는다"는 `ProjectSettings.save()`의 정상 동작이고,
+줄이 있든 없든 동작은 똑같았다 — 위에서 "규칙이 지켜지려면 있어야 하는 줄"이라고 쓴
+건 틀린 판단이었다. 문제도 아닌 걸 문제로 보고 고쳤던 셈이라, 이번엔 다시 넣지 않았다.
+
 ## 검증한 것
 
 - `dotnet build` 경고 0 / 오류 0
