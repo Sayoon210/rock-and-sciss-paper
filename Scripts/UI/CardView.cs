@@ -144,7 +144,8 @@ public partial class CardView : Control
             art = cardData.CardArt;
         }
 
-        Color typeColor = TypeColorOf(card.GetCardType());
+        CardType cardType = card.GetCardType();
+        Color typeColor = TypeColorOf(cardType);
 
         _placeholderFill.Color = typeColor.Darkened(0.6f);
 
@@ -159,7 +160,9 @@ public partial class CardView : Control
         // Back on for a node that was last showing a back: the back art carries a frame of
         // its own, so the 카드 종류 border is switched off rather than drawn over it.
         _typeBorder.Visible = true;
-        _borderStyle.BorderColor = typeColor;
+        bool squareBlackBorder = cardType == CardType.Normal || cardType == CardType.Blank;
+        _borderStyle.BorderColor = squareBlackBorder ? Colors.Black : typeColor;
+        _borderStyle.SetCornerRadiusAll(squareBlackBorder ? 0 : 10);
 
         _nameLabel.Text = displayName;
         _nameLabel.Visible = true;
