@@ -24,6 +24,8 @@ public partial class CardView : Control
     /// <summary>Argument-free on purpose: what this click means is the owner's business.</summary>
     [Signal] public delegate void ClickedEventHandler();
 
+    private const string CARD_TOOLTIP_SCENE_PATH = "res://Scenes/Match/CardTooltip.tscn";
+
     private ColorRect _placeholderFill = null!;
     private TextureRect _artView = null!;
     private ColorRect _faceDownBack = null!;
@@ -381,6 +383,51 @@ public partial class CardView : Control
 
     /// <summary>The one colour a 카드 종류 gets. The placeholder fill is a darkened version
     /// of it rather than a second colour, so the fill and the border can never disagree.</summary>
+    /// <summary>The text the tooltip is built from — this card's rules text, except while it
+    /// is being dragged, when there is no tooltip at all.
+    ///
+    /// The drag case is suppressed here and not in _MakeCustomTooltip below, because returning
+    /// null from that one does not mean "no tooltip": Godot reads it as "no custom tooltip"
+    /// and falls back to the plain default one. Emptying the text is what actually stops a
+    /// panel appearing, and a panel sitting under the cursor is in the way of exactly the
+    /// thing the player is doing while dragging.</summary>
+    public override string _GetTooltip(Vector2 atPosition)
+    {
+        if (_isDragging)
+        {
+            return string.Empty;
+        }
+
+        return TooltipText;
+    }
+
+    /// <summary>Build the panel shown when the cursor rests on this card. Godot calls this
+    /// itself once the hover has lasted long enough (gui/timers/tooltip_delay_sec), frees what
+    /// comes back when the tooltip goes away, and handles where it sits — so the card only has
+    /// to say what goes in it.
+    ///
+    /// The name and the 카드 종류 colour are passed along with forText: this view resolved them
+    /// already to draw itself, and handing them over keeps TypeColorOf the one place a
+    /// 카드 종류 becomes a colour.
+    ///
+    /// Null on empty text, which is what a face-down card has — publishing what it is would be
+    /// the one thing a back exists to prevent. Godot does not display the default tooltip for
+    /// empty text either, so this is the one case where null really does mean no tooltip.</summary>
+    public override Control? _MakeCustomTooltip(string forText)
+    {
+        if (forText.Length == 0 || !ShownCard.HasValue)
+        {
+            return null;
+        }
+
+        CardType cardType = ShownCard.Value.GetCardType();
+
+        CardTooltipView tooltip = GD.Load<PackedScene>(CARD_TOOLTIP_SCENE_PATH)
+            .Instantiate<CardTooltipView>();
+        tooltip.Fill(_nameLabel.Text, forText, cardType, TypeColorOf(cardType));
+        return tooltip;
+    }
+
     private static Color TypeColorOf(CardType cardType)
     {
         switch (cardType)

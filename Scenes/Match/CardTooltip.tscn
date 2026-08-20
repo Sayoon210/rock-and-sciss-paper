@@ -1,0 +1,79 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://Scripts/UI/CardTooltipView.cs" id="1_cardtooltip"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tooltippanel"]
+bg_color = Color(0.08, 0.10, 0.15, 0.97)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.45, 0.47, 0.55, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+shadow_color = Color(0, 0, 0, 0.45)
+shadow_size = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_typebadge"]
+bg_color = Color(0.45, 0.47, 0.55, 1)
+content_margin_left = 10.0
+content_margin_top = 3.0
+content_margin_right = 10.0
+content_margin_bottom = 3.0
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[node name="CardTooltipView" type="PanelContainer"]
+theme_override_styles/panel = SubResource("StyleBoxFlat_tooltippanel")
+script = ExtResource("1_cardtooltip")
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 14
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 16
+
+[node name="Rows" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Header" type="HBoxContainer" parent="Margin/Rows"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="NameLabel" type="Label" parent="Margin/Rows/Header"]
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_font_sizes/font_size = 28
+text = "카드 이름"
+
+[node name="TypeBadge" type="PanelContainer" parent="Margin/Rows/Header"]
+layout_mode = 2
+size_flags_horizontal = 10
+size_flags_vertical = 4
+theme_override_styles/panel = SubResource("StyleBoxFlat_typebadge")
+
+[node name="TypeLabel" type="Label" parent="Margin/Rows/Header/TypeBadge"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.06, 0.07, 0.11, 1)
+theme_override_font_sizes/font_size = 16
+text = "일반카드"
+
+[node name="Divider" type="ColorRect" parent="Margin/Rows"]
+custom_minimum_size = Vector2(0, 2)
+layout_mode = 2
+color = Color(0.45, 0.47, 0.55, 0.45)
+
+[node name="DescriptionLabel" type="Label" parent="Margin/Rows"]
+custom_minimum_size = Vector2(420, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.84, 0.86, 0.92, 1)
+theme_override_font_sizes/font_size = 19
+theme_override_constants/line_spacing = 4
+text = "카드 설명"
+autowrap_mode = 2
