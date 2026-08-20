@@ -14,7 +14,7 @@ public class RoundResultTests
             player2CardFate: CardFate.ReturnedToDeckBottom,
             winLoss: WinLossResult.Player1Win,
             player1Hand: new[] { CardName.Paper },
-            player2Hand: new[] { CardName.Dummy, CardName.Joker },
+            player2Hand: new[] { CardName.Blank, CardName.Joker },
             player1DeckCount: 12,
             player2DeckCount: 11,
             player1SwappedCardCount: 2,
@@ -29,7 +29,7 @@ public class RoundResultTests
         Assert.Equal(CardFate.ReturnedToDeckBottom, result.Player2CardFate);
         Assert.Equal(WinLossResult.Player1Win, result.WinLoss);
         Assert.Equal(new[] { CardName.Paper }, result.Player1Hand);
-        Assert.Equal(new[] { CardName.Dummy, CardName.Joker }, result.Player2Hand);
+        Assert.Equal(new[] { CardName.Blank, CardName.Joker }, result.Player2Hand);
         Assert.Equal(12, result.Player1DeckCount);
         Assert.Equal(11, result.Player2DeckCount);
         Assert.Equal(2, result.Player1SwappedCardCount);

@@ -9,7 +9,7 @@ public enum CardFate
     Vanished,
 }
 
-/// <summary>What happened in one round. WinLoss is null whenever a special, dummy, or
+/// <summary>What happened in one round. WinLoss is null whenever a ability, blank, or
 /// Joker card was involved — those rounds have no win/loss and do not count toward the
 /// 10-win score.
 ///

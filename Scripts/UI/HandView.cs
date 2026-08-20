@@ -78,7 +78,7 @@ public partial class HandView : Control
 
     // The exact cards the outstanding choice was made about, kept from the moment it is sent
     // until the new 패 comes back. Nodes and not CardNames: the deck holds three of each
-    // 일반카드 and four 더미, so a 패 nearly always has duplicates, and going back to names
+    // 일반카드 and four 공백, so a 패 nearly always has duplicates, and going back to names
     // cannot tell one copy from another — see RememberSwapSelection and
     // RememberTransformSource for what each of them would otherwise get wrong.
     private CardView? _cardBeingTransformed;
@@ -490,7 +490,7 @@ public partial class HandView : Control
     /// <summary>변화: exactly one hand card may be picked as the card to change. Same
     /// no-op-if-unchanged rule as SetSelectionModeForSwap.
     ///
-    /// Only a 일반카드/더미카드 may ever be a legal source (DESIGN.md, TransformEffect.Validate)
+    /// Only a 일반카드/공백카드 may ever be a legal source (DESIGN.md, TransformEffect.Validate)
     /// — anything else in hand is dimmed and does not respond to a click. This is the
     /// affordance Scripts/CLAUDE.md allows ("greying out is fine, but it is not validation");
     /// the host still re-checks the choice regardless.</summary>
@@ -622,7 +622,7 @@ public partial class HandView : Control
     private static bool IsTransformable(CardName card)
     {
         CardType type = card.GetCardType();
-        return type == CardType.Normal || type == CardType.Dummy;
+        return type == CardType.Normal || type == CardType.Blank;
     }
 
     /// <summary>변화's eligible cards depend on what is actually in hand, unlike the "into"

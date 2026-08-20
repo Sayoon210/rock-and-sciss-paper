@@ -163,7 +163,7 @@ public sealed class MatchSession
     ///
     /// Random rather than the first card in hand, because hand order carries no meaning here —
     /// nothing in the rules ever assigns a card a slot, so "the first one" would be an
-    /// arbitrary artefact of insertion order. Random rather than sparing 조커/특수, because a
+    /// arbitrary artefact of insertion order. Random rather than sparing 조커/능력, because a
     /// rule that protects the cards that vanish would pay a player for not answering.</summary>
     public RoundReveal? SubmitRandomCardForIdleSides()
     {

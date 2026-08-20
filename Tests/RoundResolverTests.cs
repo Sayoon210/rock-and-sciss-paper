@@ -15,12 +15,12 @@ public class RoundResolverTests
     [InlineData(CardName.Rock, CardName.Scissors, CardFate.ReturnedToDeckBottom, CardFate.ReturnedToDeckBottom, WinLossResult.Player1Win)]
     [InlineData(CardName.Scissors, CardName.Rock, CardFate.ReturnedToDeckBottom, CardFate.ReturnedToDeckBottom, WinLossResult.Player2Win)]
     [InlineData(CardName.Rock, CardName.Rock, CardFate.ReturnedToDeckBottom, CardFate.ReturnedToDeckBottom, WinLossResult.Draw)]
-    [InlineData(CardName.Rock, CardName.Dummy, CardFate.ReturnedToDeckBottom, CardFate.Vanished, null)]
-    [InlineData(CardName.Dummy, CardName.Rock, CardFate.Vanished, CardFate.ReturnedToDeckBottom, null)]
-    [InlineData(CardName.Dummy, CardName.Dummy, CardFate.Vanished, CardFate.Vanished, null)]
+    [InlineData(CardName.Rock, CardName.Blank, CardFate.ReturnedToDeckBottom, CardFate.Vanished, null)]
+    [InlineData(CardName.Blank, CardName.Rock, CardFate.Vanished, CardFate.ReturnedToDeckBottom, null)]
+    [InlineData(CardName.Blank, CardName.Blank, CardFate.Vanished, CardFate.Vanished, null)]
     [InlineData(CardName.Joker, CardName.Rock, CardFate.Vanished, CardFate.Vanished, null)]
     [InlineData(CardName.Rock, CardName.Joker, CardFate.Vanished, CardFate.Vanished, null)]
-    [InlineData(CardName.Joker, CardName.Dummy, CardFate.Vanished, CardFate.Vanished, null)]
+    [InlineData(CardName.Joker, CardName.Blank, CardFate.Vanished, CardFate.Vanished, null)]
     [InlineData(CardName.Joker, CardName.Joker, CardFate.Vanished, CardFate.Vanished, null)]
     [InlineData(CardName.Rock, CardName.Draw, CardFate.ReturnedToDeckBottom, CardFate.Vanished, null)]
     public void A_revealed_and_finished_round_produces_the_right_fates_and_winloss(
@@ -70,9 +70,9 @@ public class RoundResolverTests
     public void Resolving_draws_a_new_card_for_both_players_regardless_of_outcome()
     {
         DeckAndHand player1 = MakeZone(CardName.Joker);
-        DeckAndHand player2 = MakeZone(CardName.Dummy);
+        DeckAndHand player2 = MakeZone(CardName.Blank);
 
-        RoundResult result = ResolveWithoutChoices(CardName.Joker, CardName.Dummy, player1, player2);
+        RoundResult result = ResolveWithoutChoices(CardName.Joker, CardName.Blank, player1, player2);
 
         Assert.Equal(new[] { CardName.Paper }, result.Player1Hand);
         Assert.Equal(new[] { CardName.Paper }, result.Player2Hand);
@@ -88,16 +88,16 @@ public class RoundResolverTests
         DeckAndHand player1 = new DeckAndHand(
             new Deck(new[] { CardName.Rock, CardName.Paper, CardName.Scissors }),
             new Hand(new[] { CardName.Draw }));
-        DeckAndHand player2 = MakeZone(CardName.Dummy);
+        DeckAndHand player2 = MakeZone(CardName.Blank);
 
-        RoundResult result = ResolveWithoutChoices(CardName.Draw, CardName.Dummy, player1, player2);
+        RoundResult result = ResolveWithoutChoices(CardName.Draw, CardName.Blank, player1, player2);
 
         Assert.Equal(new[] { CardName.Rock, CardName.Paper, CardName.Scissors }, result.Player1Hand);
         Assert.Equal(0, result.Player1DeckCount);
     }
 
     [Fact]
-    public void Resolving_runs_the_played_specials_effect()
+    public void Resolving_runs_the_played_abilities_effect()
     {
         // A deck of its own rather than MakeZone's single card, because 드로우 is the effect
         // being watched for and one card cannot show two draws happening.
@@ -115,7 +115,7 @@ public class RoundResolverTests
     }
 
     [Fact]
-    public void Resolving_does_not_include_the_played_special_card_in_its_own_effect()
+    public void Resolving_does_not_include_the_played_ability_card_in_its_own_effect()
     {
         // Reset's effect reads "my current hand" — the just-played Reset card must
         // already be gone from the hand by the time that happens, or it would
@@ -123,9 +123,9 @@ public class RoundResolverTests
         DeckAndHand player1 = new DeckAndHand(
             new Deck(new[] { CardName.Paper }),
             new Hand(new[] { CardName.Reset, CardName.Rock, CardName.Scissors }));
-        DeckAndHand player2 = MakeZone(CardName.Dummy);
+        DeckAndHand player2 = MakeZone(CardName.Blank);
 
-        ResolveWithoutChoices(CardName.Reset, CardName.Dummy, player1, player2);
+        ResolveWithoutChoices(CardName.Reset, CardName.Blank, player1, player2);
 
         // Reset's own card never reappears: only Rock and Scissors (plus one post-round
         // draw) can possibly end up in player1's hand.
@@ -155,11 +155,11 @@ public class RoundResolverTests
     [InlineData(CardName.Reset, false)]
     [InlineData(CardName.Draw, false)]
     [InlineData(CardName.Rock, false)]
-    [InlineData(CardName.Dummy, false)]
+    [InlineData(CardName.Blank, false)]
     [InlineData(CardName.Joker, false)]
     public void Every_card_declares_whether_playing_it_needs_a_choice(CardName card, bool expected)
     {
-        // The phase machine asks this rather than testing card names, so a sixth special
+        // The phase machine asks this rather than testing card names, so a sixth ability
         // card only has to answer it — this is the test that catches one that forgets.
         Assert.Equal(expected, RoundResolver.RequiresChoice(card));
     }
@@ -170,7 +170,7 @@ public class RoundResolverTests
         // Reset replaces both hands. Running it during Reveal is what makes the hand a
         // player is offered the same hand their choice will be applied to.
         var player1 = new DeckAndHand(new Deck(RepeatedCards(CardName.Rock, 20)), new Hand(new[] { CardName.Reset }));
-        var player2 = new DeckAndHand(new Deck(RepeatedCards(CardName.Paper, 20)), new Hand(new[] { CardName.Transform, CardName.Dummy }));
+        var player2 = new DeckAndHand(new Deck(RepeatedCards(CardName.Paper, 20)), new Hand(new[] { CardName.Transform, CardName.Blank }));
         var rng = new Random(1);
 
         RoundInProgress round = RoundResolver.Reveal(CardName.Reset, CardName.Transform, player1, player2, rng);
@@ -194,7 +194,7 @@ public class RoundResolverTests
     {
         // The reachable version of "asked for a choice that cannot be made": 변화 is played,
         // the opponent's 리셋 runs first and replaces the hand, and what comes back holds no
-        // 일반카드/더미카드. Before this, the player was asked anyway and could only wait out
+        // 일반카드/공백카드. Before this, the player was asked anyway and could only wait out
         // the timeout with every card in the picker greyed out.
         var player1 = new DeckAndHand(new Deck(RepeatedCards(CardName.Rock, 20)), new Hand(new[] { CardName.Reset }));
         var player2 = new DeckAndHand(new Deck(RepeatedCards(CardName.Joker, 20)), new Hand(new[] { CardName.Transform, CardName.Joker }));
@@ -215,13 +215,13 @@ public class RoundResolverTests
     {
         // 조커 outranks 리셋 (DESIGN.md): it destroys whatever the other side played and
         // blocks its effect outright, so nothing about either 패 changes.
-        var player1 = new DeckAndHand(new Deck(RepeatedCards(CardName.Rock, 20)), new Hand(new[] { CardName.Joker, CardName.Dummy }));
+        var player1 = new DeckAndHand(new Deck(RepeatedCards(CardName.Rock, 20)), new Hand(new[] { CardName.Joker, CardName.Blank }));
         var player2 = new DeckAndHand(new Deck(RepeatedCards(CardName.Paper, 20)), new Hand(new[] { CardName.Reset, CardName.Scissors }));
         var rng = new Random(1);
 
         RoundInProgress round = RoundResolver.Reveal(CardName.Joker, CardName.Reset, player1, player2, rng);
 
-        Assert.Equal(new[] { CardName.Dummy }, player1.Hand.Cards);
+        Assert.Equal(new[] { CardName.Blank }, player1.Hand.Cards);
         Assert.Equal(new[] { CardName.Scissors }, player2.Hand.Cards);
         Assert.False(round.ResetApplied);
     }
@@ -229,7 +229,7 @@ public class RoundResolverTests
     [Fact]
     public void A_Reset_with_no_Joker_in_the_round_is_recorded_as_applied()
     {
-        var player1 = new DeckAndHand(new Deck(RepeatedCards(CardName.Rock, 20)), new Hand(new[] { CardName.Reset, CardName.Dummy }));
+        var player1 = new DeckAndHand(new Deck(RepeatedCards(CardName.Rock, 20)), new Hand(new[] { CardName.Reset, CardName.Blank }));
         var player2 = new DeckAndHand(new Deck(RepeatedCards(CardName.Paper, 20)), new Hand(new[] { CardName.Scissors, CardName.Scissors }));
         var rng = new Random(1);
 
@@ -241,7 +241,7 @@ public class RoundResolverTests
     [Fact]
     public void A_declined_choice_finishes_the_round_with_the_effect_unrun()
     {
-        var player1 = new DeckAndHand(new Deck(RepeatedCards(CardName.Rock, 20)), new Hand(new[] { CardName.Swap, CardName.Dummy }));
+        var player1 = new DeckAndHand(new Deck(RepeatedCards(CardName.Rock, 20)), new Hand(new[] { CardName.Swap, CardName.Blank }));
         var player2 = new DeckAndHand(new Deck(RepeatedCards(CardName.Rock, 20)), new Hand(new[] { CardName.Rock }));
         var rng = new Random(1);
 
@@ -250,7 +250,7 @@ public class RoundResolverTests
         RoundResult result = RoundResolver.Finish(round, player1, player2, rng);
 
         Assert.Equal(0, result.Player1SwappedCardCount);
-        Assert.Contains(CardName.Dummy, result.Player1Hand);
+        Assert.Contains(CardName.Blank, result.Player1Hand);
     }
 
     private static List<CardName> RepeatedCards(CardName card, int count)

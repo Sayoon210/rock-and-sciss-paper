@@ -6,13 +6,13 @@ public class SwapEffectTests
 {
     private static DeckAndHand HandOf(params CardName[] cards)
     {
-        return new DeckAndHand(new Deck(new[] { CardName.Dummy, CardName.Dummy, CardName.Dummy }), new Hand(cards));
+        return new DeckAndHand(new Deck(new[] { CardName.Blank, CardName.Blank, CardName.Blank }), new Hand(cards));
     }
 
     [Fact]
     public void Validate_rejects_a_choice_that_puts_back_more_cards_than_the_limit()
     {
-        DeckAndHand self = HandOf(CardName.Rock, CardName.Rock, CardName.Rock, CardName.Dummy);
+        DeckAndHand self = HandOf(CardName.Rock, CardName.Rock, CardName.Rock, CardName.Blank);
 
         var tooMany = new List<CardName>();
         for (int card = 0; card <= SwapEffect.MAX_SWAPPED_CARDS; card++)
@@ -29,7 +29,7 @@ public class SwapEffectTests
     {
         // Counted off MAX_SWAPPED_CARDS rather than written as a literal 2, so these two tests
         // keep testing the limit itself if the number ever changes.
-        DeckAndHand self = HandOf(CardName.Rock, CardName.Rock, CardName.Rock, CardName.Dummy);
+        DeckAndHand self = HandOf(CardName.Rock, CardName.Rock, CardName.Rock, CardName.Blank);
 
         var atLimit = new List<CardName>();
         for (int card = 0; card < SwapEffect.MAX_SWAPPED_CARDS; card++)
@@ -44,7 +44,7 @@ public class SwapEffectTests
     public void Apply_returns_the_chosen_cards_and_draws_the_same_number_back()
     {
         var self = new DeckAndHand(
-            new Deck(new[] { CardName.Dummy, CardName.Dummy, CardName.Dummy }),
+            new Deck(new[] { CardName.Blank, CardName.Blank, CardName.Blank }),
             new Hand(new[] { CardName.Rock, CardName.Paper, CardName.Scissors }));
         var opponent = new DeckAndHand(new Deck(Array.Empty<CardName>()), new Hand(Array.Empty<CardName>()));
 
@@ -60,7 +60,7 @@ public class SwapEffectTests
     public void Apply_swapping_nothing_leaves_the_hand_as_it_was()
     {
         var self = new DeckAndHand(
-            new Deck(new[] { CardName.Dummy }),
+            new Deck(new[] { CardName.Blank }),
             new Hand(new[] { CardName.Rock }));
         var opponent = new DeckAndHand(new Deck(Array.Empty<CardName>()), new Hand(Array.Empty<CardName>()));
 
@@ -74,7 +74,7 @@ public class SwapEffectTests
     public void Apply_does_not_touch_the_opponent()
     {
         var self = new DeckAndHand(
-            new Deck(new[] { CardName.Dummy }),
+            new Deck(new[] { CardName.Blank }),
             new Hand(new[] { CardName.Rock }));
         var opponent = new DeckAndHand(
             new Deck(new[] { CardName.Scissors }),
@@ -98,7 +98,7 @@ public class SwapEffectTests
     public void Validate_accepts_a_duplicate_the_hand_actually_holds_twice()
     {
         var self = new DeckAndHand(
-            new Deck(new[] { CardName.Dummy }),
+            new Deck(new[] { CardName.Blank }),
             new Hand(new[] { CardName.Rock, CardName.Rock }));
 
         new SwapEffect().Validate(CardChoice.Swapping(new[] { CardName.Rock, CardName.Rock }), self);
@@ -108,7 +108,7 @@ public class SwapEffectTests
     public void Validate_rejects_more_copies_than_the_hand_holds()
     {
         var self = new DeckAndHand(
-            new Deck(new[] { CardName.Dummy }),
+            new Deck(new[] { CardName.Blank }),
             new Hand(new[] { CardName.Rock, CardName.Rock }));
 
         Assert.Throws<ArgumentException>(
@@ -120,7 +120,7 @@ public class SwapEffectTests
     public void Validate_rejects_a_card_that_is_not_in_hand()
     {
         var self = new DeckAndHand(
-            new Deck(new[] { CardName.Dummy }),
+            new Deck(new[] { CardName.Blank }),
             new Hand(new[] { CardName.Rock }));
 
         Assert.Throws<ArgumentException>(
@@ -133,7 +133,7 @@ public class SwapEffectTests
         // The played Swap is gone by the time its owner chooses, so naming it is refused
         // by the ordinary "not in hand" rule — no special case needed any more.
         var self = new DeckAndHand(
-            new Deck(new[] { CardName.Dummy }),
+            new Deck(new[] { CardName.Blank }),
             new Hand(new[] { CardName.Rock }));
 
         Assert.Throws<ArgumentException>(
@@ -144,7 +144,7 @@ public class SwapEffectTests
     public void Validate_rejects_a_missing_choice()
     {
         var self = new DeckAndHand(
-            new Deck(new[] { CardName.Dummy }),
+            new Deck(new[] { CardName.Blank }),
             new Hand(new[] { CardName.Rock }));
 
         Assert.Throws<ArgumentException>(() => new SwapEffect().Validate(null, self));

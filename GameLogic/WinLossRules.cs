@@ -20,7 +20,7 @@ public static class WinLossRules
 {
     /// <summary>
     /// Scissors beats Paper, Rock beats Scissors, Paper beats Rock. Same card draws.
-    /// Only normal cards reach here — specials, dummies and Jokers never produce a win or loss.
+    /// Only normal cards reach here — abilities, blanks and Jokers never produce a win or loss.
     /// </summary>
     public static WinLossResult Judge(NormalCard player1, NormalCard player2)
     {

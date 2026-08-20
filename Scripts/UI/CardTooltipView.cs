@@ -63,14 +63,14 @@ public partial class CardTooltipView : PanelContainer
             case CardType.Normal:
                 return "Normal Card";
 
-            case CardType.Dummy:
-                return "Dummy Card";
+            case CardType.Blank:
+                return "Blank Card";
 
             case CardType.Joker:
                 return "Joker Card";
 
-            case CardType.Special:
-                return "Special Card";
+            case CardType.Ability:
+                return "Ability Card";
 
             default:
                 return string.Empty;

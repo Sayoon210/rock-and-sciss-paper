@@ -5,7 +5,7 @@ Paper,보
 "A normal card. Beats Rock. Returns to the bottom of your deck after use, win or lose.",바위를 이기는 일반 카드. 승패와 관계없이 사용 후 덱 바닥으로 복귀한다.
 Scissors,가위
 "A normal card. Beats Paper. Returns to the bottom of your deck after use, win or lose.",보를 이기는 일반 카드. 승패와 관계없이 사용 후 덱 바닥으로 복귀한다.
-Dummy,더미
+Blank,공백
 Vanishes with no effect. A scouting card: it shows you what your opponent played this round without spending anything that matters.,"효과 없이 소멸하는 카드. 내 카드를 소모하지 않으면서 상대가 이번 라운드에 뭘 냈는지 확인하는 ""패 까기""용 카드."
 Joker,조커
 Resolves before every other card. Vanishes the card your opponent played this round and blocks its effect. Vanishes itself as well.,다른 카드 효과보다 먼저 처리되는 최우선 소멸 카드. 상대가 이번 라운드에 제출한 카드를 소멸시키고 그 효과 발동을 막는다. 조커 자신도 사용 후 함께 소멸한다.
@@ -14,7 +14,7 @@ Both players shuffle their hand into their deck and draw back up to the same num
 Swap,교체
 "Shuffle up to 2 cards from your hand into your deck, then draw that many. Vanishes after use.","패에서 최대 2장까지 덱에 넣고 셔플한 뒤, 그만큼 다시 드로우한다. 효과 발동 후 소멸한다."
 Transform,변화
-Change one normal or dummy card in your hand into any normal or dummy card. Vanishes after use.,패에 있는 일반 카드 또는 더미 카드 1장을 원하는 카드(일반 카드 또는 더미 카드)로 바꾼다. 효과 발동 후 소멸한다.
+Change one normal or blank card in your hand into any normal or blank card. Vanishes after use.,패에 있는 일반 카드 또는 공백 카드 1장을 원하는 카드(일반 카드 또는 공백 카드)로 바꾼다. 효과 발동 후 소멸한다.
 Draw,드로우
 Draw 2 cards. Vanishes after use.,카드 2장을 뽑는다. 효과 발동 후 소멸한다.
 Play,대전
@@ -57,6 +57,6 @@ You lose the match,매치 패배
 Waiting for the host to start a rematch...,호스트가 재대결을 시작하길 기다리는 중...
 Your opponent left.,상대가 나갔습니다.
 Normal Card,일반카드
-Dummy Card,더미카드
+Blank Card,공백카드
 Joker Card,조커카드
-Special Card,특수카드
+Ability Card,능력카드

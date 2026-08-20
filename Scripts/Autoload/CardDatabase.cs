@@ -9,7 +9,7 @@ namespace RockAndScissPaper.Autoload;
 
 /// <summary>Loads every CardData .tres under Data/Cards/ and indexes it by CardName.
 /// Does not define card stats itself — that text lives only in the .tres files. Scans the
-/// directory rather than listing filenames, since the special-card roster may grow later
+/// directory rather than listing filenames, since the ability-card roster may grow later
 /// and this must not need editing when it does.</summary>
 public partial class CardDatabase : Node
 {
@@ -41,8 +41,8 @@ public partial class CardDatabase : Node
     }
 
     /// <summary>Every card name a .tres was loaded for. Deck-assembly code reads the
-    /// special-card roster from here rather than listing card names itself, so the roster
-    /// can grow without a code change — see CLAUDE.md's "don't hardcode the special-card
+    /// ability-card roster from here rather than listing card names itself, so the roster
+    /// can grow without a code change — see CLAUDE.md's "don't hardcode the ability-card
     /// roster" rule.</summary>
     public IReadOnlyCollection<CardName> LoadedCardNames
     {

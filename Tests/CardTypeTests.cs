@@ -8,12 +8,12 @@ public class CardTypeTests
     [InlineData(CardName.Rock, CardType.Normal)]
     [InlineData(CardName.Paper, CardType.Normal)]
     [InlineData(CardName.Scissors, CardType.Normal)]
-    [InlineData(CardName.Dummy, CardType.Dummy)]
+    [InlineData(CardName.Blank, CardType.Blank)]
     [InlineData(CardName.Joker, CardType.Joker)]
-    [InlineData(CardName.Reset, CardType.Special)]
-    [InlineData(CardName.Swap, CardType.Special)]
-    [InlineData(CardName.Transform, CardType.Special)]
-    [InlineData(CardName.Draw, CardType.Special)]
+    [InlineData(CardName.Reset, CardType.Ability)]
+    [InlineData(CardName.Swap, CardType.Ability)]
+    [InlineData(CardName.Transform, CardType.Ability)]
+    [InlineData(CardName.Draw, CardType.Ability)]
     public void Every_card_maps_to_the_right_type(CardName name, CardType expected)
     {
         Assert.Equal(expected, name.GetCardType());

@@ -6,7 +6,7 @@ using RockAndScissPaper.GameLogic;
 namespace RockAndScissPaper.UI;
 
 /// <summary>One card on screen, face up or face down. There is exactly one of these for
-/// every card in the game — 일반카드, 더미, 조커 and 특수 all render through it, because a
+/// every card in the game — 일반카드, 공백, 조커 and 능력 all render through it, because a
 /// subclass per card variant is the thing root CLAUDE.md rules out.
 ///
 /// It renders and it reports a click. It does not read GameState.View, does not subscribe to
@@ -435,13 +435,13 @@ public partial class CardView : Control
             case CardType.Normal:
                 return new Color(0.36f, 0.62f, 0.92f);
 
-            case CardType.Dummy:
+            case CardType.Blank:
                 return new Color(0.58f, 0.60f, 0.64f);
 
             case CardType.Joker:
                 return new Color(0.85f, 0.32f, 0.34f);
 
-            case CardType.Special:
+            case CardType.Ability:
                 return new Color(0.92f, 0.74f, 0.30f);
 
             default:

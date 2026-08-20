@@ -43,7 +43,7 @@ public class DeckTests
         {
             CardName.Rock, CardName.Rock, CardName.Rock,
             CardName.Paper, CardName.Paper, CardName.Paper,
-            CardName.Scissors, CardName.Dummy, CardName.Joker,
+            CardName.Scissors, CardName.Blank, CardName.Joker,
         };
         var deck = new Deck(original);
 
@@ -64,7 +64,7 @@ public class DeckTests
         var cards = new[]
         {
             CardName.Rock, CardName.Paper, CardName.Scissors,
-            CardName.Dummy, CardName.Joker, CardName.Reset,
+            CardName.Blank, CardName.Joker, CardName.Reset,
         };
         var deckA = new Deck(cards);
         var deckB = new Deck(cards);

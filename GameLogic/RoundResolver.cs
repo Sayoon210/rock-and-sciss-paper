@@ -14,7 +14,7 @@ namespace RockAndScissPaper.GameLogic;
 /// there is no window in which a validated choice can go stale.</summary>
 public static class RoundResolver
 {
-    private static readonly IReadOnlyDictionary<CardName, ICardEffect> SpecialEffects = new Dictionary<CardName, ICardEffect>
+    private static readonly IReadOnlyDictionary<CardName, ICardEffect> AbilityEffects = new Dictionary<CardName, ICardEffect>
     {
         { CardName.Reset, new ResetEffect() },
         { CardName.Swap, new SwapEffect() },
@@ -36,20 +36,20 @@ public static class RoundResolver
     /// Runs against the live hand, which by this point is exactly what Apply will see.</summary>
     public static void ValidateChoice(CardName card, CardChoice choice, DeckAndHand player)
     {
-        SpecialEffects[card].Validate(choice, player);
+        AbilityEffects[card].Validate(choice, player);
     }
 
     /// <summary>Whether playing this card obliges the player to choose something. Asked of
-    /// the effect rather than tested against a list of card names, so a new special card
+    /// the effect rather than tested against a list of card names, so a new ability card
     /// does not need this file edited.</summary>
     public static bool RequiresChoice(CardName card)
     {
-        if (card.GetCardType() != CardType.Special)
+        if (card.GetCardType() != CardType.Ability)
         {
             return false;
         }
 
-        return SpecialEffects[card].RequiresChoice;
+        return AbilityEffects[card].RequiresChoice;
     }
 
     /// <summary>Whether this player is actually going to be asked. A card that needs a choice
@@ -71,7 +71,7 @@ public static class RoundResolver
             return false;
         }
 
-        return SpecialEffects[card].HasAnyLegalChoice(player);
+        return AbilityEffects[card].HasAnyLegalChoice(player);
     }
 
     /// <summary>Phase one: make both cards public, apply their fates, and run everything
@@ -114,7 +114,7 @@ public static class RoundResolver
             runEffects = true;
         }
 
-        // Remove each played card from its hand before any effect runs, so a special
+        // Remove each played card from its hand before any effect runs, so a ability
         // card's own effect never sees itself as still part of "my hand".
         ApplyFate(player1, player1Card, player1Fate);
         ApplyFate(player2, player2Card, player2Fate);
@@ -193,7 +193,7 @@ public static class RoundResolver
             return;
         }
 
-        SpecialEffects[round.CardOf(side)].Apply(choice, self, opponent, rng);
+        AbilityEffects[round.CardOf(side)].Apply(choice, self, opponent, rng);
     }
 
     // Both animation facts are read off the recorded choice, which was validated against
@@ -223,12 +223,12 @@ public static class RoundResolver
 
     private static CardFate DefaultFate(CardName card)
     {
-        if (card.GetCardType() == CardType.Dummy)
+        if (card.GetCardType() == CardType.Blank)
         {
             return CardFate.Vanished;
         }
 
-        if (card.GetCardType() == CardType.Special)
+        if (card.GetCardType() == CardType.Ability)
         {
             return CardFate.Vanished;
         }
@@ -260,7 +260,7 @@ public static class RoundResolver
     {
         bool resetApplied = false;
 
-        // Reset outranks every other special. If both players played Reset, it runs
+        // Reset outranks every other ability. If both players played Reset, it runs
         // twice, Player 1's card first, per DESIGN.md.
         if (player1Card == CardName.Reset)
         {
@@ -274,12 +274,12 @@ public static class RoundResolver
             resetApplied = true;
         }
 
-        if (IsChoicelessSpecial(player1Card) && player1Card != CardName.Reset)
+        if (IsChoicelessAbility(player1Card) && player1Card != CardName.Reset)
         {
             RunEffect(player1Card, player1, player2, rng);
         }
 
-        if (IsChoicelessSpecial(player2Card) && player2Card != CardName.Reset)
+        if (IsChoicelessAbility(player2Card) && player2Card != CardName.Reset)
         {
             RunEffect(player2Card, player2, player1, rng);
         }
@@ -287,18 +287,18 @@ public static class RoundResolver
         return resetApplied;
     }
 
-    private static bool IsChoicelessSpecial(CardName card)
+    private static bool IsChoicelessAbility(CardName card)
     {
-        if (card.GetCardType() != CardType.Special)
+        if (card.GetCardType() != CardType.Ability)
         {
             return false;
         }
 
-        return !SpecialEffects[card].RequiresChoice;
+        return !AbilityEffects[card].RequiresChoice;
     }
 
     private static void RunEffect(CardName card, DeckAndHand self, DeckAndHand opponent, Random rng)
     {
-        SpecialEffects[card].Apply(null, self, opponent, rng);
+        AbilityEffects[card].Apply(null, self, opponent, rng);
     }
 }

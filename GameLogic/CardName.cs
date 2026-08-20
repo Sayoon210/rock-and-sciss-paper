@@ -16,12 +16,12 @@ public enum CardName
     Scissors,
 
     // No effect, vanishes on play
-    Dummy,
+    Blank,
 
     // Destroys the opponent's card and blocks its effect, then vanishes itself
     Joker,
 
-    // Special — has an ICardEffect, vanishes after use
+    // Ability — has an ICardEffect, vanishes after use
     Reset,
     Swap,
     Transform,
@@ -34,9 +34,9 @@ public enum CardName
 public enum CardType
 {
     Normal,
-    Dummy,
+    Blank,
     Joker,
-    Special,
+    Ability,
 }
 
 public static class CardNameExtensions
@@ -50,8 +50,8 @@ public static class CardNameExtensions
             case CardName.Scissors:
                 return CardType.Normal;
 
-            case CardName.Dummy:
-                return CardType.Dummy;
+            case CardName.Blank:
+                return CardType.Blank;
 
             case CardName.Joker:
                 return CardType.Joker;
@@ -60,7 +60,7 @@ public static class CardNameExtensions
             case CardName.Swap:
             case CardName.Transform:
             case CardName.Draw:
-                return CardType.Special;
+                return CardType.Ability;
 
             default:
                 throw new ArgumentOutOfRangeException(nameof(name), name, "Unhandled CardName — every card must map to a type.");

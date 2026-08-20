@@ -10,14 +10,14 @@ public class TransformEffectTests
     }
 
     [Fact]
-    public void A_hand_with_a_normal_or_dummy_card_has_a_legal_choice()
+    public void A_hand_with_a_normal_or_blank_card_has_a_legal_choice()
     {
         Assert.True(new TransformEffect().HasAnyLegalChoice(HandOf(CardName.Joker, CardName.Rock)));
-        Assert.True(new TransformEffect().HasAnyLegalChoice(HandOf(CardName.Reset, CardName.Dummy)));
+        Assert.True(new TransformEffect().HasAnyLegalChoice(HandOf(CardName.Reset, CardName.Blank)));
     }
 
     [Fact]
-    public void A_hand_of_only_jokers_and_specials_has_no_legal_choice()
+    public void A_hand_of_only_jokers_and_abilities_has_no_legal_choice()
     {
         // What 리셋 can deal to someone who has already played 변화 — the picker would
         // otherwise open with every card greyed out and no way to answer it.
@@ -52,16 +52,16 @@ public class TransformEffectTests
         DeckAndHand opponent = HandOf(CardName.Rock);
 
         new TransformEffect().Apply(
-            CardChoice.Transforming(CardName.Rock, CardName.Dummy), self, opponent, new Random(1));
+            CardChoice.Transforming(CardName.Rock, CardName.Blank), self, opponent, new Random(1));
 
-        Assert.Equal(new[] { CardName.Rock, CardName.Dummy }, self.Hand.Cards);
+        Assert.Equal(new[] { CardName.Rock, CardName.Blank }, self.Hand.Cards);
     }
 
     [Theory]
     [InlineData(CardName.Rock, CardName.Paper)]
-    [InlineData(CardName.Dummy, CardName.Scissors)]
-    [InlineData(CardName.Rock, CardName.Dummy)]
-    public void Validate_accepts_normal_and_dummy_cards_in_either_position(CardName from, CardName into)
+    [InlineData(CardName.Blank, CardName.Scissors)]
+    [InlineData(CardName.Rock, CardName.Blank)]
+    public void Validate_accepts_normal_and_blank_cards_in_either_position(CardName from, CardName into)
     {
         DeckAndHand self = HandOf(from);
 
@@ -73,7 +73,7 @@ public class TransformEffectTests
     [InlineData(CardName.Reset, CardName.Rock)]
     [InlineData(CardName.Rock, CardName.Joker)]
     [InlineData(CardName.Rock, CardName.Draw)]
-    public void Validate_rejects_anything_that_is_not_a_normal_or_dummy_card(CardName from, CardName into)
+    public void Validate_rejects_anything_that_is_not_a_normal_or_blank_card(CardName from, CardName into)
     {
         DeckAndHand self = HandOf(from);
 

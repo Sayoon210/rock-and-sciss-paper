@@ -1,7 +1,7 @@
 namespace RockAndScissPaper.GameLogic;
 
 /// <summary>리셋: both players put their whole hand back into their own deck, shuffle,
-/// then draw back up to whatever hand size they had before. The only special card that
+/// then draw back up to whatever hand size they had before. The only ability card that
 /// touches the opponent.</summary>
 public sealed class ResetEffect : ICardEffect
 {

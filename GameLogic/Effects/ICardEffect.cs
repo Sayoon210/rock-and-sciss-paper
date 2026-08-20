@@ -1,7 +1,7 @@
 namespace RockAndScissPaper.GameLogic;
 
-/// <summary>One special card's effect. opponent is unused by every effect except Reset —
-/// DESIGN.md notes Reset is the only special card that affects both players.
+/// <summary>One ability card's effect. opponent is unused by every effect except Reset —
+/// DESIGN.md notes Reset is the only ability card that affects both players.
 ///
 /// Note what is *not* here: the card that was played. An effect is looked up by card, so
 /// it already knows which one it is, and not passing it means an effect cannot ask whether
@@ -12,7 +12,7 @@ public interface ICardEffect
 {
     /// <summary>Whether the player must choose something before this effect can run. True
     /// for 교체 and 변화 only. RoundResolver asks the effect rather than testing card names,
-    /// so a sixth special card slots in without editing the resolver.</summary>
+    /// so a sixth ability card slots in without editing the resolver.</summary>
     bool RequiresChoice { get; }
 
     /// <summary>Whether this hand offers any choice this effect would accept. Separate from

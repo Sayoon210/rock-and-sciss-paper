@@ -1,9 +1,9 @@
 [gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
 
-[ext_resource type="Script" path="res://Scripts/Cards/CardData.cs" id="1_dummy"]
+[ext_resource type="Script" path="res://Scripts/Cards/CardData.cs" id="1_blank"]
 
 [resource]
-script = ExtResource("1_dummy")
+script = ExtResource("1_blank")
 CardName = 3
-DisplayName = "Dummy"
+DisplayName = "Blank"
 Description = "Vanishes with no effect. A scouting card: it shows you what your opponent played this round without spending anything that matters."

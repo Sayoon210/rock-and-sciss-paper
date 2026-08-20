@@ -15,7 +15,7 @@ Design doc will be added separately later — this document covers tech stack / 
 - That is about the *product's* language, not the codebase's. Identifiers, comments and [DESIGN.md](DESIGN.md) keep the Korean game vocabulary (교체, 리셋, 패, 소멸) — the rule below is unchanged.
 - Spell every name out in full. No initialisms (`Rps`, `Mgr`, `Cfg`, `Btn`).
 - Name a type after what it holds or does, not a vague category (`WinLossRules`, not `Helper`).
-- Use DESIGN.md's vocabulary verbatim — normal card, dummy, joker, special, vanish, deck bottom.
+- Use DESIGN.md's vocabulary verbatim — normal card, blank, joker, ability, vanish, deck bottom.
 - Godot script names reveal role via suffix: `...Manager`, `...Controller`, `...Data`, `...View`/`...UI`, `...Effect`, `I...`. File name matches class name.
 - Name `const` members in `SCREAMING_SNAKE_CASE` (`MULLIGAN_HAND_SIZE`, `MAX_CLIENTS`) — a deliberate departure from the C#/Godot PascalCase convention, so a constant is distinguishable from a property at the call site. Don't "correct" these back.
 - Write the plain form of a C# construct, not the compressed one: full `{ }`/`return` bodies, not expression-bodied `=>` members or switch expressions.
@@ -25,7 +25,7 @@ Design doc will be added separately later — this document covers tech stack / 
 - GDScript.
 - Trusting client-sent values without host-side re-validation.
 - Full-syncing hidden information through `MultiplayerSynchronizer`.
-- Subclass trees for card variants (`ResetCard : SpecialCard : Card`) — cards are identified by `CardName`, special behavior composed via `ICardEffect`.
+- Subclass trees for card variants (`ResetCard : AbilityCard : Card`) — cards are identified by `CardName`, ability behavior composed via `ICardEffect`.
 - Hardcoding card stats/text in scripts.
 - Adding abstractions/scaffolding "in case it's needed later."
 
@@ -60,7 +60,7 @@ Tests/                        xUnit — references GameLogic only
 
 - `CardDatabase` (Autoload) loads and indexes `.tres` `CardData` resources; it does not define card stats itself.
 - One `.tres` file per card.
-- Don't hardcode the special-card count or roster into deck-assembly logic — read the special-card set from `CardDatabase` (deckbuilding/pool expansion planned, see [DESIGN.md](DESIGN.md)).
+- Don't hardcode the ability-card count or roster into deck-assembly logic — read the ability-card set from `CardDatabase` (deckbuilding/pool expansion planned, see [DESIGN.md](DESIGN.md)).
 
 ## AI-Assisted Development
 

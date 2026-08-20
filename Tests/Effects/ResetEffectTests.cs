@@ -8,7 +8,7 @@ public class ResetEffectTests
     public void Apply_redraws_the_same_hand_size_for_both_players()
     {
         var self = new DeckAndHand(
-            new Deck(new[] { CardName.Rock, CardName.Paper, CardName.Scissors, CardName.Dummy, CardName.Joker }),
+            new Deck(new[] { CardName.Rock, CardName.Paper, CardName.Scissors, CardName.Blank, CardName.Joker }),
             new Hand(new[] { CardName.Reset, CardName.Draw }));
         var opponent = new DeckAndHand(
             new Deck(new[] { CardName.Rock }),
@@ -27,7 +27,7 @@ public class ResetEffectTests
             new Deck(new[] { CardName.Rock, CardName.Paper }),
             new Hand(new[] { CardName.Reset }));
         var opponent = new DeckAndHand(
-            new Deck(new[] { CardName.Scissors, CardName.Dummy }),
+            new Deck(new[] { CardName.Scissors, CardName.Blank }),
             new Hand(new[] { CardName.Joker, CardName.Draw }));
 
         new ResetEffect().Apply(null, self, opponent, new Random(1));

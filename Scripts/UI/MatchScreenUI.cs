@@ -328,7 +328,7 @@ public partial class MatchScreenUI : Control
     }
 
     /// <summary>Sends the round's cards where they actually went, just as the field is
-    /// emptied. A 일반카드 goes to the bottom of its owner's 덱 and a 특수/조커 소멸s
+    /// emptied. A 일반카드 goes to the bottom of its owner's 덱 and a 능력/조커 소멸s
     /// (DESIGN.md) — two different endings, so they are shown as two different things rather
     /// than both being switched off.
     ///
@@ -747,9 +747,9 @@ public partial class MatchScreenUI : Control
     }
 
     /// <summary>Built once from CardDatabase rather than a hardcoded roster — the same
-    /// reasoning DeckAssembler follows for the special-card roster applies here.
+    /// reasoning DeckAssembler follows for the ability-card roster applies here.
     ///
-    /// Only 일반카드/더미카드 are ever a legal 변화 result (DESIGN.md, TransformEffect.Validate),
+    /// Only 일반카드/공백카드 are ever a legal 변화 result (DESIGN.md, TransformEffect.Validate),
     /// and that never depends on hand contents, unlike the source side — so the palette simply
     /// excludes everything else rather than building and disabling it. MatchDebugUI's own
     /// picker deliberately stays unfiltered; this one does not need to double as that
@@ -764,7 +764,7 @@ public partial class MatchScreenUI : Control
         foreach (CardName card in CardDatabase.Instance.LoadedCardNames)
         {
             CardType cardType = card.GetCardType();
-            if (cardType != CardType.Normal && cardType != CardType.Dummy)
+            if (cardType != CardType.Normal && cardType != CardType.Blank)
             {
                 continue;
             }
@@ -848,7 +848,7 @@ public partial class MatchScreenUI : Control
 
         if (view.LastRoundOutcome == null)
         {
-            // 특수/더미/조커가 낀 라운드는 승패 자체가 없다 (DESIGN.md).
+            // 능력/공백/조커가 낀 라운드는 승패 자체가 없다 (DESIGN.md).
             return "No result";
         }
 

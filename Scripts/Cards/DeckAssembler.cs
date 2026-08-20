@@ -6,9 +6,9 @@ using RockAndScissPaper.GameLogic;
 namespace RockAndScissPaper.Cards;
 
 /// <summary>Builds one player's deck per DESIGN.md's fixed composition: 3 each of
-/// Rock/Paper/Scissors, 2 Dummy, 2 Joker, and every currently-loaded special card. The
-/// special-card portion reads CardDatabase.LoadedCardNames rather than listing CardNames
-/// itself — DESIGN.md's "확장성" section calls out a future special-card pool expansion, and
+/// Rock/Paper/Scissors, 2 Blank, 2 Joker, and every currently-loaded ability card. The
+/// ability-card portion reads CardDatabase.LoadedCardNames rather than listing CardNames
+/// itself — DESIGN.md's "확장성" section calls out a future ability-card pool expansion, and
 /// listing names here would need editing every time that pool grows (see root CLAUDE.md).</summary>
 public static class DeckAssembler
 {
@@ -29,12 +29,12 @@ public static class DeckAssembler
         AddCopies(deck, CardName.Rock, NORMAL_CARD_COPIES);
         AddCopies(deck, CardName.Paper, NORMAL_CARD_COPIES);
         AddCopies(deck, CardName.Scissors, NORMAL_CARD_COPIES);
-        AddCopies(deck, CardName.Dummy, DUMMY_CARD_COPIES);
+        AddCopies(deck, CardName.Blank, DUMMY_CARD_COPIES);
         AddCopies(deck, CardName.Joker, JOKER_CARD_COPIES);
 
         foreach (CardName cardName in cardDatabase.LoadedCardNames)
         {
-            if (cardName.GetCardType() == CardType.Special)
+            if (cardName.GetCardType() == CardType.Ability)
             {
                 deck.Add(cardName);
             }

@@ -19,7 +19,7 @@ The test for whether the split is right: **a full match should be runnable in a 
 
 Why this matters for this project specifically:
 - Host-authoritative means the rules only ever execute on one side, but an Autoload exists on *both* host and client. A singleton that *is* the rules ends up half-real on clients — a reliable source of confusion and desync. A singleton that merely *holds* an authoritative session on the host and a received view on the client stays honest about which side it's on.
-- Round resolution has real branching (Joker > Reset > other specials > normal; ties; vanish vs. return-to-deck-bottom). Verifying that by launching two Godot instances is slow. Verifying it as a plain function call is not.
+- Round resolution has real branching (Joker > Reset > other abilities > normal; ties; vanish vs. return-to-deck-bottom). Verifying that by launching two Godot instances is slow. Verifying it as a plain function call is not.
 
 ## Registration
 

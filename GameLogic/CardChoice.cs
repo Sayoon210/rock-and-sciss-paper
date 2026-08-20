@@ -1,6 +1,6 @@
 namespace RockAndScissPaper.GameLogic;
 
-/// <summary>What a player chose so a special card's effect can be carried out. Only 교체
+/// <summary>What a player chose so a ability card's effect can be carried out. Only 교체
 /// and 변화 need one, and per DESIGN.md the choice is made after both cards are revealed —
 /// so a choice is a separate message from the card it belongs to, not part of it.
 ///

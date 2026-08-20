@@ -1,6 +1,6 @@
 # GameLogic — Pure Game Logic
 
-`RockAndScissPaper.GameLogic` is a separate .NET project (`Microsoft.NET.Sdk`, no Godot reference). The rules of the match live here: round resolution, scoring, deck/hand operations, special card effects. This is the half of the architecture that `Scripts/Autoload/` owns but does not implement — see [Scripts/Autoload/CLAUDE.md](../Scripts/Autoload/CLAUDE.md) for the other side of the boundary.
+`RockAndScissPaper.GameLogic` is a separate .NET project (`Microsoft.NET.Sdk`, no Godot reference). The rules of the match live here: round resolution, scoring, deck/hand operations, ability card effects. This is the half of the architecture that `Scripts/Autoload/` owns but does not implement — see [Scripts/Autoload/CLAUDE.md](../Scripts/Autoload/CLAUDE.md) for the other side of the boundary.
 
 Named `GameLogic` rather than `Core` on purpose — `Scripts/Cards/` also holds card-related files (the `CardData` Resource/`.tres` side), and a generic name like `Core` made the two easy to confuse. This folder is specifically the rules; `Scripts/Cards/` is specifically the presentation data.
 
@@ -11,14 +11,14 @@ Named `GameLogic` rather than `Core` on purpose — `Scripts/Cards/` also holds 
 This isn't a convention you have to remember — it's enforced by the build. `GameLogic` references nothing, so `using Godot;` fails with `error CS0246` before the code can run. Tests reference `GameLogic` alone, so they never need Godot either.
 
 - The test: a full match should run in a plain console harness with no Godot and no network. If a class here can't, something leaked.
-- Why it's worth the discipline: round resolution has real branching (Joker > Reset > other specials > normal; ties; vanish vs. return-to-deck-bottom), and this is the code most likely to be wrong. Verifying it by launching two Godot instances and clicking through rounds is slow enough that it won't happen often. Verifying it as a plain function call is fast enough that it will.
+- Why it's worth the discipline: round resolution has real branching (Joker > Reset > other abilities > normal; ties; vanish vs. return-to-deck-bottom), and this is the code most likely to be wrong. Verifying it by launching two Godot instances and clicking through rounds is slow enough that it won't happen often. Verifying it as a plain function call is fast enough that it will.
 - `Resource` counts as a Godot type even though it needs no scene tree — it still drags in the Godot runtime and breaks the harness test.
 
 ### Card identity vs. card presentation
 
 Because `CardData : Resource` can't cross the boundary, game logic deals in plain identity values, not `CardData`:
 
-- Here: `CardName` (Rock / Paper / Scissors / Dummy / Joker / Reset / Swap / Transform / Draw). A deck is a list of those. Its member order is serialized — `Data/Cards/*.tres` store a card as this enum's integer value — so taking a name out or inserting one renumbers the rest and those files have to be renumbered with it. `CardType` (Normal / Dummy / Joker / Special) is derived from a `CardName` via `GetCardType()` and is what `RoundResolver` actually dispatches on.
+- Here: `CardName` (Rock / Paper / Scissors / Blank / Joker / Reset / Swap / Transform / Draw). A deck is a list of those. Its member order is serialized — `Data/Cards/*.tres` store a card as this enum's integer value — so taking a name out or inserting one renumbers the rest and those files have to be renumbered with it. `CardType` (Normal / Blank / Joker / Ability) is derived from a `CardName` via `GetCardType()` and is what `RoundResolver` actually dispatches on.
 - Outside: `CardDatabase` maps identity → `CardData` for display name, art, and description at the presentation layer.
 
 Resolution only needs to know *"this is a Joker"* — never what it looks like. Keeping art and flavor text out of the rules is what makes the rules testable.
@@ -35,18 +35,18 @@ Resolution only needs to know *"this is a Joker"* — never what it looks like. 
 - `CardChoice` in `CardChoice.cs` — what a player picked so 교체 or 변화 can run. Built through `Transforming` or `Swapping`. It deliberately does **not** name the card it belongs to: the host already knows what it prompted for, and a choice that carried a card would let a client pick which effect runs by shaping its payload.
 - `RoundReveal` in `RoundReveal.cs` — both played cards made public, plus who still owes a choice. `Result` is non-null exactly when nobody does.
 - `RoundInProgress` and `ChoiceStatus` in `RoundInProgress.cs` — a round that has been revealed but not finished. One object rather than a fistful of nullable fields on `MatchSession`, so ending a round is a single `_round = null` instead of remembering to clear eleven things.
-- `ICardEffect` in `Effects/ICardEffect.cs` — `RequiresChoice`, then `Validate(choice, self)` and `Apply(choice, self, opponent, rng)`. Note what an effect is **not** given: the card that was played. It is looked up by card so it already knows which one it is, and withholding it means an effect cannot ask whether its own card is still in hand. It never is, and a bug came from `SwapEffect.Validate` assuming otherwise — taking the card away makes that mistake unrepresentable rather than merely guarded against. Every special card is implemented in `Effects/`: `ResetEffect`, `SwapEffect`, `TransformEffect`, `DrawEffect`. (`RefillEffect` was one of these until 보충 was taken out of the game; it sits in `Deprecated/` now.) `opponent` is unused by everything except Reset. `Validate` exists so a bad play is rejected before anything mutates.
+- `ICardEffect` in `Effects/ICardEffect.cs` — `RequiresChoice`, then `Validate(choice, self)` and `Apply(choice, self, opponent, rng)`. Note what an effect is **not** given: the card that was played. It is looked up by card so it already knows which one it is, and withholding it means an effect cannot ask whether its own card is still in hand. It never is, and a bug came from `SwapEffect.Validate` assuming otherwise — taking the card away makes that mistake unrepresentable rather than merely guarded against. Every ability card is implemented in `Effects/`: `ResetEffect`, `SwapEffect`, `TransformEffect`, `DrawEffect`. (`RefillEffect` was one of these until 보충 was taken out of the game; it sits in `Deprecated/` now.) `opponent` is unused by everything except Reset. `Validate` exists so a bad play is rejected before anything mutates.
 - `RoundResolver.Reveal` then `RoundResolver.Finish` — one round, two phases, because 교체 and 변화 are chosen after both cards are revealed.
   - `Reveal`: figure out each side's `CardFate`/win-loss, remove both played cards from their hands (`ApplyFate`), then run every effect that needs **no** choice — 리셋 included. Removing the played card first matters: Reset's own card must not still be "in hand" when Reset asks what's in the hand, or it would get shuffled back into the deck instead of vanishing.
   - `Finish`: apply the choices that came back — always Player 1 then Player 2, **never** the order they arrived in, since 교체 and 리셋 both draw from the shared `Random` — then draw for both sides.
   - **Why choiceless effects run before anyone is prompted:** 리셋 is the only effect that touches the opponent, and it needs no choice. Running it first means nothing can change a hand between the moment its owner is shown it and the moment their choice is applied, so a validated choice can never go stale. Choosing before the reveal let 리셋 invalidate an already-validated choice, which threw partway through resolution and wedged the match.
-  - Priority: Joker present → both vanish, no effects run, no win/loss, and **the blocked player is never asked to choose**. Otherwise: Reset runs first if either side played it (twice, Player 1 first, if both did), then any other choiceless Special, Player 1 before Player 2.
+  - Priority: Joker present → both vanish, no effects run, no win/loss, and **the blocked player is never asked to choose**. Otherwise: Reset runs first if either side played it (twice, Player 1 first, if both did), then any other choiceless Ability, Player 1 before Player 2.
   - `ValidateSubmission` rejects a card not in hand; `ValidateChoice` rejects a choice the effect can't carry out. Neither mutates anything, and `MatchSession` runs each before recording, so a rejected request can't leave a side unable to try again.
-  - `RequiresChoice` asks the effect rather than testing card names, so a sixth special card slots in without editing the resolver.
+  - `RequiresChoice` asks the effect rather than testing card names, so a sixth ability card slots in without editing the resolver.
 
 ## Tests
 
-Every rule here should be reachable from `Tests/` (xUnit). Prefer `[Theory]` + `[InlineData]` for the combination matrices this game is full of — matchups, Joker against each special, priority collisions — one test method covers the whole table. Run with `dotnet test`.
+Every rule here should be reachable from `Tests/` (xUnit). Prefer `[Theory]` + `[InlineData]` for the combination matrices this game is full of — matchups, Joker against each ability, priority collisions — one test method covers the whole table. Run with `dotnet test`.
 
 ## Sides, not peers
 

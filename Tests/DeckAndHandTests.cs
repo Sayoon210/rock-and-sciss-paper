@@ -51,9 +51,9 @@ public class DeckAndHandTests
     {
         var deckAndHand = new DeckAndHand(
             new Deck(Array.Empty<CardName>()),
-            new Hand(new[] { CardName.Dummy }));
+            new Hand(new[] { CardName.Blank }));
 
-        deckAndHand.Vanish(CardName.Dummy);
+        deckAndHand.Vanish(CardName.Blank);
 
         Assert.Empty(deckAndHand.Hand.Cards);
         Assert.Equal(0, deckAndHand.Deck.Count);

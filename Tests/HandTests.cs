@@ -7,9 +7,9 @@ public class HandTests
     [Fact]
     public void Cards_reflects_the_initial_hand()
     {
-        var hand = new Hand(new[] { CardName.Rock, CardName.Dummy });
+        var hand = new Hand(new[] { CardName.Rock, CardName.Blank });
 
-        Assert.Equal(new[] { CardName.Rock, CardName.Dummy }, hand.Cards);
+        Assert.Equal(new[] { CardName.Rock, CardName.Blank }, hand.Cards);
     }
 
     [Fact]
