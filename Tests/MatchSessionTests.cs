@@ -406,8 +406,13 @@ public class MatchSessionTests
         RoundReveal? reveal = session.SubmitCard(Side.Player2, CardName.Transform);
         Assert.True(reveal!.Player2MustChoose);
 
+        // The first card 변화 can actually work on, not simply the first card: 변화 only takes
+        // a 일반카드 or 더미카드, and which of those the post-리셋 hand starts with is up to the
+        // shuffle. Reaching for offered[0] happened to work at a six-card hand and stopped
+        // working at four — the test never meant to care which card it got.
         IReadOnlyList<CardName> offered = session.HandOf(Side.Player2);
-        CardName target = offered[0];
+        CardName target = offered.First(
+            card => card.GetCardType() == CardType.Normal || card.GetCardType() == CardType.Dummy);
 
         RoundResult? result = session.SubmitChoice(
             Side.Player2, CardChoice.Transforming(target, CardName.Paper));
