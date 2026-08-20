@@ -9,7 +9,7 @@ public class ResetEffectTests
     {
         var self = new DeckAndHand(
             new Deck(new[] { CardName.Rock, CardName.Paper, CardName.Scissors, CardName.Dummy, CardName.Joker }),
-            new Hand(new[] { CardName.Reset, CardName.Refill }));
+            new Hand(new[] { CardName.Reset, CardName.Draw }));
         var opponent = new DeckAndHand(
             new Deck(new[] { CardName.Rock }),
             new Hand(Array.Empty<CardName>()));

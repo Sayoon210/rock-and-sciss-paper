@@ -19,7 +19,6 @@ public static class RoundResolver
         { CardName.Reset, new ResetEffect() },
         { CardName.Swap, new SwapEffect() },
         { CardName.Transform, new TransformEffect() },
-        { CardName.Refill, new RefillEffect() },
         { CardName.Draw, new DrawEffect() },
     };
 

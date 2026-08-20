@@ -13,7 +13,6 @@ public class CardTypeTests
     [InlineData(CardName.Reset, CardType.Special)]
     [InlineData(CardName.Swap, CardType.Special)]
     [InlineData(CardName.Transform, CardType.Special)]
-    [InlineData(CardName.Refill, CardType.Special)]
     [InlineData(CardName.Draw, CardType.Special)]
     public void Every_card_maps_to_the_right_type(CardName name, CardType expected)
     {

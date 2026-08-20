@@ -9,10 +9,13 @@
 
   <!-- GameLogic and Tests are separate projects. Godot's SDK globs **/*.cs from the
        project root, so they must be excluded here or their files would be
-       compiled into the Godot assembly and the boundary would not exist. -->
+       compiled into the Godot assembly and the boundary would not exist.
+       Deprecated is not a project at all — it is code taken out of the game and kept
+       rather than deleted, and the same glob would otherwise drag it back in. -->
   <ItemGroup>
     <Compile Remove="GameLogic/**/*.cs" />
     <Compile Remove="Tests/**/*.cs" />
+    <Compile Remove="Deprecated/**/*.cs" />
   </ItemGroup>
 
   <!-- One-way reference: the Godot project knows GameLogic. GameLogic does not know Godot. -->

@@ -4,6 +4,6 @@
 
 [resource]
 script = ExtResource("1_draw")
-CardName = 9
+CardName = 8
 DisplayName = "드로우"
 Description = "카드 2장을 뽑는다. 효과 발동 후 소멸한다."

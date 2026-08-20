@@ -22,7 +22,7 @@ public class RoundResolverTests
     [InlineData(CardName.Rock, CardName.Joker, CardFate.Vanished, CardFate.Vanished, null)]
     [InlineData(CardName.Joker, CardName.Dummy, CardFate.Vanished, CardFate.Vanished, null)]
     [InlineData(CardName.Joker, CardName.Joker, CardFate.Vanished, CardFate.Vanished, null)]
-    [InlineData(CardName.Rock, CardName.Refill, CardFate.ReturnedToDeckBottom, CardFate.Vanished, null)]
+    [InlineData(CardName.Rock, CardName.Draw, CardFate.ReturnedToDeckBottom, CardFate.Vanished, null)]
     public void A_revealed_and_finished_round_produces_the_right_fates_and_winloss(
         CardName player1Card,
         CardName player2Card,
@@ -99,18 +99,19 @@ public class RoundResolverTests
     [Fact]
     public void Resolving_runs_the_played_specials_effect()
     {
-        DeckAndHand player1 = MakeZone(CardName.Refill);
+        // A deck of its own rather than MakeZone's single card, because 드로우 is the effect
+        // being watched for and one card cannot show two draws happening.
+        var player1 = new DeckAndHand(
+            new Deck(new[] { CardName.Paper, CardName.Paper, CardName.Paper, CardName.Paper }),
+            new Hand(new[] { CardName.Draw }));
         DeckAndHand player2 = MakeZone(CardName.Rock);
 
-        ResolveWithoutChoices(CardName.Refill, CardName.Rock, player1, player2);
+        ResolveWithoutChoices(CardName.Draw, CardName.Rock, player1, player2);
 
-        // Refill's own card vanishes (deck(1)+hand(1)=2 -> 1), then Refill's effect
-        // adds two Dummy cards to the deck (1 -> 3). Total ends at 3.
-        Assert.Equal(3, player1.Deck.Count + player1.Hand.Cards.Count);
-
-        var remaining = new List<CardName>(player1.Hand.Cards);
-        remaining.AddRange(DeckContents(player1));
-        Assert.Equal(2, remaining.FindAll(card => card == CardName.Dummy).Count);
+        // 드로우's own card vanishes, leaving an empty hand, then its effect draws two and the
+        // round's own draw adds a third. Without the effect the hand would hold one card.
+        Assert.Equal(3, player1.Hand.Cards.Count);
+        Assert.Equal(1, player1.Deck.Count);
     }
 
     [Fact]
@@ -152,7 +153,6 @@ public class RoundResolverTests
     [InlineData(CardName.Swap, true)]
     [InlineData(CardName.Transform, true)]
     [InlineData(CardName.Reset, false)]
-    [InlineData(CardName.Refill, false)]
     [InlineData(CardName.Draw, false)]
     [InlineData(CardName.Rock, false)]
     [InlineData(CardName.Dummy, false)]

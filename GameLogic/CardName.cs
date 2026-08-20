@@ -2,7 +2,12 @@ namespace RockAndScissPaper.GameLogic;
 
 /// <summary>Every card identity in the game. This is the only thing GameLogic needs to know
 /// about a card — no display name, no art, no flavor text. See CardType below for how
-/// a card is grouped for round resolution.</summary>
+/// a card is grouped for round resolution.
+///
+/// The order matters outside this file: Data/Cards/*.tres each store their card as this
+/// enum's integer value, so adding a name anywhere but the end — or taking one out —
+/// renumbers every name after it and those files have to be renumbered to match. Nothing
+/// checks that for you; a mismatch surfaces as an out-of-range card at deck assembly.</summary>
 public enum CardName
 {
     // Normal — compared via WinLossRules
@@ -20,7 +25,6 @@ public enum CardName
     Reset,
     Swap,
     Transform,
-    Refill,
     Draw,
 }
 
@@ -55,7 +59,6 @@ public static class CardNameExtensions
             case CardName.Reset:
             case CardName.Swap:
             case CardName.Transform:
-            case CardName.Refill:
             case CardName.Draw:
                 return CardType.Special;
 
