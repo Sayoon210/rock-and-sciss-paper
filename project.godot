@@ -33,6 +33,10 @@ window/stretch/aspect="expand"
 
 project/assembly_name="RockAndScissPaper"
 
+[editor]
+
+run/main_run_args="--resolution 960x600"
+
 [gui]
 
 theme/custom="res://Assets/Fonts/DefaultTheme.tres"
