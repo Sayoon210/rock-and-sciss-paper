@@ -1,9 +1,9 @@
 namespace RockAndScissPaper.GameLogic;
 
 /// <summary>What happens to a played card after a round: back into the deck, or gone
-/// for good. Not derivable from the card's CardType alone — a normal card that gets hit
+/// for good. Not derivable from the card's ECardType alone — a normal card that gets hit
 /// by a Joker vanishes instead of its usual deck-bottom return.</summary>
-public enum CardFate
+public enum ECardFate
 {
     ReturnedToDeckBottom,
     Vanished,
@@ -24,13 +24,13 @@ public enum CardFate
 /// cards were involved.</summary>
 public sealed class RoundResult
 {
-    public CardName Player1Card { get; }
-    public CardName Player2Card { get; }
-    public CardFate Player1CardFate { get; }
-    public CardFate Player2CardFate { get; }
-    public WinLossResult? WinLoss { get; }
-    public IReadOnlyList<CardName> Player1Hand { get; }
-    public IReadOnlyList<CardName> Player2Hand { get; }
+    public ECardName Player1Card { get; }
+    public ECardName Player2Card { get; }
+    public ECardFate Player1CardFate { get; }
+    public ECardFate Player2CardFate { get; }
+    public EWinLossResult? WinLoss { get; }
+    public IReadOnlyList<ECardName> Player1Hand { get; }
+    public IReadOnlyList<ECardName> Player2Hand { get; }
     public int Player1DeckCount { get; }
     public int Player2DeckCount { get; }
 
@@ -50,13 +50,13 @@ public sealed class RoundResult
     public bool ResetApplied { get; }
 
     public RoundResult(
-        CardName player1Card,
-        CardName player2Card,
-        CardFate player1CardFate,
-        CardFate player2CardFate,
-        WinLossResult? winLoss,
-        IEnumerable<CardName> player1Hand,
-        IEnumerable<CardName> player2Hand,
+        ECardName player1Card,
+        ECardName player2Card,
+        ECardFate player1CardFate,
+        ECardFate player2CardFate,
+        EWinLossResult? winLoss,
+        IEnumerable<ECardName> player1Hand,
+        IEnumerable<ECardName> player2Hand,
         int player1DeckCount,
         int player2DeckCount,
         int player1SwappedCardCount,
@@ -73,8 +73,8 @@ public sealed class RoundResult
 
         // Copied, not referenced — Hand.Cards is a live view over a list that keeps
         // changing as the match goes on.
-        Player1Hand = new List<CardName>(player1Hand);
-        Player2Hand = new List<CardName>(player2Hand);
+        Player1Hand = new List<ECardName>(player1Hand);
+        Player2Hand = new List<ECardName>(player2Hand);
 
         Player1DeckCount = player1DeckCount;
         Player2DeckCount = player2DeckCount;

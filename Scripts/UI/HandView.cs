@@ -8,7 +8,7 @@ namespace RockAndScissPaper.UI;
 /// included, is submitted by picking it up and dragging it onto a drop zone (CardDropZone),
 /// not by clicking it. The other two only apply while a choice is outstanding for a card
 /// this hand's owner already played, and stay click-to-toggle.</summary>
-public enum HandSelectionMode
+public enum EHandSelectionMode
 {
     Play,
     SelectMultipleForSwap,
@@ -72,7 +72,7 @@ public partial class HandView : Control
     // child so it can still be drawn, but is out of this list so nothing lays it out.
     private readonly List<CardView> _slots = new List<CardView>();
 
-    private HandSelectionMode _selectionMode = HandSelectionMode.Play;
+    private EHandSelectionMode _selectionMode = EHandSelectionMode.Play;
     private readonly List<CardView> _selectedForSwap = new List<CardView>();
     private CardView? _selectedForTransform;
 
@@ -156,7 +156,7 @@ public partial class HandView : Control
     /// row and the new one already holds the slot, so the name matching there keeps it — which
     /// is also what stops the old card being flown to the 덱 and the new one dealt out of it.
     /// 변화 never touches the deck, so that is the wrong picture as well as the wrong feel.</summary>
-    public void TransformRememberedCardInto(CardName target)
+    public void TransformRememberedCardInto(ECardName target)
     {
         CardView? remembered = _cardBeingTransformed;
         _cardBeingTransformed = null;
@@ -364,9 +364,9 @@ public partial class HandView : Control
     /// <summary>Show my 패, face up and clickable. A card that was already in hand keeps the
     /// node it had — rebuilding the whole row on every change throws away which node the
     /// player was looking at (Scripts/CLAUDE.md, "Card presentation").</summary>
-    public void ShowFaceUpHand(IReadOnlyList<CardName> cards)
+    public void ShowFaceUpHand(IReadOnlyList<ECardName> cards)
     {
-        List<CardName> arrived = new List<CardName>(cards);
+        List<ECardName> arrived = new List<ECardName>(cards);
 
         // A docked card has already been handed to the host, and the hand arriving here is the
         // authoritative one that answers what became of it. It is dropped before the matching
@@ -386,7 +386,7 @@ public partial class HandView : Control
         // whatever is left over at the end is genuinely new and needs a slot.
         for (int slot = _slots.Count - 1; slot >= 0; slot--)
         {
-            CardName? shown = _slots[slot].ShownCard;
+            ECardName? shown = _slots[slot].ShownCard;
             if (shown.HasValue && arrived.Remove(shown.Value))
             {
                 continue;
@@ -396,7 +396,7 @@ public partial class HandView : Control
         }
 
         int drawnIndex = 0;
-        foreach (CardName card in arrived)
+        foreach (ECardName card in arrived)
         {
             CardView cardView = AddSlot();
             cardView.ShowFaceUp(card);
@@ -460,12 +460,12 @@ public partial class HandView : Control
     /// every refresh that isn't a choice prompt doesn't repaint anything.</summary>
     public void SetSelectionModeNone()
     {
-        if (_selectionMode == HandSelectionMode.Play)
+        if (_selectionMode == EHandSelectionMode.Play)
         {
             return;
         }
 
-        _selectionMode = HandSelectionMode.Play;
+        _selectionMode = EHandSelectionMode.Play;
         ClearSelection();
         ResetCardOpacity();
         ApplyDragEligibility();
@@ -476,12 +476,12 @@ public partial class HandView : Control
     /// mid-selection.</summary>
     public void SetSelectionModeForSwap()
     {
-        if (_selectionMode == HandSelectionMode.SelectMultipleForSwap)
+        if (_selectionMode == EHandSelectionMode.SelectMultipleForSwap)
         {
             return;
         }
 
-        _selectionMode = HandSelectionMode.SelectMultipleForSwap;
+        _selectionMode = EHandSelectionMode.SelectMultipleForSwap;
         ClearSelection();
         ApplySwapEligibilityDimming();
         ApplyDragEligibility();
@@ -496,25 +496,25 @@ public partial class HandView : Control
     /// the host still re-checks the choice regardless.</summary>
     public void SetSelectionModeForTransformSource()
     {
-        if (_selectionMode == HandSelectionMode.SelectOneForTransform)
+        if (_selectionMode == EHandSelectionMode.SelectOneForTransform)
         {
             return;
         }
 
-        _selectionMode = HandSelectionMode.SelectOneForTransform;
+        _selectionMode = EHandSelectionMode.SelectOneForTransform;
         ClearSelection();
         ApplyTransformEligibilityDimming();
         ApplyDragEligibility();
     }
 
     /// <summary>The cards currently toggled on in SelectMultipleForSwap mode. Tracked by
-    /// node rather than by CardName so two copies of the same card in hand can be told
+    /// node rather than by ECardName so two copies of the same card in hand can be told
     /// apart — selecting one Rock must not silently also count a second one.</summary>
-    public IReadOnlyList<CardName> SwapSelection
+    public IReadOnlyList<ECardName> SwapSelection
     {
         get
         {
-            var cards = new List<CardName>();
+            var cards = new List<ECardName>();
             foreach (CardView cardView in _selectedForSwap)
             {
                 if (cardView.ShownCard.HasValue)
@@ -528,7 +528,7 @@ public partial class HandView : Control
     }
 
     /// <summary>The card picked in SelectOneForTransform mode, or null until one is.</summary>
-    public CardName? TransformSourceSelection
+    public ECardName? TransformSourceSelection
     {
         get
         {
@@ -544,11 +544,11 @@ public partial class HandView : Control
     {
         switch (_selectionMode)
         {
-            case HandSelectionMode.SelectMultipleForSwap:
+            case EHandSelectionMode.SelectMultipleForSwap:
                 ToggleSwapSelection(cardView);
                 return;
 
-            case HandSelectionMode.SelectOneForTransform:
+            case EHandSelectionMode.SelectOneForTransform:
                 SelectTransformSource(cardView);
                 return;
         }
@@ -619,10 +619,10 @@ public partial class HandView : Control
         EmitSignalSelectionChanged();
     }
 
-    private static bool IsTransformable(CardName card)
+    private static bool IsTransformable(ECardName card)
     {
-        CardType type = card.GetCardType();
-        return type == CardType.Normal || type == CardType.Blank;
+        ECardType type = card.GetCardType();
+        return type == ECardType.Normal || type == ECardType.Blank;
     }
 
     /// <summary>변화's eligible cards depend on what is actually in hand, unlike the "into"
@@ -652,7 +652,7 @@ public partial class HandView : Control
     /// played twice.</summary>
     private void ApplyDragEligibility()
     {
-        bool canDrag = _selectionMode == HandSelectionMode.Play;
+        bool canDrag = _selectionMode == EHandSelectionMode.Play;
         foreach (CardView cardView in _slots)
         {
             if (cardView.DockTarget.HasValue)

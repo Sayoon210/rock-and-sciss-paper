@@ -14,17 +14,17 @@ namespace RockAndScissPaper.GameLogic;
 /// there is no window in which a validated choice can go stale.</summary>
 public static class RoundResolver
 {
-    private static readonly IReadOnlyDictionary<CardName, ICardEffect> AbilityEffects = new Dictionary<CardName, ICardEffect>
+    private static readonly IReadOnlyDictionary<ECardName, ICardEffect> AbilityEffects = new Dictionary<ECardName, ICardEffect>
     {
-        { CardName.Reset, new ResetEffect() },
-        { CardName.Swap, new SwapEffect() },
-        { CardName.Transform, new TransformEffect() },
-        { CardName.Draw, new DrawEffect() },
+        { ECardName.Reset, new ResetEffect() },
+        { ECardName.Swap, new SwapEffect() },
+        { ECardName.Transform, new TransformEffect() },
+        { ECardName.Draw, new DrawEffect() },
     };
 
     /// <summary>Rejects a card the player does not hold, without changing anything.
     /// MatchSession runs this before it records a submission.</summary>
-    public static void ValidateSubmission(CardName card, DeckAndHand player)
+    public static void ValidateSubmission(ECardName card, DeckAndHand player)
     {
         if (!player.Hand.Contains(card))
         {
@@ -34,7 +34,7 @@ public static class RoundResolver
 
     /// <summary>Rejects a choice the effect cannot carry out, without changing anything.
     /// Runs against the live hand, which by this point is exactly what Apply will see.</summary>
-    public static void ValidateChoice(CardName card, CardChoice choice, DeckAndHand player)
+    public static void ValidateChoice(ECardName card, CardChoice choice, DeckAndHand player)
     {
         AbilityEffects[card].Validate(choice, player);
     }
@@ -42,9 +42,9 @@ public static class RoundResolver
     /// <summary>Whether playing this card obliges the player to choose something. Asked of
     /// the effect rather than tested against a list of card names, so a new ability card
     /// does not need this file edited.</summary>
-    public static bool RequiresChoice(CardName card)
+    public static bool RequiresChoice(ECardName card)
     {
-        if (card.GetCardType() != CardType.Ability)
+        if (card.GetCardType() != ECardType.Ability)
         {
             return false;
         }
@@ -64,7 +64,7 @@ public static class RoundResolver
     ///
     /// The effect is simply left unrun, which is exactly what a declined choice already
     /// does.</summary>
-    public static bool MustChoose(CardName card, DeckAndHand player)
+    public static bool MustChoose(ECardName card, DeckAndHand player)
     {
         if (!RequiresChoice(card))
         {
@@ -77,23 +77,23 @@ public static class RoundResolver
     /// <summary>Phase one: make both cards public, apply their fates, and run everything
     /// that needs no choice. The returned round records who still owes one.</summary>
     public static RoundInProgress Reveal(
-        CardName player1Card,
-        CardName player2Card,
+        ECardName player1Card,
+        ECardName player2Card,
         DeckAndHand player1,
         DeckAndHand player2,
         Random rng)
     {
-        CardFate player1Fate;
-        CardFate player2Fate;
-        WinLossResult? winLoss;
+        ECardFate player1Fate;
+        ECardFate player2Fate;
+        EWinLossResult? winLoss;
         bool runEffects;
 
-        if (player1Card == CardName.Joker || player2Card == CardName.Joker)
+        if (player1Card == ECardName.Joker || player2Card == ECardName.Joker)
         {
             // Joker vanishes itself and destroys whatever the other side played,
             // blocking its effect entirely — including another Joker's (no-op) effect.
-            player1Fate = CardFate.Vanished;
-            player2Fate = CardFate.Vanished;
+            player1Fate = ECardFate.Vanished;
+            player2Fate = ECardFate.Vanished;
             winLoss = null;
             runEffects = false;
         }
@@ -157,8 +157,8 @@ public static class RoundResolver
         // Player 1 first, always — never the order the choices arrived in. 교체 and 리셋
         // both draw from the shared rng, so applying on arrival would make the resolved
         // hands depend on which network message landed first.
-        ApplyChoiceIfMade(round, Side.Player1, player1, player2, rng);
-        ApplyChoiceIfMade(round, Side.Player2, player2, player1, rng);
+        ApplyChoiceIfMade(round, ESide.Player1, player1, player2, rng);
+        ApplyChoiceIfMade(round, ESide.Player2, player2, player1, rng);
 
         player1.Draw();
         player2.Draw();
@@ -173,16 +173,16 @@ public static class RoundResolver
             player2.Hand.Cards,
             player1.Deck.Count,
             player2.Deck.Count,
-            SwappedCardCount(round, Side.Player1),
-            SwappedCardCount(round, Side.Player2),
-            TransformApplied(round, Side.Player1),
-            TransformApplied(round, Side.Player2),
+            SwappedCardCount(round, ESide.Player1),
+            SwappedCardCount(round, ESide.Player2),
+            TransformApplied(round, ESide.Player1),
+            TransformApplied(round, ESide.Player2),
             round.ResetApplied);
     }
 
     private static void ApplyChoiceIfMade(
         RoundInProgress round,
-        Side side,
+        ESide side,
         DeckAndHand self,
         DeckAndHand opponent,
         Random rng)
@@ -199,7 +199,7 @@ public static class RoundResolver
     // Both animation facts are read off the recorded choice, which was validated against
     // the real hand — never off anything a client asserted. A declined or blocked choice
     // is null here, so it reports as "nothing happened".
-    private static int SwappedCardCount(RoundInProgress round, Side side)
+    private static int SwappedCardCount(RoundInProgress round, ESide side)
     {
         CardChoice? choice = round.ChoiceOf(side);
         if (choice == null)
@@ -210,7 +210,7 @@ public static class RoundResolver
         return choice.CardsToReturn.Count;
     }
 
-    private static bool TransformApplied(RoundInProgress round, Side side)
+    private static bool TransformApplied(RoundInProgress round, ESide side)
     {
         CardChoice? choice = round.ChoiceOf(side);
         if (choice == null)
@@ -221,24 +221,24 @@ public static class RoundResolver
         return choice.CardToTransform != null;
     }
 
-    private static CardFate DefaultFate(CardName card)
+    private static ECardFate DefaultFate(ECardName card)
     {
-        if (card.GetCardType() == CardType.Blank)
+        if (card.GetCardType() == ECardType.Blank)
         {
-            return CardFate.Vanished;
+            return ECardFate.Vanished;
         }
 
-        if (card.GetCardType() == CardType.Ability)
+        if (card.GetCardType() == ECardType.Ability)
         {
-            return CardFate.Vanished;
+            return ECardFate.Vanished;
         }
 
-        return CardFate.ReturnedToDeckBottom;
+        return ECardFate.ReturnedToDeckBottom;
     }
 
-    private static void ApplyFate(DeckAndHand player, CardName card, CardFate fate)
+    private static void ApplyFate(DeckAndHand player, ECardName card, ECardFate fate)
     {
-        if (fate == CardFate.Vanished)
+        if (fate == ECardFate.Vanished)
         {
             player.Vanish(card);
         }
@@ -252,9 +252,9 @@ public static class RoundResolver
     /// outranks everything and this is not called at all, which is what makes "a 리셋 was
     /// played" and "the hands were replaced" two different things.</summary>
     private static bool RunChoicelessEffectsInPriorityOrder(
-        CardName player1Card,
+        ECardName player1Card,
         DeckAndHand player1,
-        CardName player2Card,
+        ECardName player2Card,
         DeckAndHand player2,
         Random rng)
     {
@@ -262,24 +262,24 @@ public static class RoundResolver
 
         // Reset outranks every other ability. If both players played Reset, it runs
         // twice, Player 1's card first, per DESIGN.md.
-        if (player1Card == CardName.Reset)
+        if (player1Card == ECardName.Reset)
         {
             RunEffect(player1Card, player1, player2, rng);
             resetApplied = true;
         }
 
-        if (player2Card == CardName.Reset)
+        if (player2Card == ECardName.Reset)
         {
             RunEffect(player2Card, player2, player1, rng);
             resetApplied = true;
         }
 
-        if (IsChoicelessAbility(player1Card) && player1Card != CardName.Reset)
+        if (IsChoicelessAbility(player1Card) && player1Card != ECardName.Reset)
         {
             RunEffect(player1Card, player1, player2, rng);
         }
 
-        if (IsChoicelessAbility(player2Card) && player2Card != CardName.Reset)
+        if (IsChoicelessAbility(player2Card) && player2Card != ECardName.Reset)
         {
             RunEffect(player2Card, player2, player1, rng);
         }
@@ -287,9 +287,9 @@ public static class RoundResolver
         return resetApplied;
     }
 
-    private static bool IsChoicelessAbility(CardName card)
+    private static bool IsChoicelessAbility(ECardName card)
     {
-        if (card.GetCardType() != CardType.Ability)
+        if (card.GetCardType() != ECardType.Ability)
         {
             return false;
         }
@@ -297,7 +297,7 @@ public static class RoundResolver
         return !AbilityEffects[card].RequiresChoice;
     }
 
-    private static void RunEffect(CardName card, DeckAndHand self, DeckAndHand opponent, Random rng)
+    private static void RunEffect(ECardName card, DeckAndHand self, DeckAndHand opponent, Random rng)
     {
         AbilityEffects[card].Apply(null, self, opponent, rng);
     }

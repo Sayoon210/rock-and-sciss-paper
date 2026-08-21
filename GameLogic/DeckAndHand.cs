@@ -18,25 +18,25 @@ public sealed class DeckAndHand
     /// that draw more than one card in a loop (교체/리셋/드로우) rely on this to stop taking
     /// cards instead of crashing partway through; MatchSession is what turns an empty deck
     /// into the match actually ending.</summary>
-    public CardName? Draw()
+    public ECardName? Draw()
     {
         if (Deck.Count == 0)
         {
             return null;
         }
 
-        CardName card = Deck.TakeFromTop();
+        ECardName card = Deck.TakeFromTop();
         Hand.Add(card);
         return card;
     }
 
-    public void ReturnToDeckBottom(CardName card)
+    public void ReturnToDeckBottom(ECardName card)
     {
         Hand.Remove(card);
         Deck.AddToBottom(card);
     }
 
-    public void Vanish(CardName card)
+    public void Vanish(ECardName card)
     {
         Hand.Remove(card);
     }

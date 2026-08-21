@@ -16,7 +16,7 @@ public sealed class TransformEffect : ICardEffect
     /// can be all 조커/능력.</summary>
     public bool HasAnyLegalChoice(DeckAndHand self)
     {
-        foreach (CardName card in self.Hand.Cards)
+        foreach (ECardName card in self.Hand.Cards)
         {
             if (IsTransformable(card))
             {
@@ -34,8 +34,8 @@ public sealed class TransformEffect : ICardEffect
             throw new ArgumentException("Transform needs both a card to change and what it becomes.", nameof(choice));
         }
 
-        CardName cardToTransform = choice.CardToTransform.Value;
-        CardName transformInto = choice.TransformInto.Value;
+        ECardName cardToTransform = choice.CardToTransform.Value;
+        ECardName transformInto = choice.TransformInto.Value;
 
         if (!IsTransformable(cardToTransform))
         {
@@ -59,9 +59,9 @@ public sealed class TransformEffect : ICardEffect
         self.Hand.Add(choice.TransformInto!.Value);
     }
 
-    private static bool IsTransformable(CardName card)
+    private static bool IsTransformable(ECardName card)
     {
-        CardType type = card.GetCardType();
-        return type == CardType.Normal || type == CardType.Blank;
+        ECardType type = card.GetCardType();
+        return type == ECardType.Normal || type == ECardType.Blank;
     }
 }

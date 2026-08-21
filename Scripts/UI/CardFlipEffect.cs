@@ -20,7 +20,7 @@ public partial class CardFlipEffect : Node
     public delegate void FinishedEventHandler();
 
     private CardView? _card;
-    private CardName? _revealCard;
+    private ECardName? _revealCard;
     private float _elapsedSeconds;
     private bool _hasRevealed;
 
@@ -32,7 +32,7 @@ public partial class CardFlipEffect : Node
     /// <summary>Start the turn. cardView is assumed to already be showing its face-down side;
     /// revealCard is what it turns into at the midpoint, when the edge-on card can't show
     /// either face and swapping it is invisible.</summary>
-    public void Play(CardView cardView, CardName revealCard)
+    public void Play(CardView cardView, ECardName revealCard)
     {
         Stop();
 

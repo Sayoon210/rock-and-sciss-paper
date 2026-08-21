@@ -8,13 +8,13 @@ public class MatchSessionTests
 
     /// <summary>Twelve cards — comfortably more than a mulligan, with enough left over to
     /// keep playing for a while.</summary>
-    private static IEnumerable<CardName> SmallDeck()
+    private static IEnumerable<ECardName> SmallDeck()
     {
         return new[]
         {
-            CardName.Rock, CardName.Rock, CardName.Rock, CardName.Rock,
-            CardName.Paper, CardName.Paper, CardName.Paper, CardName.Paper,
-            CardName.Scissors, CardName.Scissors, CardName.Scissors, CardName.Scissors,
+            ECardName.Rock, ECardName.Rock, ECardName.Rock, ECardName.Rock,
+            ECardName.Paper, ECardName.Paper, ECardName.Paper, ECardName.Paper,
+            ECardName.Scissors, ECardName.Scissors, ECardName.Scissors, ECardName.Scissors,
         };
     }
 
@@ -32,16 +32,16 @@ public class MatchSessionTests
 
         // Neither side acted, so both were played for and the round revealed in one go.
         Assert.NotNull(reveal);
-        Assert.Equal(MatchSession.MULLIGAN_HAND_SIZE - 1 + 1, session.HandOf(Side.Player1).Count);
-        Assert.Equal(MatchSession.MULLIGAN_HAND_SIZE - 1 + 1, session.HandOf(Side.Player2).Count);
+        Assert.Equal(MatchSession.MULLIGAN_HAND_SIZE - 1 + 1, session.HandOf(ESide.Player1).Count);
+        Assert.Equal(MatchSession.MULLIGAN_HAND_SIZE - 1 + 1, session.HandOf(ESide.Player2).Count);
     }
 
     [Fact]
     public void A_timed_out_round_leaves_a_card_that_was_already_played_alone()
     {
         MatchSession session = NewSession();
-        CardName played = session.HandOf(Side.Player1)[0];
-        Assert.Null(session.SubmitCard(Side.Player1, played));
+        ECardName played = session.HandOf(ESide.Player1)[0];
+        Assert.Null(session.SubmitCard(ESide.Player1, played));
 
         // Only Player 2 is filled in; Player 1's own card stands, and the round completes.
         RoundReveal? reveal = session.SubmitRandomCardForIdleSides();
@@ -57,11 +57,11 @@ public class MatchSessionTests
         // submission clock belongs to the phase before this one, so a late firing of it must
         // not play a card into a round that is past taking them.
         MatchSession session = SwapVersusPlainSession();
-        session.SubmitCard(Side.Player1, CardName.Swap);
-        session.SubmitCard(Side.Player2, CardName.Rock);
+        session.SubmitCard(ESide.Player1, ECardName.Swap);
+        session.SubmitCard(ESide.Player2, ECardName.Rock);
 
         Assert.Null(session.SubmitRandomCardForIdleSides());
-        Assert.True(session.IsAwaitingChoiceFrom(Side.Player1));
+        Assert.True(session.IsAwaitingChoiceFrom(ESide.Player1));
     }
 
     [Fact]
@@ -69,10 +69,10 @@ public class MatchSessionTests
     {
         MatchSession session = NewSession();
 
-        Assert.Equal(MatchSession.MULLIGAN_HAND_SIZE, session.HandOf(Side.Player1).Count);
-        Assert.Equal(MatchSession.MULLIGAN_HAND_SIZE, session.HandOf(Side.Player2).Count);
-        Assert.Equal(SMALL_DECK_SIZE - MatchSession.MULLIGAN_HAND_SIZE, session.DeckCountOf(Side.Player1));
-        Assert.Equal(SMALL_DECK_SIZE - MatchSession.MULLIGAN_HAND_SIZE, session.DeckCountOf(Side.Player2));
+        Assert.Equal(MatchSession.MULLIGAN_HAND_SIZE, session.HandOf(ESide.Player1).Count);
+        Assert.Equal(MatchSession.MULLIGAN_HAND_SIZE, session.HandOf(ESide.Player2).Count);
+        Assert.Equal(SMALL_DECK_SIZE - MatchSession.MULLIGAN_HAND_SIZE, session.DeckCountOf(ESide.Player1));
+        Assert.Equal(SMALL_DECK_SIZE - MatchSession.MULLIGAN_HAND_SIZE, session.DeckCountOf(ESide.Player2));
     }
 
     [Fact]
@@ -84,22 +84,22 @@ public class MatchSessionTests
         Assert.Equal(0, session.Player2Score);
         Assert.Equal(1, session.RoundNumber);
         Assert.Null(session.Winner);
-        Assert.Equal(RoundPhase.AwaitingSubmissions, session.Phase);
+        Assert.Equal(ERoundPhase.AwaitingSubmissions, session.Phase);
     }
 
     [Fact]
     public void SubmitCard_returns_null_until_both_sides_have_submitted()
     {
         MatchSession session = NewSession();
-        CardName player1Card = session.HandOf(Side.Player1)[0];
-        CardName player2Card = session.HandOf(Side.Player2)[0];
+        ECardName player1Card = session.HandOf(ESide.Player1)[0];
+        ECardName player2Card = session.HandOf(ESide.Player2)[0];
 
-        RoundReveal? afterFirst = session.SubmitCard(Side.Player1, player1Card);
+        RoundReveal? afterFirst = session.SubmitCard(ESide.Player1, player1Card);
         Assert.Null(afterFirst);
-        Assert.True(session.HasSubmittedCard(Side.Player1));
-        Assert.False(session.HasSubmittedCard(Side.Player2));
+        Assert.True(session.HasSubmittedCard(ESide.Player1));
+        Assert.False(session.HasSubmittedCard(ESide.Player2));
 
-        RoundReveal? afterSecond = session.SubmitCard(Side.Player2, player2Card);
+        RoundReveal? afterSecond = session.SubmitCard(ESide.Player2, player2Card);
         Assert.NotNull(afterSecond);
     }
 
@@ -108,13 +108,13 @@ public class MatchSessionTests
     {
         MatchSession session = NewSession();
 
-        session.SubmitCard(Side.Player1, session.HandOf(Side.Player1)[0]);
-        RoundReveal? reveal = session.SubmitCard(Side.Player2, session.HandOf(Side.Player2)[0]);
+        session.SubmitCard(ESide.Player1, session.HandOf(ESide.Player1)[0]);
+        RoundReveal? reveal = session.SubmitCard(ESide.Player2, session.HandOf(ESide.Player2)[0]);
 
         Assert.False(reveal!.Player1MustChoose);
         Assert.False(reveal.Player2MustChoose);
         Assert.NotNull(reveal.Result);
-        Assert.Equal(RoundPhase.AwaitingSubmissions, session.Phase);
+        Assert.Equal(ERoundPhase.AwaitingSubmissions, session.Phase);
     }
 
     [Fact]
@@ -122,11 +122,11 @@ public class MatchSessionTests
     {
         MatchSession session = NewSession();
 
-        session.SubmitCard(Side.Player1, session.HandOf(Side.Player1)[0]);
-        session.SubmitCard(Side.Player2, session.HandOf(Side.Player2)[0]);
+        session.SubmitCard(ESide.Player1, session.HandOf(ESide.Player1)[0]);
+        session.SubmitCard(ESide.Player2, session.HandOf(ESide.Player2)[0]);
 
-        Assert.False(session.HasSubmittedCard(Side.Player1));
-        Assert.False(session.HasSubmittedCard(Side.Player2));
+        Assert.False(session.HasSubmittedCard(ESide.Player1));
+        Assert.False(session.HasSubmittedCard(ESide.Player2));
         Assert.Equal(2, session.RoundNumber);
     }
 
@@ -134,14 +134,14 @@ public class MatchSessionTests
     public void A_win_increments_only_the_winners_score()
     {
         var session = new MatchSession(
-            Repeated(CardName.Rock, 8),
-            Repeated(CardName.Scissors, 8),
+            Repeated(ECardName.Rock, 8),
+            Repeated(ECardName.Scissors, 8),
             new Random(1));
 
-        session.SubmitCard(Side.Player1, CardName.Rock);
-        RoundReveal? reveal = session.SubmitCard(Side.Player2, CardName.Scissors);
+        session.SubmitCard(ESide.Player1, ECardName.Rock);
+        RoundReveal? reveal = session.SubmitCard(ESide.Player2, ECardName.Scissors);
 
-        Assert.Equal(WinLossResult.Player1Win, reveal!.Result!.WinLoss);
+        Assert.Equal(EWinLossResult.Player1Win, reveal!.Result!.WinLoss);
         Assert.Equal(1, session.Player1Score);
         Assert.Equal(0, session.Player2Score);
     }
@@ -150,12 +150,12 @@ public class MatchSessionTests
     public void A_round_with_no_win_loss_does_not_change_the_score()
     {
         var session = new MatchSession(
-            Repeated(CardName.Blank, 8),
-            Repeated(CardName.Rock, 8),
+            Repeated(ECardName.Blank, 8),
+            Repeated(ECardName.Rock, 8),
             new Random(1));
 
-        session.SubmitCard(Side.Player1, CardName.Blank);
-        RoundReveal? reveal = session.SubmitCard(Side.Player2, CardName.Rock);
+        session.SubmitCard(ESide.Player1, ECardName.Blank);
+        RoundReveal? reveal = session.SubmitCard(ESide.Player2, ECardName.Rock);
 
         Assert.Null(reveal!.Result!.WinLoss);
         Assert.Equal(0, session.Player1Score);
@@ -168,7 +168,7 @@ public class MatchSessionTests
         MatchSession session = PlayRounds(MatchSession.WINS_NEEDED_FOR_MATCH);
 
         Assert.Equal(MatchSession.WINS_NEEDED_FOR_MATCH, session.Player1Score);
-        Assert.Equal(Side.Player1, session.Winner);
+        Assert.Equal(ESide.Player1, session.Winner);
     }
 
     [Fact]
@@ -177,17 +177,17 @@ public class MatchSessionTests
         MatchSession session = PlayRounds(MatchSession.WINS_NEEDED_FOR_MATCH);
 
         Assert.Throws<InvalidOperationException>(
-            () => session.SubmitCard(Side.Player1, session.HandOf(Side.Player1)[0]));
+            () => session.SubmitCard(ESide.Player1, session.HandOf(ESide.Player1)[0]));
     }
 
     [Fact]
     public void SubmitCard_throws_when_the_same_side_submits_twice()
     {
         MatchSession session = NewSession();
-        session.SubmitCard(Side.Player1, session.HandOf(Side.Player1)[0]);
+        session.SubmitCard(ESide.Player1, session.HandOf(ESide.Player1)[0]);
 
         Assert.Throws<InvalidOperationException>(
-            () => session.SubmitCard(Side.Player1, session.HandOf(Side.Player1)[0]));
+            () => session.SubmitCard(ESide.Player1, session.HandOf(ESide.Player1)[0]));
     }
 
     [Fact]
@@ -195,7 +195,7 @@ public class MatchSessionTests
     {
         MatchSession session = NewSession();
 
-        Assert.Throws<ArgumentException>(() => session.SubmitCard(Side.Player1, CardName.Joker));
+        Assert.Throws<ArgumentException>(() => session.SubmitCard(ESide.Player1, ECardName.Joker));
     }
 
     /// <summary>A deck whose mulligan always holds at least one of each card, whatever the
@@ -209,9 +209,9 @@ public class MatchSessionTests
     ///
     /// The deck this leaves behind is short by design. These sessions exist to exercise the
     /// choice phase, not to play out many rounds.</summary>
-    private static List<CardName> MulliganHoldsBoth(CardName first, CardName second)
+    private static List<ECardName> MulliganHoldsBoth(ECardName first, ECardName second)
     {
-        var cards = new List<CardName>();
+        var cards = new List<ECardName>();
         for (int i = 0; i < MatchSession.MULLIGAN_HAND_SIZE - 1; i++)
         {
             cards.Add(first);
@@ -224,8 +224,8 @@ public class MatchSessionTests
     private static MatchSession SwapVersusPlainSession()
     {
         return new MatchSession(
-            MulliganHoldsBoth(CardName.Swap, CardName.Blank),
-            Repeated(CardName.Rock, 20),
+            MulliganHoldsBoth(ECardName.Swap, ECardName.Blank),
+            Repeated(ECardName.Rock, 20),
             new Random(1));
     }
 
@@ -234,15 +234,15 @@ public class MatchSessionTests
     {
         MatchSession session = SwapVersusPlainSession();
 
-        session.SubmitCard(Side.Player1, CardName.Swap);
-        RoundReveal? reveal = session.SubmitCard(Side.Player2, CardName.Rock);
+        session.SubmitCard(ESide.Player1, ECardName.Swap);
+        RoundReveal? reveal = session.SubmitCard(ESide.Player2, ECardName.Rock);
 
         Assert.True(reveal!.Player1MustChoose);
         Assert.False(reveal.Player2MustChoose);
         Assert.Null(reveal.Result);
-        Assert.Equal(RoundPhase.AwaitingChoices, session.Phase);
-        Assert.True(session.IsAwaitingChoiceFrom(Side.Player1));
-        Assert.Equal(CardName.Swap, session.CardAwaitingChoiceFrom(Side.Player1));
+        Assert.Equal(ERoundPhase.AwaitingChoices, session.Phase);
+        Assert.True(session.IsAwaitingChoiceFrom(ESide.Player1));
+        Assert.Equal(ECardName.Swap, session.CardAwaitingChoiceFrom(ESide.Player1));
         Assert.Equal(1, session.RoundNumber);
     }
 
@@ -255,70 +255,70 @@ public class MatchSessionTests
         // Exactly one Swap, and a deck the same size as the mulligan so the whole deck is
         // dealt — otherwise a second Swap could come up and the assertion would say
         // nothing. The round stops at the choice phase, so the empty deck is never drawn.
-        var deck = new List<CardName> { CardName.Swap };
+        var deck = new List<ECardName> { ECardName.Swap };
         for (int i = 0; i < MatchSession.MULLIGAN_HAND_SIZE - 1; i++)
         {
-            deck.Add(CardName.Blank);
+            deck.Add(ECardName.Blank);
         }
 
-        var session = new MatchSession(deck, Repeated(CardName.Rock, 20), new Random(1));
+        var session = new MatchSession(deck, Repeated(ECardName.Rock, 20), new Random(1));
 
-        session.SubmitCard(Side.Player1, CardName.Swap);
-        session.SubmitCard(Side.Player2, CardName.Rock);
+        session.SubmitCard(ESide.Player1, ECardName.Swap);
+        session.SubmitCard(ESide.Player2, ECardName.Rock);
 
-        Assert.Equal(RoundPhase.AwaitingChoices, session.Phase);
-        Assert.DoesNotContain(CardName.Swap, session.HandOf(Side.Player1));
+        Assert.Equal(ERoundPhase.AwaitingChoices, session.Phase);
+        Assert.DoesNotContain(ECardName.Swap, session.HandOf(ESide.Player1));
     }
 
     [Fact]
     public void Settling_the_last_owed_choice_finishes_the_round()
     {
         MatchSession session = SwapVersusPlainSession();
-        session.SubmitCard(Side.Player1, CardName.Swap);
-        session.SubmitCard(Side.Player2, CardName.Rock);
+        session.SubmitCard(ESide.Player1, ECardName.Swap);
+        session.SubmitCard(ESide.Player2, ECardName.Rock);
 
         RoundResult? result = session.SubmitChoice(
-            Side.Player1, CardChoice.Swapping(new[] { CardName.Blank }));
+            ESide.Player1, CardChoice.Swapping(new[] { ECardName.Blank }));
 
         Assert.NotNull(result);
         Assert.Equal(1, result!.Player1SwappedCardCount);
-        Assert.Equal(RoundPhase.AwaitingSubmissions, session.Phase);
+        Assert.Equal(ERoundPhase.AwaitingSubmissions, session.Phase);
         Assert.Equal(2, session.RoundNumber);
-        Assert.False(session.HasSubmittedCard(Side.Player1));
+        Assert.False(session.HasSubmittedCard(ESide.Player1));
     }
 
     [Fact]
     public void SubmitCard_is_rejected_while_the_round_is_awaiting_choices()
     {
         MatchSession session = SwapVersusPlainSession();
-        session.SubmitCard(Side.Player1, CardName.Swap);
-        session.SubmitCard(Side.Player2, CardName.Rock);
+        session.SubmitCard(ESide.Player1, ECardName.Swap);
+        session.SubmitCard(ESide.Player2, ECardName.Rock);
 
         Assert.Throws<InvalidOperationException>(
-            () => session.SubmitCard(Side.Player2, CardName.Rock));
+            () => session.SubmitCard(ESide.Player2, ECardName.Rock));
     }
 
     [Fact]
     public void SubmitChoice_is_rejected_from_a_side_that_was_not_asked()
     {
         MatchSession session = SwapVersusPlainSession();
-        session.SubmitCard(Side.Player1, CardName.Swap);
-        session.SubmitCard(Side.Player2, CardName.Rock);
+        session.SubmitCard(ESide.Player1, ECardName.Swap);
+        session.SubmitCard(ESide.Player2, ECardName.Rock);
 
         Assert.Throws<InvalidOperationException>(
-            () => session.SubmitChoice(Side.Player2, CardChoice.Swapping(Array.Empty<CardName>())));
+            () => session.SubmitChoice(ESide.Player2, CardChoice.Swapping(Array.Empty<ECardName>())));
     }
 
     [Fact]
     public void SubmitChoice_is_rejected_when_that_side_already_chose()
     {
         MatchSession session = SwapVersusPlainSession();
-        session.SubmitCard(Side.Player1, CardName.Swap);
-        session.SubmitCard(Side.Player2, CardName.Rock);
-        session.SubmitChoice(Side.Player1, CardChoice.Swapping(Array.Empty<CardName>()));
+        session.SubmitCard(ESide.Player1, ECardName.Swap);
+        session.SubmitCard(ESide.Player2, ECardName.Rock);
+        session.SubmitChoice(ESide.Player1, CardChoice.Swapping(Array.Empty<ECardName>()));
 
         Assert.Throws<InvalidOperationException>(
-            () => session.SubmitChoice(Side.Player1, CardChoice.Swapping(Array.Empty<CardName>())));
+            () => session.SubmitChoice(ESide.Player1, CardChoice.Swapping(Array.Empty<ECardName>())));
     }
 
     [Fact]
@@ -327,18 +327,18 @@ public class MatchSessionTests
         // The choice-phase counterpart of "a rejected card must leave the round exactly as
         // it was": a client that sends nonsense has to be able to simply try again.
         MatchSession session = SwapVersusPlainSession();
-        session.SubmitCard(Side.Player1, CardName.Swap);
-        session.SubmitCard(Side.Player2, CardName.Rock);
+        session.SubmitCard(ESide.Player1, ECardName.Swap);
+        session.SubmitCard(ESide.Player2, ECardName.Rock);
 
         Assert.Throws<ArgumentException>(
-            () => session.SubmitChoice(Side.Player1, CardChoice.Swapping(new[] { CardName.Joker })));
+            () => session.SubmitChoice(ESide.Player1, CardChoice.Swapping(new[] { ECardName.Joker })));
 
-        Assert.True(session.IsAwaitingChoiceFrom(Side.Player1));
-        Assert.Equal(RoundPhase.AwaitingChoices, session.Phase);
+        Assert.True(session.IsAwaitingChoiceFrom(ESide.Player1));
+        Assert.Equal(ERoundPhase.AwaitingChoices, session.Phase);
         Assert.Equal(1, session.RoundNumber);
 
         RoundResult? result = session.SubmitChoice(
-            Side.Player1, CardChoice.Swapping(new[] { CardName.Blank }));
+            ESide.Player1, CardChoice.Swapping(new[] { ECardName.Blank }));
         Assert.NotNull(result);
     }
 
@@ -346,10 +346,10 @@ public class MatchSessionTests
     public void DeclineChoice_finishes_the_round_without_running_the_effect()
     {
         MatchSession session = SwapVersusPlainSession();
-        session.SubmitCard(Side.Player1, CardName.Swap);
-        session.SubmitCard(Side.Player2, CardName.Rock);
+        session.SubmitCard(ESide.Player1, ECardName.Swap);
+        session.SubmitCard(ESide.Player2, ECardName.Rock);
 
-        RoundResult? result = session.DeclineChoice(Side.Player1);
+        RoundResult? result = session.DeclineChoice(ESide.Player1);
 
         Assert.NotNull(result);
         Assert.Equal(0, result!.Player1SwappedCardCount);
@@ -363,29 +363,29 @@ public class MatchSessionTests
         // next one.
         MatchSession session = SwapVersusPlainSession();
 
-        Assert.Null(session.DeclineChoice(Side.Player1));
+        Assert.Null(session.DeclineChoice(ESide.Player1));
         Assert.Equal(1, session.RoundNumber);
-        Assert.Equal(RoundPhase.AwaitingSubmissions, session.Phase);
+        Assert.Equal(ERoundPhase.AwaitingSubmissions, session.Phase);
     }
 
     [Theory]
-    [InlineData(CardName.Swap)]
-    [InlineData(CardName.Transform)]
-    public void A_Joker_leaves_the_blocked_player_with_nothing_to_choose(CardName choiceCard)
+    [InlineData(ECardName.Swap)]
+    [InlineData(ECardName.Transform)]
+    public void A_Joker_leaves_the_blocked_player_with_nothing_to_choose(ECardName choiceCard)
     {
         // The whole point of asking after the reveal: a card the Joker destroyed never
         // prompts, instead of prompting and then throwing the answer away.
         var session = new MatchSession(
-            MulliganHoldsBoth(choiceCard, CardName.Blank),
-            Repeated(CardName.Joker, 20),
+            MulliganHoldsBoth(choiceCard, ECardName.Blank),
+            Repeated(ECardName.Joker, 20),
             new Random(1));
 
-        session.SubmitCard(Side.Player1, choiceCard);
-        RoundReveal? reveal = session.SubmitCard(Side.Player2, CardName.Joker);
+        session.SubmitCard(ESide.Player1, choiceCard);
+        RoundReveal? reveal = session.SubmitCard(ESide.Player2, ECardName.Joker);
 
         Assert.False(reveal!.Player1MustChoose);
         Assert.NotNull(reveal.Result);
-        Assert.Equal(RoundPhase.AwaitingSubmissions, session.Phase);
+        Assert.Equal(ERoundPhase.AwaitingSubmissions, session.Phase);
         Assert.Equal(0, reveal.Result!.Player1SwappedCardCount);
         Assert.False(reveal.Result.Player1TransformApplied);
     }
@@ -398,28 +398,28 @@ public class MatchSessionTests
         // applies. Choosing before the reveal — the old flow — let 리셋 invalidate a choice
         // that had already been validated, which threw partway through resolution.
         var session = new MatchSession(
-            MulliganHoldsBoth(CardName.Reset, CardName.Rock),
-            MulliganHoldsBoth(CardName.Transform, CardName.Blank),
+            MulliganHoldsBoth(ECardName.Reset, ECardName.Rock),
+            MulliganHoldsBoth(ECardName.Transform, ECardName.Blank),
             new Random(3));
 
-        session.SubmitCard(Side.Player1, CardName.Reset);
-        RoundReveal? reveal = session.SubmitCard(Side.Player2, CardName.Transform);
+        session.SubmitCard(ESide.Player1, ECardName.Reset);
+        RoundReveal? reveal = session.SubmitCard(ESide.Player2, ECardName.Transform);
         Assert.True(reveal!.Player2MustChoose);
 
         // The first card 변화 can actually work on, not simply the first card: 변화 only takes
         // a 일반카드 or 공백카드, and which of those the post-리셋 hand starts with is up to the
         // shuffle. Reaching for offered[0] happened to work at a six-card hand and stopped
         // working at four — the test never meant to care which card it got.
-        IReadOnlyList<CardName> offered = session.HandOf(Side.Player2);
-        CardName target = offered.First(
-            card => card.GetCardType() == CardType.Normal || card.GetCardType() == CardType.Blank);
+        IReadOnlyList<ECardName> offered = session.HandOf(ESide.Player2);
+        ECardName target = offered.First(
+            card => card.GetCardType() == ECardType.Normal || card.GetCardType() == ECardType.Blank);
 
         RoundResult? result = session.SubmitChoice(
-            Side.Player2, CardChoice.Transforming(target, CardName.Paper));
+            ESide.Player2, CardChoice.Transforming(target, ECardName.Paper));
 
         Assert.NotNull(result);
         Assert.True(result!.Player2TransformApplied);
-        Assert.Contains(CardName.Paper, result.Player2Hand);
+        Assert.Contains(ECardName.Paper, result.Player2Hand);
     }
 
     [Fact]
@@ -440,26 +440,26 @@ public class MatchSessionTests
     private static RoundResult ResolveBothChoices(bool chooseForPlayer1First)
     {
         var session = new MatchSession(
-            MulliganHoldsBoth(CardName.Swap, CardName.Blank),
-            MulliganHoldsBoth(CardName.Swap, CardName.Rock),
+            MulliganHoldsBoth(ECardName.Swap, ECardName.Blank),
+            MulliganHoldsBoth(ECardName.Swap, ECardName.Rock),
             new Random(5));
 
-        session.SubmitCard(Side.Player1, CardName.Swap);
-        session.SubmitCard(Side.Player2, CardName.Swap);
+        session.SubmitCard(ESide.Player1, ECardName.Swap);
+        session.SubmitCard(ESide.Player2, ECardName.Swap);
 
-        CardChoice player1Choice = CardChoice.Swapping(new[] { CardName.Blank });
-        CardChoice player2Choice = CardChoice.Swapping(new[] { CardName.Rock });
+        CardChoice player1Choice = CardChoice.Swapping(new[] { ECardName.Blank });
+        CardChoice player2Choice = CardChoice.Swapping(new[] { ECardName.Rock });
 
         RoundResult? result;
         if (chooseForPlayer1First)
         {
-            Assert.Null(session.SubmitChoice(Side.Player1, player1Choice));
-            result = session.SubmitChoice(Side.Player2, player2Choice);
+            Assert.Null(session.SubmitChoice(ESide.Player1, player1Choice));
+            result = session.SubmitChoice(ESide.Player2, player2Choice);
         }
         else
         {
-            Assert.Null(session.SubmitChoice(Side.Player2, player2Choice));
-            result = session.SubmitChoice(Side.Player1, player1Choice);
+            Assert.Null(session.SubmitChoice(ESide.Player2, player2Choice));
+            result = session.SubmitChoice(ESide.Player1, player1Choice);
         }
 
         return result!;
@@ -473,30 +473,30 @@ public class MatchSessionTests
         // the deck is empty the moment that round is recorded — before either side has a
         // chance to also win on score.
         var session = new MatchSession(
-            Repeated(CardName.Blank, MatchSession.MULLIGAN_HAND_SIZE + 1),
-            Repeated(CardName.Rock, 20),
+            Repeated(ECardName.Blank, MatchSession.MULLIGAN_HAND_SIZE + 1),
+            Repeated(ECardName.Rock, 20),
             new Random(1));
 
-        session.SubmitCard(Side.Player1, CardName.Blank);
-        session.SubmitCard(Side.Player2, CardName.Rock);
+        session.SubmitCard(ESide.Player1, ECardName.Blank);
+        session.SubmitCard(ESide.Player2, ECardName.Rock);
 
-        Assert.Equal(0, session.DeckCountOf(Side.Player1));
-        Assert.Equal(Side.Player2, session.Winner);
+        Assert.Equal(0, session.DeckCountOf(ESide.Player1));
+        Assert.Equal(ESide.Player2, session.Winner);
     }
 
     [Fact]
     public void SubmitCard_throws_once_a_side_has_exhausted_its_deck()
     {
         var session = new MatchSession(
-            Repeated(CardName.Blank, MatchSession.MULLIGAN_HAND_SIZE + 1),
-            Repeated(CardName.Rock, 20),
+            Repeated(ECardName.Blank, MatchSession.MULLIGAN_HAND_SIZE + 1),
+            Repeated(ECardName.Rock, 20),
             new Random(1));
 
-        session.SubmitCard(Side.Player1, CardName.Blank);
-        session.SubmitCard(Side.Player2, CardName.Rock);
+        session.SubmitCard(ESide.Player1, ECardName.Blank);
+        session.SubmitCard(ESide.Player2, ECardName.Rock);
 
         Assert.Throws<InvalidOperationException>(
-            () => session.SubmitCard(Side.Player2, session.HandOf(Side.Player2)[0]));
+            () => session.SubmitCard(ESide.Player2, session.HandOf(ESide.Player2)[0]));
     }
 
     [Fact]
@@ -507,16 +507,16 @@ public class MatchSessionTests
         // simultaneous Reset and same-priority submissions, rather than leaving the match
         // with no winner at all.
         var session = new MatchSession(
-            Repeated(CardName.Blank, MatchSession.MULLIGAN_HAND_SIZE + 1),
-            Repeated(CardName.Blank, MatchSession.MULLIGAN_HAND_SIZE + 1),
+            Repeated(ECardName.Blank, MatchSession.MULLIGAN_HAND_SIZE + 1),
+            Repeated(ECardName.Blank, MatchSession.MULLIGAN_HAND_SIZE + 1),
             new Random(1));
 
-        session.SubmitCard(Side.Player1, CardName.Blank);
-        session.SubmitCard(Side.Player2, CardName.Blank);
+        session.SubmitCard(ESide.Player1, ECardName.Blank);
+        session.SubmitCard(ESide.Player2, ECardName.Blank);
 
-        Assert.Equal(0, session.DeckCountOf(Side.Player1));
-        Assert.Equal(0, session.DeckCountOf(Side.Player2));
-        Assert.Equal(Side.Player2, session.Winner);
+        Assert.Equal(0, session.DeckCountOf(ESide.Player1));
+        Assert.Equal(0, session.DeckCountOf(ESide.Player2));
+        Assert.Equal(ESide.Player2, session.Winner);
     }
 
     [Fact]
@@ -525,13 +525,13 @@ public class MatchSessionTests
         var a = new MatchSession(SmallDeck(), SmallDeck(), new Random(99));
         var b = new MatchSession(SmallDeck(), SmallDeck(), new Random(99));
 
-        Assert.Equal(a.HandOf(Side.Player1), b.HandOf(Side.Player1));
-        Assert.Equal(a.HandOf(Side.Player2), b.HandOf(Side.Player2));
+        Assert.Equal(a.HandOf(ESide.Player1), b.HandOf(ESide.Player1));
+        Assert.Equal(a.HandOf(ESide.Player2), b.HandOf(ESide.Player2));
     }
 
-    private static List<CardName> Repeated(CardName card, int count)
+    private static List<ECardName> Repeated(ECardName card, int count)
     {
-        var cards = new List<CardName>();
+        var cards = new List<ECardName>();
         for (int i = 0; i < count; i++)
         {
             cards.Add(card);
@@ -544,14 +544,14 @@ public class MatchSessionTests
     private static MatchSession PlayRounds(int count)
     {
         var session = new MatchSession(
-            Repeated(CardName.Rock, 20),
-            Repeated(CardName.Scissors, 20),
+            Repeated(ECardName.Rock, 20),
+            Repeated(ECardName.Scissors, 20),
             new Random(1));
 
         for (int round = 0; round < count; round++)
         {
-            session.SubmitCard(Side.Player1, CardName.Rock);
-            session.SubmitCard(Side.Player2, CardName.Scissors);
+            session.SubmitCard(ESide.Player1, ECardName.Rock);
+            session.SubmitCard(ESide.Player2, ECardName.Scissors);
         }
 
         return session;

@@ -84,7 +84,7 @@ The host's process holds both players' real hands in memory, so nothing but this
 
 ```
 View
-├─ MyHand : List<CardName>       ← always my real hand
+├─ MyHand : List<ECardName>       ← always my real hand
 ├─ OpponentHandCount : int       ← count only, never contents
 ├─ MyDeckCount / OpponentDeckCount
 └─ this round's revealed cards, scores
@@ -94,7 +94,7 @@ Both sides fill `View` differently — the host copies from its session in-proce
 
 ## Card presentation
 
-- `CardName` is the only card type that crosses from `GameLogic`. Resolve it to a `CardData` through `CardDatabase` at the point of display.
+- `ECardName` is the only card type that crosses from `GameLogic`. Resolve it to a `CardData` through `CardDatabase` at the point of display.
 - Hand order in `GameLogic` is meaningless; the rules never assign a card a slot. Screen-side slot stability is this layer's business — rebuilding the whole row on every change throws away which node the player was looking at.
 - The panel that appears when the cursor rests on a card is `CardTooltipView` (`Scenes/Match/CardTooltip.tscn`), built by `CardView._MakeCustomTooltip`. Godot owns when it appears, where it sits and when it is freed — do not reimplement any of that with a panel and a timer of your own. Two gotchas the engine's contract carries: return a **new instance every time** (the old one is freed), and returning `null` means "no *custom* tooltip", which makes Godot fall back to the plain default one — the only way to show nothing at all is for `_GetTooltip` to return an empty string.
 - Playing a card is always a single click, 교체 and 변화 included. Their choice is asked for **after** both cards are revealed, through `GameState.RequestChoice`, and only ever on the screen of the player who owes it. A card node therefore does not need to know whether the card it shows needs a choice.

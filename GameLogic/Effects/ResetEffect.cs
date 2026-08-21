@@ -28,9 +28,9 @@ public sealed class ResetEffect : ICardEffect
     private static void ResetOne(DeckAndHand player, Random rng)
     {
         int handSize = player.Hand.Cards.Count;
-        var handCards = new List<CardName>(player.Hand.Cards);
+        var handCards = new List<ECardName>(player.Hand.Cards);
 
-        foreach (CardName card in handCards)
+        foreach (ECardName card in handCards)
         {
             player.ReturnToDeckBottom(card);
         }

@@ -3,21 +3,21 @@ namespace RockAndScissPaper.GameLogic;
 /// <summary>One player's hand.</summary>
 public sealed class Hand
 {
-    private readonly List<CardName> _cards;
+    private readonly List<ECardName> _cards;
 
-    public Hand(IEnumerable<CardName> cards)
+    public Hand(IEnumerable<ECardName> cards)
     {
-        _cards = new List<CardName>(cards);
+        _cards = new List<ECardName>(cards);
     }
 
-    public IReadOnlyList<CardName> Cards => _cards;
+    public IReadOnlyList<ECardName> Cards => _cards;
 
-    public void Add(CardName card)
+    public void Add(ECardName card)
     {
         _cards.Add(card);
     }
 
-    public void Remove(CardName card)
+    public void Remove(ECardName card)
     {
         if (!_cards.Remove(card))
         {
@@ -25,7 +25,7 @@ public sealed class Hand
         }
     }
 
-    public bool Contains(CardName card)
+    public bool Contains(ECardName card)
     {
         return _cards.Contains(card);
     }

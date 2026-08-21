@@ -150,7 +150,7 @@ public partial class MatchDebugUI : Control
         GameState.Instance!.HostStartsMatch();
     }
 
-    private void OnCardPressed(CardName card)
+    private void OnCardPressed(ECardName card)
     {
         // Every card is a single click now, 교체 and 변화 included — their choice is asked
         // for after the reveal, by ChoiceRequired, not gathered before submitting.
@@ -173,7 +173,7 @@ public partial class MatchDebugUI : Control
         _choiceRow.AddChild(label);
 
         var fromPicker = new OptionButton();
-        foreach (CardName card in GameState.Instance!.View.MyHand)
+        foreach (ECardName card in GameState.Instance!.View.MyHand)
         {
             fromPicker.AddItem(DisplayNameOf(card), (int)card);
         }
@@ -185,7 +185,7 @@ public partial class MatchDebugUI : Control
         _choiceRow.AddChild(intoLabel);
 
         var intoPicker = new OptionButton();
-        foreach (CardName card in AllKnownCards())
+        foreach (ECardName card in AllKnownCards())
         {
             intoPicker.AddItem(DisplayNameOf(card), (int)card);
         }
@@ -200,8 +200,8 @@ public partial class MatchDebugUI : Control
                 return;
             }
 
-            var from = (CardName)fromPicker.GetItemId(fromPicker.Selected);
-            var into = (CardName)intoPicker.GetItemId(intoPicker.Selected);
+            var from = (ECardName)fromPicker.GetItemId(fromPicker.Selected);
+            var into = (ECardName)intoPicker.GetItemId(intoPicker.Selected);
             Log($"-> choosing Transform {from} -> {into}");
             GameState.Instance!.RequestChoice(CardChoice.Transforming(from, into));
             ClearChoiceRow();
@@ -220,9 +220,9 @@ public partial class MatchDebugUI : Control
         _choiceRow.AddChild(label);
 
         var toggles = new List<Button>();
-        var toggledCards = new List<CardName>();
+        var toggledCards = new List<ECardName>();
 
-        foreach (CardName card in GameState.Instance!.View.MyHand)
+        foreach (ECardName card in GameState.Instance!.View.MyHand)
         {
             var toggle = new Button();
             toggle.Text = DisplayNameOf(card);
@@ -235,7 +235,7 @@ public partial class MatchDebugUI : Control
 
         AddConfirmButtons(() =>
         {
-            var chosen = new List<CardName>();
+            var chosen = new List<ECardName>();
             for (int i = 0; i < toggles.Count; i++)
             {
                 if (toggles[i].ButtonPressed)
@@ -274,11 +274,11 @@ public partial class MatchDebugUI : Control
         }
     }
 
-    private static IReadOnlyCollection<CardName> AllKnownCards()
+    private static IReadOnlyCollection<ECardName> AllKnownCards()
     {
         if (CardDatabase.Instance == null)
         {
-            return Array.Empty<CardName>();
+            return Array.Empty<ECardName>();
         }
 
         return CardDatabase.Instance.LoadedCardNames;
@@ -314,15 +314,15 @@ public partial class MatchDebugUI : Control
     /// pickers offer everything and let the host rule on it.</summary>
     private void OnChoiceRequired()
     {
-        CardName? card = GameState.Instance!.View.CardIMustChooseFor;
-        if (card == CardName.Transform)
+        ECardName? card = GameState.Instance!.View.CardIMustChooseFor;
+        if (card == ECardName.Transform)
         {
             Log("choose: Transform");
             ShowTransformChoice();
             return;
         }
 
-        if (card == CardName.Swap)
+        if (card == ECardName.Swap)
         {
             Log("choose: Swap");
             ShowSwapChoice();
@@ -409,9 +409,9 @@ public partial class MatchDebugUI : Control
         // Rebuilding the whole row is fine for a harness; the real UI is expected to keep
         // card nodes stable instead, since Transform and Swap need the clicked node
         // identified (Scripts/CLAUDE.md, "Card presentation").
-        foreach (CardName card in GameState.Instance!.View.MyHand)
+        foreach (ECardName card in GameState.Instance!.View.MyHand)
         {
-            CardName cardToPlay = card;
+            ECardName cardToPlay = card;
             var cardButton = new Button();
             cardButton.Text = DisplayNameOf(card);
             cardButton.Pressed += () => { OnCardPressed(cardToPlay); };
@@ -470,7 +470,7 @@ public partial class MatchDebugUI : Control
         return $"me {view.MyCard} ({view.MyCardFate}) vs opponent {view.OpponentCard} ({view.OpponentCardFate}) -> {outcome}";
     }
 
-    private static string DisplayNameOf(CardName card)
+    private static string DisplayNameOf(ECardName card)
     {
         CardData? cardData = CardDatabase.Instance?.GetCardData(card);
         if (cardData == null)

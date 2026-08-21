@@ -17,6 +17,7 @@ Design doc will be added separately later — this document covers tech stack / 
 - Name a type after what it holds or does, not a vague category (`WinLossRules`, not `Helper`).
 - Use DESIGN.md's vocabulary verbatim — normal card, blank, joker, ability, vanish, deck bottom.
 - Godot script names reveal role via suffix: `...Manager`, `...Controller`, `...Data`, `...View`/`...UI`, `...Effect`, `I...`. File name matches class name.
+- A plain `enum` is prefixed `E...` (`ECardName`, `ESide`, `ERoundOutcome`) — the same reasoning as `I...` for interfaces: the name alone says the type carries no behavior, so a reader isn't left checking whether "CardName" is a value type or a class with logic on it. Applies to the enum only, never to a property or field of that type — `CardData.CardName` stays `CardName` (it's what `Data/Cards/*.tres` key their value on), even though its type is `ECardName`.
 - Name `const` members in `SCREAMING_SNAKE_CASE` (`MULLIGAN_HAND_SIZE`, `MAX_CLIENTS`) — a deliberate departure from the C#/Godot PascalCase convention, so a constant is distinguishable from a property at the call site. Don't "correct" these back.
 - Write the plain form of a C# construct, not the compressed one: full `{ }`/`return` bodies, not expression-bodied `=>` members or switch expressions.
 
@@ -25,7 +26,7 @@ Design doc will be added separately later — this document covers tech stack / 
 - GDScript.
 - Trusting client-sent values without host-side re-validation.
 - Full-syncing hidden information through `MultiplayerSynchronizer`.
-- Subclass trees for card variants (`ResetCard : AbilityCard : Card`) — cards are identified by `CardName`, ability behavior composed via `ICardEffect`.
+- Subclass trees for card variants (`ResetCard : AbilityCard : Card`) — cards are identified by `ECardName`, ability behavior composed via `ICardEffect`.
 - Hardcoding card stats/text in scripts.
 - Adding abstractions/scaffolding "in case it's needed later."
 

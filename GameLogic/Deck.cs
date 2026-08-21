@@ -3,23 +3,23 @@ namespace RockAndScissPaper.GameLogic;
 /// <summary>One player's deck. Index 0 is the deck top.</summary>
 public sealed class Deck
 {
-    private readonly List<CardName> _cards;
+    private readonly List<ECardName> _cards;
 
-    public Deck(IEnumerable<CardName> cards)
+    public Deck(IEnumerable<ECardName> cards)
     {
-        _cards = new List<CardName>(cards);
+        _cards = new List<ECardName>(cards);
     }
 
     public int Count => _cards.Count;
 
-    public CardName TakeFromTop()
+    public ECardName TakeFromTop()
     {
-        CardName card = _cards[0];
+        ECardName card = _cards[0];
         _cards.RemoveAt(0);
         return card;
     }
 
-    public void AddToBottom(CardName card)
+    public void AddToBottom(ECardName card)
     {
         _cards.Add(card);
     }
@@ -34,7 +34,7 @@ public sealed class Deck
         for (int i = _cards.Count - 1; i > 0; i--)
         {
             int j = rng.Next(i + 1);
-            CardName swap = _cards[i];
+            ECardName swap = _cards[i];
             _cards[i] = _cards[j];
             _cards[j] = swap;
         }

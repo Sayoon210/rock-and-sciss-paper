@@ -7,8 +7,8 @@ namespace RockAndScissPaper.GameLogic;
 /// round was able to finish in the same call and there is no choice phase at all.</summary>
 public sealed class RoundReveal
 {
-    public CardName Player1Card { get; }
-    public CardName Player2Card { get; }
+    public ECardName Player1Card { get; }
+    public ECardName Player2Card { get; }
     public bool Player1MustChoose { get; }
     public bool Player2MustChoose { get; }
 
@@ -16,8 +16,8 @@ public sealed class RoundReveal
     public RoundResult? Result { get; }
 
     public RoundReveal(
-        CardName player1Card,
-        CardName player2Card,
+        ECardName player1Card,
+        ECardName player2Card,
         bool player1MustChoose,
         bool player2MustChoose,
         RoundResult? result)

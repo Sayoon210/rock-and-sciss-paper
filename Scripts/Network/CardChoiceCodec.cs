@@ -4,7 +4,7 @@ using RockAndScissPaper.GameLogic;
 namespace RockAndScissPaper.Network;
 
 /// <summary>Converts a CardChoice to and from the primitive values Godot's RPC
-/// serialization understands. CardChoice carries CardName enums and nullable CardNames, and
+/// serialization understands. CardChoice carries ECardName enums and nullable CardNames, and
 /// Godot's Variant marshalling has no built-in notion of either — everything here becomes
 /// int, with NO_CARD standing in for "not part of this choice".</summary>
 public static class CardChoiceCodec
@@ -57,25 +57,25 @@ public static class CardChoiceCodec
     /// in. A client prompted for 교체 that answers with a 변화-shaped payload simply has
     /// those fields ignored.</summary>
     public static CardChoice? Decode(
-        CardName promptedCard,
+        ECardName promptedCard,
         int cardToTransform,
         int transformInto,
         int[] cardsToReturn)
     {
-        if (promptedCard == CardName.Transform)
+        if (promptedCard == ECardName.Transform)
         {
             if (cardToTransform == NO_CARD || transformInto == NO_CARD)
             {
                 return null;
             }
 
-            return CardChoice.Transforming((CardName)cardToTransform, (CardName)transformInto);
+            return CardChoice.Transforming((ECardName)cardToTransform, (ECardName)transformInto);
         }
 
-        List<CardName> returned = new List<CardName>();
+        List<ECardName> returned = new List<ECardName>();
         foreach (int value in cardsToReturn)
         {
-            returned.Add((CardName)value);
+            returned.Add((ECardName)value);
         }
 
         return CardChoice.Swapping(returned);

@@ -9,12 +9,12 @@ public class MatchSessionLogTests
     {
         // The default null log is what every other test relies on to keep output clean.
         var session = new MatchSession(
-            Repeated(CardName.Rock, 8),
-            Repeated(CardName.Scissors, 8),
+            Repeated(ECardName.Rock, 8),
+            Repeated(ECardName.Scissors, 8),
             new Random(1));
 
-        session.SubmitCard(Side.Player1, CardName.Rock);
-        session.SubmitCard(Side.Player2, CardName.Scissors);
+        session.SubmitCard(ESide.Player1, ECardName.Rock);
+        session.SubmitCard(ESide.Player2, ECardName.Scissors);
 
         Assert.Equal(1, session.Player1Score);
     }
@@ -24,13 +24,13 @@ public class MatchSessionLogTests
     {
         var lines = new List<string>();
         var session = new MatchSession(
-            Repeated(CardName.Rock, 8),
-            Repeated(CardName.Scissors, 8),
+            Repeated(ECardName.Rock, 8),
+            Repeated(ECardName.Scissors, 8),
             new Random(1),
             lines.Add);
 
-        session.SubmitCard(Side.Player1, CardName.Rock);
-        session.SubmitCard(Side.Player2, CardName.Scissors);
+        session.SubmitCard(ESide.Player1, ECardName.Rock);
+        session.SubmitCard(ESide.Player2, ECardName.Scissors);
 
         Assert.Equal(2, lines.FindAll(line => line.StartsWith("[deal]")).Count);
         Assert.Equal(2, lines.FindAll(line => line.StartsWith("[submit]")).Count);
@@ -44,23 +44,23 @@ public class MatchSessionLogTests
     {
         var lines = new List<string>();
         var session = new MatchSession(
-            Repeated(CardName.Rock, 20),
-            Repeated(CardName.Scissors, 20),
+            Repeated(ECardName.Rock, 20),
+            Repeated(ECardName.Scissors, 20),
             new Random(1),
             lines.Add);
 
         for (int round = 0; round < MatchSession.WINS_NEEDED_FOR_MATCH; round++)
         {
-            session.SubmitCard(Side.Player1, CardName.Rock);
-            session.SubmitCard(Side.Player2, CardName.Scissors);
+            session.SubmitCard(ESide.Player1, ECardName.Rock);
+            session.SubmitCard(ESide.Player2, ECardName.Scissors);
         }
 
         Assert.Contains(lines, line => line.StartsWith("[match]") && line.Contains($"Player1 wins {MatchSession.WINS_NEEDED_FOR_MATCH}-0"));
     }
 
-    private static List<CardName> Repeated(CardName card, int count)
+    private static List<ECardName> Repeated(ECardName card, int count)
     {
-        var cards = new List<CardName>();
+        var cards = new List<ECardName>();
         for (int i = 0; i < count; i++)
         {
             cards.Add(card);

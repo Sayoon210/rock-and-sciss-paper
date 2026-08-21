@@ -8,11 +8,11 @@ public class ResetEffectTests
     public void Apply_redraws_the_same_hand_size_for_both_players()
     {
         var self = new DeckAndHand(
-            new Deck(new[] { CardName.Rock, CardName.Paper, CardName.Scissors, CardName.Blank, CardName.Joker }),
-            new Hand(new[] { CardName.Reset, CardName.Draw }));
+            new Deck(new[] { ECardName.Rock, ECardName.Paper, ECardName.Scissors, ECardName.Blank, ECardName.Joker }),
+            new Hand(new[] { ECardName.Reset, ECardName.Draw }));
         var opponent = new DeckAndHand(
-            new Deck(new[] { CardName.Rock }),
-            new Hand(Array.Empty<CardName>()));
+            new Deck(new[] { ECardName.Rock }),
+            new Hand(Array.Empty<ECardName>()));
 
         new ResetEffect().Apply(null, self, opponent, new Random(1));
 
@@ -24,11 +24,11 @@ public class ResetEffectTests
     public void Apply_preserves_each_players_total_card_count()
     {
         var self = new DeckAndHand(
-            new Deck(new[] { CardName.Rock, CardName.Paper }),
-            new Hand(new[] { CardName.Reset }));
+            new Deck(new[] { ECardName.Rock, ECardName.Paper }),
+            new Hand(new[] { ECardName.Reset }));
         var opponent = new DeckAndHand(
-            new Deck(new[] { CardName.Scissors, CardName.Blank }),
-            new Hand(new[] { CardName.Joker, CardName.Draw }));
+            new Deck(new[] { ECardName.Scissors, ECardName.Blank }),
+            new Hand(new[] { ECardName.Joker, ECardName.Draw }));
 
         new ResetEffect().Apply(null, self, opponent, new Random(1));
 

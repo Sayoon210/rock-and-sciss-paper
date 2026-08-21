@@ -16,7 +16,7 @@ public static class DeckAssembler
     private const int DUMMY_CARD_COPIES = 2;
     private const int JOKER_CARD_COPIES = 2;
 
-    public static List<CardName> BuildDeck()
+    public static List<ECardName> BuildDeck()
     {
         CardDatabase? cardDatabase = CardDatabase.Instance;
         if (cardDatabase == null)
@@ -24,17 +24,17 @@ public static class DeckAssembler
             throw new InvalidOperationException("DeckAssembler: CardDatabase autoload is not available yet.");
         }
 
-        List<CardName> deck = new List<CardName>();
+        List<ECardName> deck = new List<ECardName>();
 
-        AddCopies(deck, CardName.Rock, NORMAL_CARD_COPIES);
-        AddCopies(deck, CardName.Paper, NORMAL_CARD_COPIES);
-        AddCopies(deck, CardName.Scissors, NORMAL_CARD_COPIES);
-        AddCopies(deck, CardName.Blank, DUMMY_CARD_COPIES);
-        AddCopies(deck, CardName.Joker, JOKER_CARD_COPIES);
+        AddCopies(deck, ECardName.Rock, NORMAL_CARD_COPIES);
+        AddCopies(deck, ECardName.Paper, NORMAL_CARD_COPIES);
+        AddCopies(deck, ECardName.Scissors, NORMAL_CARD_COPIES);
+        AddCopies(deck, ECardName.Blank, DUMMY_CARD_COPIES);
+        AddCopies(deck, ECardName.Joker, JOKER_CARD_COPIES);
 
-        foreach (CardName cardName in cardDatabase.LoadedCardNames)
+        foreach (ECardName cardName in cardDatabase.LoadedCardNames)
         {
-            if (cardName.GetCardType() == CardType.Ability)
+            if (cardName.GetCardType() == ECardType.Ability)
             {
                 deck.Add(cardName);
             }
@@ -43,7 +43,7 @@ public static class DeckAssembler
         return deck;
     }
 
-    private static void AddCopies(List<CardName> deck, CardName card, int count)
+    private static void AddCopies(List<ECardName> deck, ECardName card, int count)
     {
         for (int i = 0; i < count; i++)
         {

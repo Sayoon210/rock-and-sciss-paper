@@ -108,7 +108,7 @@ public partial class MatchScreenUI : Control
     // another — and those two look identical as lists of card names. Which card is changing is
     // HandView's to remember, since only it can tell two copies of the same card apart.
     // Cleared either by the hand arriving or by a rejection.
-    private CardName? _pendingTransformTarget;
+    private ECardName? _pendingTransformTarget;
 
     // The card currently sitting on the submit zone, while the host has not answered yet.
     // Kept only so a rejected submission can be sent back to the hand — nothing else moves
@@ -368,7 +368,7 @@ public partial class MatchScreenUI : Control
     /// <summary>The pause before the opponent's card turns over.</summary>
     private void OnPreFlipPauseTimeout()
     {
-        CardName? opponentCard = GameState.Instance!.View.OpponentCard;
+        ECardName? opponentCard = GameState.Instance!.View.OpponentCard;
         if (!opponentCard.HasValue)
         {
             // Defensive only -- a reveal always sets both cards, so this timer should never
@@ -447,14 +447,14 @@ public partial class MatchScreenUI : Control
     /// View, not something this screen should be re-deriving from card identities.</summary>
     private void PlayRoundOutcomeEffects()
     {
-        RoundOutcome? outcome = GameState.Instance!.View.LastRoundOutcome;
+        ERoundOutcome? outcome = GameState.Instance!.View.LastRoundOutcome;
 
-        if (outcome == RoundOutcome.MyWin)
+        if (outcome == ERoundOutcome.MyWin)
         {
             _myOutcomeEffect.PlayWin(_myPlayedCardView);
             _opponentOutcomeEffect.PlayLoss(_opponentPlayedCardView);
         }
-        else if (outcome == RoundOutcome.OpponentWin)
+        else if (outcome == ERoundOutcome.OpponentWin)
         {
             _opponentOutcomeEffect.PlayWin(_opponentPlayedCardView);
             _myOutcomeEffect.PlayLoss(_myPlayedCardView);
@@ -514,8 +514,8 @@ public partial class MatchScreenUI : Control
     }
 
     private static void SendPlayedCardHome(
-        CardName? card,
-        CardFate? fate,
+        ECardName? card,
+        ECardFate? fate,
         CardView playedCardView,
         DeckView deckView,
         CardVanishEffect vanishEffect)
@@ -527,13 +527,13 @@ public partial class MatchScreenUI : Control
             return;
         }
 
-        if (fate == CardFate.ReturnedToDeckBottom)
+        if (fate == ECardFate.ReturnedToDeckBottom)
         {
             deckView.AbsorbCard(card.Value, playedCardView.GlobalPosition);
             return;
         }
 
-        if (fate == CardFate.Vanished)
+        if (fate == ECardFate.Vanished)
         {
             // The card stays on screen from here and takes itself off when it has finished
             // coming apart — see RefreshField, which leaves it alone while that runs.
@@ -601,7 +601,7 @@ public partial class MatchScreenUI : Control
 
     private void OnConfirmSwapPressed()
     {
-        IReadOnlyList<CardName> chosen = _myHandView.SwapSelection;
+        IReadOnlyList<ECardName> chosen = _myHandView.SwapSelection;
 
         // Noted before the request goes out, and before the selection is cleared below: on the
         // host RequestChoice resolves the whole round in-process, so the new 패 arrives inside
@@ -618,9 +618,9 @@ public partial class MatchScreenUI : Control
         _promptLabel.Text = "MATCH_PROMPT_CHOICE_SENT";
     }
 
-    private void OnConfirmTransformTarget(CardName target)
+    private void OnConfirmTransformTarget(ECardName target)
     {
-        CardName? source = _myHandView.TransformSourceSelection;
+        ECardName? source = _myHandView.TransformSourceSelection;
         if (!source.HasValue)
         {
             // The palette is disabled until a source is picked, so this should not fire —
@@ -810,13 +810,13 @@ public partial class MatchScreenUI : Control
 
         RefreshPhaseTimer(view);
 
-        if (view.CardIMustChooseFor == CardName.Swap)
+        if (view.CardIMustChooseFor == ECardName.Swap)
         {
             ShowSwapPrompt();
             return;
         }
 
-        if (view.CardIMustChooseFor == CardName.Transform)
+        if (view.CardIMustChooseFor == ECardName.Transform)
         {
             ShowTransformPrompt();
             return;
@@ -905,7 +905,7 @@ public partial class MatchScreenUI : Control
         _myHandView.SetSelectionModeForTransformSource();
         _confirmButton.Visible = false;
 
-        CardName? source = _myHandView.TransformSourceSelection;
+        ECardName? source = _myHandView.TransformSourceSelection;
         SetTargetPaletteVisible(true);
         SetTargetPaletteEnabled(source.HasValue);
 
@@ -943,15 +943,15 @@ public partial class MatchScreenUI : Control
             return;
         }
 
-        foreach (CardName card in CardDatabase.Instance.LoadedCardNames)
+        foreach (ECardName card in CardDatabase.Instance.LoadedCardNames)
         {
-            CardType cardType = card.GetCardType();
-            if (cardType != CardType.Normal && cardType != CardType.Blank)
+            ECardType cardType = card.GetCardType();
+            if (cardType != ECardType.Normal && cardType != ECardType.Blank)
             {
                 continue;
             }
 
-            CardName target = card;
+            ECardName target = card;
 
             Button button = new Button();
             button.Text = DisplayNameOf(card);
@@ -1034,12 +1034,12 @@ public partial class MatchScreenUI : Control
             return "MATCH_OUTCOME_NONE";
         }
 
-        if (view.LastRoundOutcome == RoundOutcome.MyWin)
+        if (view.LastRoundOutcome == ERoundOutcome.MyWin)
         {
             return "MATCH_OUTCOME_WIN";
         }
 
-        if (view.LastRoundOutcome == RoundOutcome.OpponentWin)
+        if (view.LastRoundOutcome == ERoundOutcome.OpponentWin)
         {
             return "MATCH_OUTCOME_LOSS";
         }
@@ -1047,7 +1047,7 @@ public partial class MatchScreenUI : Control
         return "MATCH_OUTCOME_TIE";
     }
 
-    private static string DisplayNameOf(CardName card)
+    private static string DisplayNameOf(ECardName card)
     {
         CardData? cardData = CardDatabase.Instance?.GetCardData(card);
         if (cardData == null)

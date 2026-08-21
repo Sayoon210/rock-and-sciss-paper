@@ -2,7 +2,7 @@ namespace RockAndScissPaper.GameLogic;
 
 /// <summary>Whether a side owes a choice this round, and whether it has settled it.
 /// Declined is what a timeout produces — the effect simply does not run.</summary>
-public enum ChoiceStatus
+public enum EChoiceStatus
 {
     NotRequired,
     Awaited,
@@ -20,14 +20,14 @@ public enum ChoiceStatus
 /// before.</summary>
 public sealed class RoundInProgress
 {
-    public CardName Player1Card { get; }
-    public CardName Player2Card { get; }
-    public CardFate Player1CardFate { get; }
-    public CardFate Player2CardFate { get; }
-    public WinLossResult? WinLoss { get; }
+    public ECardName Player1Card { get; }
+    public ECardName Player2Card { get; }
+    public ECardFate Player1CardFate { get; }
+    public ECardFate Player2CardFate { get; }
+    public EWinLossResult? WinLoss { get; }
 
-    private ChoiceStatus _player1ChoiceStatus;
-    private ChoiceStatus _player2ChoiceStatus;
+    private EChoiceStatus _player1ChoiceStatus;
+    private EChoiceStatus _player2ChoiceStatus;
     private CardChoice? _player1Choice;
     private CardChoice? _player2Choice;
 
@@ -39,11 +39,11 @@ public sealed class RoundInProgress
     public bool ResetApplied { get; }
 
     public RoundInProgress(
-        CardName player1Card,
-        CardName player2Card,
-        CardFate player1CardFate,
-        CardFate player2CardFate,
-        WinLossResult? winLoss,
+        ECardName player1Card,
+        ECardName player2Card,
+        ECardFate player1CardFate,
+        ECardFate player2CardFate,
+        EWinLossResult? winLoss,
         bool player1MustChoose,
         bool player2MustChoose,
         bool resetApplied)
@@ -57,20 +57,20 @@ public sealed class RoundInProgress
 
         if (player1MustChoose)
         {
-            _player1ChoiceStatus = ChoiceStatus.Awaited;
+            _player1ChoiceStatus = EChoiceStatus.Awaited;
         }
         else
         {
-            _player1ChoiceStatus = ChoiceStatus.NotRequired;
+            _player1ChoiceStatus = EChoiceStatus.NotRequired;
         }
 
         if (player2MustChoose)
         {
-            _player2ChoiceStatus = ChoiceStatus.Awaited;
+            _player2ChoiceStatus = EChoiceStatus.Awaited;
         }
         else
         {
-            _player2ChoiceStatus = ChoiceStatus.NotRequired;
+            _player2ChoiceStatus = EChoiceStatus.NotRequired;
         }
     }
 
@@ -78,14 +78,14 @@ public sealed class RoundInProgress
     {
         get
         {
-            return _player1ChoiceStatus == ChoiceStatus.Awaited
-                || _player2ChoiceStatus == ChoiceStatus.Awaited;
+            return _player1ChoiceStatus == EChoiceStatus.Awaited
+                || _player2ChoiceStatus == EChoiceStatus.Awaited;
         }
     }
 
-    public CardName CardOf(Side side)
+    public ECardName CardOf(ESide side)
     {
-        if (side == Side.Player1)
+        if (side == ESide.Player1)
         {
             return Player1Card;
         }
@@ -93,9 +93,9 @@ public sealed class RoundInProgress
         return Player2Card;
     }
 
-    public ChoiceStatus ChoiceStatusOf(Side side)
+    public EChoiceStatus ChoiceStatusOf(ESide side)
     {
-        if (side == Side.Player1)
+        if (side == ESide.Player1)
         {
             return _player1ChoiceStatus;
         }
@@ -104,9 +104,9 @@ public sealed class RoundInProgress
     }
 
     /// <summary>The choice to apply, or null when that side owes none or declined.</summary>
-    public CardChoice? ChoiceOf(Side side)
+    public CardChoice? ChoiceOf(ESide side)
     {
-        if (side == Side.Player1)
+        if (side == ESide.Player1)
         {
             return _player1Choice;
         }
@@ -117,29 +117,29 @@ public sealed class RoundInProgress
     /// <summary>Records a choice that has already been validated. Nothing is mutated here —
     /// every effect runs later, in fixed order, so the outcome cannot depend on which
     /// player's message reached the host first.</summary>
-    public void RecordChoice(Side side, CardChoice choice)
+    public void RecordChoice(ESide side, CardChoice choice)
     {
-        if (side == Side.Player1)
+        if (side == ESide.Player1)
         {
             _player1Choice = choice;
-            _player1ChoiceStatus = ChoiceStatus.Made;
+            _player1ChoiceStatus = EChoiceStatus.Made;
         }
         else
         {
             _player2Choice = choice;
-            _player2ChoiceStatus = ChoiceStatus.Made;
+            _player2ChoiceStatus = EChoiceStatus.Made;
         }
     }
 
-    public void DeclineChoice(Side side)
+    public void DeclineChoice(ESide side)
     {
-        if (side == Side.Player1)
+        if (side == ESide.Player1)
         {
-            _player1ChoiceStatus = ChoiceStatus.Declined;
+            _player1ChoiceStatus = EChoiceStatus.Declined;
         }
         else
         {
-            _player2ChoiceStatus = ChoiceStatus.Declined;
+            _player2ChoiceStatus = EChoiceStatus.Declined;
         }
     }
 }

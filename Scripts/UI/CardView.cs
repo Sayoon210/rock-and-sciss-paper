@@ -50,7 +50,7 @@ public partial class CardView : Control
     /// <summary>The card this view is currently showing face up, or null while it is face
     /// down. Read-only: it lets an owner that bound the *node* recover the card without the
     /// card ever deciding anything about itself.</summary>
-    public CardName? ShownCard { get; private set; }
+    public ECardName? ShownCard { get; private set; }
 
     /// <summary>Whether picking this card up and dragging it means anything right now. Off
     /// by default; the owner (HandView) turns it on only in Play mode — during 교체/변화
@@ -121,10 +121,10 @@ public partial class CardView : Control
         ShowFaceDown();
     }
 
-    /// <summary>Show this card's face. Resolves the CardName through CardDatabase and falls
+    /// <summary>Show this card's face. Resolves the ECardName through CardDatabase and falls
     /// back to the enum name when no .tres was loaded for it, so a missing resource shows a
     /// readable card instead of a blank one.</summary>
-    public void ShowFaceUp(CardName card)
+    public void ShowFaceUp(ECardName card)
     {
         CardData? cardData = CardDatabase.Instance?.GetCardData(card);
 
@@ -144,7 +144,7 @@ public partial class CardView : Control
             art = cardData.CardArt;
         }
 
-        CardType cardType = card.GetCardType();
+        ECardType cardType = card.GetCardType();
         Color typeColor = TypeColorOf(cardType);
 
         _placeholderFill.Color = typeColor.Darkened(0.6f);
@@ -160,7 +160,7 @@ public partial class CardView : Control
         // Back on for a node that was last showing a back: the back art carries a frame of
         // its own, so the 카드 종류 border is switched off rather than drawn over it.
         _typeBorder.Visible = true;
-        bool squareBlackBorder = cardType == CardType.Normal || cardType == CardType.Blank;
+        bool squareBlackBorder = cardType == ECardType.Normal || cardType == ECardType.Blank;
         _borderStyle.BorderColor = squareBlackBorder ? Colors.Black : typeColor;
         _borderStyle.SetCornerRadiusAll(squareBlackBorder ? 0 : 10);
 
@@ -423,7 +423,7 @@ public partial class CardView : Control
             return null;
         }
 
-        CardType cardType = ShownCard.Value.GetCardType();
+        ECardType cardType = ShownCard.Value.GetCardType();
 
         CardTooltipView tooltip = GD.Load<PackedScene>(CARD_TOOLTIP_SCENE_PATH)
             .Instantiate<CardTooltipView>();
@@ -431,20 +431,20 @@ public partial class CardView : Control
         return tooltip;
     }
 
-    private static Color TypeColorOf(CardType cardType)
+    private static Color TypeColorOf(ECardType cardType)
     {
         switch (cardType)
         {
-            case CardType.Normal:
+            case ECardType.Normal:
                 return new Color(0.36f, 0.62f, 0.92f);
 
-            case CardType.Blank:
+            case ECardType.Blank:
                 return new Color(0.58f, 0.60f, 0.64f);
 
-            case CardType.Joker:
+            case ECardType.Joker:
                 return new Color(0.85f, 0.32f, 0.34f);
 
-            case CardType.Ability:
+            case ECardType.Ability:
                 return new Color(0.92f, 0.74f, 0.30f);
 
             default:

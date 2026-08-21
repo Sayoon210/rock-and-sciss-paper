@@ -20,12 +20,12 @@ public partial class CardTooltipView : PanelContainer
 {
     private string _cardName = string.Empty;
     private string _description = string.Empty;
-    private CardType _cardType;
+    private ECardType _cardType;
     private Color _typeColor;
 
     /// <summary>Fill in what to show. Called on a freshly instantiated scene, before it is in
     /// the tree, so it only records — _Ready puts the values on the nodes.</summary>
-    public void Fill(string cardName, string description, CardType cardType, Color typeColor)
+    public void Fill(string cardName, string description, ECardType cardType, Color typeColor)
     {
         _cardName = cardName;
         _description = description;
@@ -54,22 +54,22 @@ public partial class CardTooltipView : PanelContainer
     }
 
     /// <summary>DESIGN.md's 카드 분류 names. They live here rather than in a .tres because they
-    /// name a CardType, and CardType is a grouping the rules make up — no single card owns
+    /// name a ECardType, and ECardType is a grouping the rules make up — no single card owns
     /// one, so there is no .tres for it to sit in.</summary>
-    private static string TypeNameOf(CardType cardType)
+    private static string TypeNameOf(ECardType cardType)
     {
         switch (cardType)
         {
-            case CardType.Normal:
+            case ECardType.Normal:
                 return "CARD_TYPE_NORMAL";
 
-            case CardType.Blank:
+            case ECardType.Blank:
                 return "CARD_TYPE_BLANK";
 
-            case CardType.Joker:
+            case ECardType.Joker:
                 return "CARD_TYPE_JOKER";
 
-            case CardType.Ability:
+            case ECardType.Ability:
                 return "CARD_TYPE_ABILITY";
 
             default:

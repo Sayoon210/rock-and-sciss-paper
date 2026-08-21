@@ -5,16 +5,16 @@ namespace RockAndScissPaper.Autoload;
 
 /// <summary>Which side of the last resolved round I came out on, from my own perspective
 /// rather than Player1/Player2 — View is "me/opponent" shaped throughout, so the UI should
-/// never have to compare a Side against GameState's own bookkeeping to know if it won.</summary>
-public enum RoundOutcome
+/// never have to compare a ESide against GameState's own bookkeeping to know if it won.</summary>
+public enum ERoundOutcome
 {
     MyWin,
     OpponentWin,
     Draw,
 }
 
-/// <summary>Who won the match, from my own perspective. Same reasoning as RoundOutcome.</summary>
-public enum MatchOutcome
+/// <summary>Who won the match, from my own perspective. Same reasoning as ERoundOutcome.</summary>
+public enum EMatchOutcome
 {
     IWon,
     OpponentWon,
@@ -27,19 +27,19 @@ public enum MatchOutcome
 /// but the shape here is identical either way.</summary>
 public sealed class MatchView
 {
-    public IReadOnlyList<CardName> MyHand { get; set; } = new List<CardName>();
+    public IReadOnlyList<ECardName> MyHand { get; set; } = new List<ECardName>();
     public int OpponentHandCount { get; set; }
 
     public int MyDeckCount { get; set; }
     public int OpponentDeckCount { get; set; }
 
     // This round's revealed cards and fates. Null until the first round resolves.
-    public CardName? MyCard { get; set; }
-    public CardName? OpponentCard { get; set; }
-    public CardFate? MyCardFate { get; set; }
-    public CardFate? OpponentCardFate { get; set; }
+    public ECardName? MyCard { get; set; }
+    public ECardName? OpponentCard { get; set; }
+    public ECardFate? MyCardFate { get; set; }
+    public ECardFate? OpponentCardFate { get; set; }
 
-    public RoundOutcome? LastRoundOutcome { get; set; }
+    public ERoundOutcome? LastRoundOutcome { get; set; }
 
     /// <summary>Whether this round is still taking cards. Kept here rather than derived on
     /// screen from "no card revealed yet", because both sides need to agree on when the
@@ -49,7 +49,7 @@ public sealed class MatchView
 
     // The card I still have to choose for this round (교체 or 변화), or null when I owe no
     // choice. Set from the targeted prompt, so it is never populated on the wrong screen.
-    public CardName? CardIMustChooseFor { get; set; }
+    public ECardName? CardIMustChooseFor { get; set; }
 
     /// <summary>Whether the opponent is still picking. Public information — which card they
     /// played is already revealed, and the rules say plainly which cards need a choice.</summary>
@@ -72,5 +72,5 @@ public sealed class MatchView
     public int OpponentScore { get; set; }
     public int RoundNumber { get; set; }
 
-    public MatchOutcome? MatchResult { get; set; }
+    public EMatchOutcome? MatchResult { get; set; }
 }

@@ -95,7 +95,7 @@ public partial class DeckView : Control
     /// (MatchScreenUI) — whose nodes are owned, laid out and freed on their own terms, and
     /// neither of them should have to keep one alive just to watch it fly. They say what card
     /// it was and where it was, and are free to dispose of their own the same instant.</summary>
-    public void AbsorbCard(CardName? card, Vector2 fromGlobalPosition)
+    public void AbsorbCard(ECardName? card, Vector2 fromGlobalPosition)
     {
         CardView cardView = _cardViewScene.Instantiate<CardView>();
 

@@ -43,7 +43,7 @@ public sealed class SwapEffect : ICardEffect
 
         // The same card can legitimately appear twice in the list when the hand holds two
         // of it, but not three times when it holds two.
-        foreach (CardName card in choice.CardsToReturn)
+        foreach (ECardName card in choice.CardsToReturn)
         {
             if (!remaining.Contains(card))
             {
@@ -56,7 +56,7 @@ public sealed class SwapEffect : ICardEffect
 
     public void Apply(CardChoice? choice, DeckAndHand self, DeckAndHand opponent, Random rng)
     {
-        foreach (CardName card in choice!.CardsToReturn)
+        foreach (ECardName card in choice!.CardsToReturn)
         {
             self.ReturnToDeckBottom(card);
         }

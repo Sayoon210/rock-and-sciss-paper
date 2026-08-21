@@ -8,13 +8,13 @@ public class DeckAndHandTests
     public void Draw_moves_the_deck_top_into_the_hand()
     {
         var deckAndHand = new DeckAndHand(
-            new Deck(new[] { CardName.Rock, CardName.Paper }),
-            new Hand(Array.Empty<CardName>()));
+            new Deck(new[] { ECardName.Rock, ECardName.Paper }),
+            new Hand(Array.Empty<ECardName>()));
 
-        CardName? drawn = deckAndHand.Draw();
+        ECardName? drawn = deckAndHand.Draw();
 
-        Assert.Equal(CardName.Rock, drawn);
-        Assert.Equal(new[] { CardName.Rock }, deckAndHand.Hand.Cards);
+        Assert.Equal(ECardName.Rock, drawn);
+        Assert.Equal(new[] { ECardName.Rock }, deckAndHand.Hand.Cards);
         Assert.Equal(1, deckAndHand.Deck.Count);
     }
 
@@ -22,10 +22,10 @@ public class DeckAndHandTests
     public void Draw_from_an_empty_deck_returns_null_instead_of_throwing()
     {
         var deckAndHand = new DeckAndHand(
-            new Deck(Array.Empty<CardName>()),
-            new Hand(Array.Empty<CardName>()));
+            new Deck(Array.Empty<ECardName>()),
+            new Hand(Array.Empty<ECardName>()));
 
-        CardName? drawn = deckAndHand.Draw();
+        ECardName? drawn = deckAndHand.Draw();
 
         Assert.Null(drawn);
         Assert.Empty(deckAndHand.Hand.Cards);
@@ -35,25 +35,25 @@ public class DeckAndHandTests
     public void ReturnToDeckBottom_moves_a_hand_card_to_the_deck_bottom()
     {
         var deckAndHand = new DeckAndHand(
-            new Deck(new[] { CardName.Rock }),
-            new Hand(new[] { CardName.Paper }));
+            new Deck(new[] { ECardName.Rock }),
+            new Hand(new[] { ECardName.Paper }));
 
-        deckAndHand.ReturnToDeckBottom(CardName.Paper);
+        deckAndHand.ReturnToDeckBottom(ECardName.Paper);
 
         Assert.Empty(deckAndHand.Hand.Cards);
         Assert.Equal(2, deckAndHand.Deck.Count);
-        Assert.Equal(CardName.Rock, deckAndHand.Deck.TakeFromTop());
-        Assert.Equal(CardName.Paper, deckAndHand.Deck.TakeFromTop());
+        Assert.Equal(ECardName.Rock, deckAndHand.Deck.TakeFromTop());
+        Assert.Equal(ECardName.Paper, deckAndHand.Deck.TakeFromTop());
     }
 
     [Fact]
     public void Vanish_removes_a_hand_card_without_returning_it_to_the_deck()
     {
         var deckAndHand = new DeckAndHand(
-            new Deck(Array.Empty<CardName>()),
-            new Hand(new[] { CardName.Blank }));
+            new Deck(Array.Empty<ECardName>()),
+            new Hand(new[] { ECardName.Blank }));
 
-        deckAndHand.Vanish(CardName.Blank);
+        deckAndHand.Vanish(ECardName.Blank);
 
         Assert.Empty(deckAndHand.Hand.Cards);
         Assert.Equal(0, deckAndHand.Deck.Count);

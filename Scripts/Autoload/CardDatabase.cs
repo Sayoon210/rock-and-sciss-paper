@@ -7,7 +7,7 @@ namespace RockAndScissPaper.Autoload;
 
 // 코드로 .tres 파일을 Dictionary로 로딩시키는코드 (싱글톤)
 
-/// <summary>Loads every CardData .tres under Data/Cards/ and indexes it by CardName.
+/// <summary>Loads every CardData .tres under Data/Cards/ and indexes it by ECardName.
 /// Does not define card stats itself — that text lives only in the .tres files. Scans the
 /// directory rather than listing filenames, since the ability-card roster may grow later
 /// and this must not need editing when it does.</summary>
@@ -17,7 +17,7 @@ public partial class CardDatabase : Node
 
     public static CardDatabase? Instance { get; private set; }
 
-    private readonly Dictionary<CardName, CardData> _cardsByName = new Dictionary<CardName, CardData>();
+    private readonly Dictionary<ECardName, CardData> _cardsByName = new Dictionary<ECardName, CardData>();
 
     public override void _EnterTree()
     {
@@ -29,7 +29,7 @@ public partial class CardDatabase : Node
         LoadCards();
     }
 
-    public CardData? GetCardData(CardName cardName)
+    public CardData? GetCardData(ECardName cardName)
     {
         if (_cardsByName.TryGetValue(cardName, out CardData? cardData))
         {
@@ -44,7 +44,7 @@ public partial class CardDatabase : Node
     /// ability-card roster from here rather than listing card names itself, so the roster
     /// can grow without a code change — see CLAUDE.md's "don't hardcode the ability-card
     /// roster" rule.</summary>
-    public IReadOnlyCollection<CardName> LoadedCardNames
+    public IReadOnlyCollection<ECardName> LoadedCardNames
     {
         get
         {

@@ -8,21 +8,21 @@ public class DrawEffectTests
     public void Apply_draws_two_cards_into_the_hand()
     {
         var self = new DeckAndHand(
-            new Deck(new[] { CardName.Rock, CardName.Paper, CardName.Scissors }),
-            new Hand(Array.Empty<CardName>()));
-        var opponent = new DeckAndHand(new Deck(Array.Empty<CardName>()), new Hand(Array.Empty<CardName>()));
+            new Deck(new[] { ECardName.Rock, ECardName.Paper, ECardName.Scissors }),
+            new Hand(Array.Empty<ECardName>()));
+        var opponent = new DeckAndHand(new Deck(Array.Empty<ECardName>()), new Hand(Array.Empty<ECardName>()));
 
         new DrawEffect().Apply(null, self, opponent, new Random(1));
 
-        Assert.Equal(new[] { CardName.Rock, CardName.Paper }, self.Hand.Cards);
+        Assert.Equal(new[] { ECardName.Rock, ECardName.Paper }, self.Hand.Cards);
         Assert.Equal(1, self.Deck.Count);
     }
 
     [Fact]
     public void Apply_does_not_touch_the_opponent()
     {
-        var self = new DeckAndHand(new Deck(new[] { CardName.Rock, CardName.Paper }), new Hand(Array.Empty<CardName>()));
-        var opponent = new DeckAndHand(new Deck(new[] { CardName.Scissors }), new Hand(Array.Empty<CardName>()));
+        var self = new DeckAndHand(new Deck(new[] { ECardName.Rock, ECardName.Paper }), new Hand(Array.Empty<ECardName>()));
+        var opponent = new DeckAndHand(new Deck(new[] { ECardName.Scissors }), new Hand(Array.Empty<ECardName>()));
 
         new DrawEffect().Apply(null, self, opponent, new Random(1));
 
@@ -38,12 +38,12 @@ public class DrawEffectTests
         // they can never ask for more than the deck already holds). DeckAndHand.Draw()
         // returning null instead of throwing on an empty deck (DESIGN.md, "덱 고갈") is what
         // keeps this from crashing a round in progress.
-        var self = new DeckAndHand(new Deck(new[] { CardName.Rock }), new Hand(Array.Empty<CardName>()));
-        var opponent = new DeckAndHand(new Deck(Array.Empty<CardName>()), new Hand(Array.Empty<CardName>()));
+        var self = new DeckAndHand(new Deck(new[] { ECardName.Rock }), new Hand(Array.Empty<ECardName>()));
+        var opponent = new DeckAndHand(new Deck(Array.Empty<ECardName>()), new Hand(Array.Empty<ECardName>()));
 
         new DrawEffect().Apply(null, self, opponent, new Random(1));
 
-        Assert.Equal(new[] { CardName.Rock }, self.Hand.Cards);
+        Assert.Equal(new[] { ECardName.Rock }, self.Hand.Cards);
         Assert.Equal(0, self.Deck.Count);
     }
 }

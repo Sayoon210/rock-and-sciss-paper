@@ -10,30 +10,30 @@ namespace RockAndScissPaper.GameLogic;
 public sealed class CardChoice
 {
     /// <summary>변화 only: the hand card being changed.</summary>
-    public CardName? CardToTransform { get; }
+    public ECardName? CardToTransform { get; }
 
     /// <summary>변화 only: what it becomes.</summary>
-    public CardName? TransformInto { get; }
+    public ECardName? TransformInto { get; }
 
     /// <summary>교체 only: the hand cards going back into the deck. Empty otherwise.</summary>
-    public IReadOnlyList<CardName> CardsToReturn { get; }
+    public IReadOnlyList<ECardName> CardsToReturn { get; }
 
     private CardChoice(
-        CardName? cardToTransform,
-        CardName? transformInto,
-        IEnumerable<CardName> cardsToReturn)
+        ECardName? cardToTransform,
+        ECardName? transformInto,
+        IEnumerable<ECardName> cardsToReturn)
     {
         CardToTransform = cardToTransform;
         TransformInto = transformInto;
-        CardsToReturn = new List<CardName>(cardsToReturn);
+        CardsToReturn = new List<ECardName>(cardsToReturn);
     }
 
-    public static CardChoice Transforming(CardName cardToTransform, CardName transformInto)
+    public static CardChoice Transforming(ECardName cardToTransform, ECardName transformInto)
     {
-        return new CardChoice(cardToTransform, transformInto, Array.Empty<CardName>());
+        return new CardChoice(cardToTransform, transformInto, Array.Empty<ECardName>());
     }
 
-    public static CardChoice Swapping(IEnumerable<CardName> cardsToReturn)
+    public static CardChoice Swapping(IEnumerable<ECardName> cardsToReturn)
     {
         return new CardChoice(null, null, cardsToReturn);
     }

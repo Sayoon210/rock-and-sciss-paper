@@ -1,7 +1,7 @@
 namespace RockAndScissPaper.GameLogic;
 
 /// <summary>The three cards that actually decide a round.</summary>
-public enum NormalCard
+public enum ENormalCard
 {
     Rock,
     Paper,
@@ -9,7 +9,7 @@ public enum NormalCard
 }
 
 /// <summary>Who won a round, or whether it was a draw.</summary>
-public enum WinLossResult
+public enum EWinLossResult
 {
     Player1Win,
     Player2Win,
@@ -22,34 +22,34 @@ public static class WinLossRules
     /// Scissors beats Paper, Rock beats Scissors, Paper beats Rock. Same card draws.
     /// Only normal cards reach here — abilities, blanks and Jokers never produce a win or loss.
     /// </summary>
-    public static WinLossResult Judge(NormalCard player1, NormalCard player2)
+    public static EWinLossResult Judge(ENormalCard player1, ENormalCard player2)
     {
         if (player1 == player2)
         {
-            return WinLossResult.Draw;
+            return EWinLossResult.Draw;
         }
 
         if (Beats(player1, player2))
         {
-            return WinLossResult.Player1Win;
+            return EWinLossResult.Player1Win;
         }
 
-        return WinLossResult.Player2Win;
+        return EWinLossResult.Player2Win;
     }
 
-    private static bool Beats(NormalCard attacker, NormalCard defender)
+    private static bool Beats(ENormalCard attacker, ENormalCard defender)
     {
-        if (attacker == NormalCard.Scissors && defender == NormalCard.Paper)
+        if (attacker == ENormalCard.Scissors && defender == ENormalCard.Paper)
         {
             return true;
         }
 
-        if (attacker == NormalCard.Rock && defender == NormalCard.Scissors)
+        if (attacker == ENormalCard.Rock && defender == ENormalCard.Scissors)
         {
             return true;
         }
 
-        if (attacker == NormalCard.Paper && defender == NormalCard.Rock)
+        if (attacker == ENormalCard.Paper && defender == ENormalCard.Rock)
         {
             return true;
         }

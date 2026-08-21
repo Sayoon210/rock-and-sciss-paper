@@ -5,16 +5,16 @@ namespace RockAndScissPaper.Tests;
 public class CardTypeTests
 {
     [Theory]
-    [InlineData(CardName.Rock, CardType.Normal)]
-    [InlineData(CardName.Paper, CardType.Normal)]
-    [InlineData(CardName.Scissors, CardType.Normal)]
-    [InlineData(CardName.Blank, CardType.Blank)]
-    [InlineData(CardName.Joker, CardType.Joker)]
-    [InlineData(CardName.Reset, CardType.Ability)]
-    [InlineData(CardName.Swap, CardType.Ability)]
-    [InlineData(CardName.Transform, CardType.Ability)]
-    [InlineData(CardName.Draw, CardType.Ability)]
-    public void Every_card_maps_to_the_right_type(CardName name, CardType expected)
+    [InlineData(ECardName.Rock, ECardType.Normal)]
+    [InlineData(ECardName.Paper, ECardType.Normal)]
+    [InlineData(ECardName.Scissors, ECardType.Normal)]
+    [InlineData(ECardName.Blank, ECardType.Blank)]
+    [InlineData(ECardName.Joker, ECardType.Joker)]
+    [InlineData(ECardName.Reset, ECardType.Ability)]
+    [InlineData(ECardName.Swap, ECardType.Ability)]
+    [InlineData(ECardName.Transform, ECardType.Ability)]
+    [InlineData(ECardName.Draw, ECardType.Ability)]
+    public void Every_card_maps_to_the_right_type(ECardName name, ECardType expected)
     {
         Assert.Equal(expected, name.GetCardType());
     }
@@ -22,9 +22,9 @@ public class CardTypeTests
     [Fact]
     public void Every_CardName_value_has_a_type()
     {
-        // Guards against a new CardName being added without updating GetCardType's switch —
+        // Guards against a new ECardName being added without updating GetCardType's switch —
         // that throws ArgumentOutOfRangeException instead of silently miscategorizing.
-        foreach (CardName name in Enum.GetValues<CardName>())
+        foreach (ECardName name in Enum.GetValues<ECardName>())
         {
             var type = name.GetCardType();
             Assert.True(Enum.IsDefined(type));
@@ -32,10 +32,10 @@ public class CardTypeTests
     }
 
     [Theory]
-    [InlineData(CardName.Rock, NormalCard.Rock)]
-    [InlineData(CardName.Paper, NormalCard.Paper)]
-    [InlineData(CardName.Scissors, NormalCard.Scissors)]
-    public void ToNormalCard_converts_normal_cards(CardName name, NormalCard expected)
+    [InlineData(ECardName.Rock, ENormalCard.Rock)]
+    [InlineData(ECardName.Paper, ENormalCard.Paper)]
+    [InlineData(ECardName.Scissors, ENormalCard.Scissors)]
+    public void ToNormalCard_converts_normal_cards(ECardName name, ENormalCard expected)
     {
         Assert.Equal(expected, name.ToNormalCard());
     }
@@ -43,6 +43,6 @@ public class CardTypeTests
     [Fact]
     public void ToNormalCard_throws_for_non_normal_cards()
     {
-        Assert.Throws<ArgumentException>(() => CardName.Joker.ToNormalCard());
+        Assert.Throws<ArgumentException>(() => ECardName.Joker.ToNormalCard());
     }
 }

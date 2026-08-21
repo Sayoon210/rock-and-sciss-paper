@@ -1,8 +1,8 @@
 namespace RockAndScissPaper.GameLogic;
 
 /// <summary>Which side of the match. Not a peer id and not a connection — the translation
-/// from peer id to Side happens in GameState, outside this project.</summary>
-public enum Side
+/// from peer id to ESide happens in GameState, outside this project.</summary>
+public enum ESide
 {
     Player1,
     Player2,
@@ -10,7 +10,7 @@ public enum Side
 
 /// <summary>Where a round currently is. A round only sits in AwaitingChoices when 교체 or
 /// 변화 was played and not blocked by a Joker.</summary>
-public enum RoundPhase
+public enum ERoundPhase
 {
     AwaitingSubmissions,
     AwaitingChoices,
@@ -37,8 +37,8 @@ public sealed class MatchSession
     private readonly Random _rng;
     private readonly Action<string>? _log;
 
-    private CardName? _player1SubmittedCard;
-    private CardName? _player2SubmittedCard;
+    private ECardName? _player1SubmittedCard;
+    private ECardName? _player2SubmittedCard;
     private RoundInProgress? _round;
 
     // Sticky once set — a side that ran out of cards has lost regardless of score, and
@@ -54,34 +54,34 @@ public sealed class MatchSession
     /// GD.Print, and because a session that printed on its own would be the one piece of
     /// GameLogic with a side effect of its own.</summary>
     public MatchSession(
-        IEnumerable<CardName> player1Deck,
-        IEnumerable<CardName> player2Deck,
+        IEnumerable<ECardName> player1Deck,
+        IEnumerable<ECardName> player2Deck,
         Random rng,
         Action<string>? log = null)
     {
         _rng = rng;
         _log = log;
-        _player1 = new DeckAndHand(new Deck(player1Deck), new Hand(Array.Empty<CardName>()));
-        _player2 = new DeckAndHand(new Deck(player2Deck), new Hand(Array.Empty<CardName>()));
+        _player1 = new DeckAndHand(new Deck(player1Deck), new Hand(Array.Empty<ECardName>()));
+        _player2 = new DeckAndHand(new Deck(player2Deck), new Hand(Array.Empty<ECardName>()));
 
-        Deal(Side.Player1);
-        Deal(Side.Player2);
+        Deal(ESide.Player1);
+        Deal(ESide.Player2);
     }
 
     public int Player1Score { get; private set; }
     public int Player2Score { get; private set; }
     public int RoundNumber { get; private set; } = 1;
 
-    public RoundPhase Phase
+    public ERoundPhase Phase
     {
         get
         {
             if (_round == null)
             {
-                return RoundPhase.AwaitingSubmissions;
+                return ERoundPhase.AwaitingSubmissions;
             }
 
-            return RoundPhase.AwaitingChoices;
+            return ERoundPhase.AwaitingChoices;
         }
     }
 
@@ -92,62 +92,62 @@ public sealed class MatchSession
     /// exhaustion is the one that resolves it — the same "Player 1 first" tie-break this
     /// codebase already uses for simultaneous Reset and same-priority submissions — so
     /// Player 2 is declared the winner rather than the match hanging with no result.</summary>
-    public Side? Winner
+    public ESide? Winner
     {
         get
         {
             if (_player1Exhausted)
             {
-                return Side.Player2;
+                return ESide.Player2;
             }
 
             if (_player2Exhausted)
             {
-                return Side.Player1;
+                return ESide.Player1;
             }
 
             if (Player1Score >= WINS_NEEDED_FOR_MATCH)
             {
-                return Side.Player1;
+                return ESide.Player1;
             }
 
             if (Player2Score >= WINS_NEEDED_FOR_MATCH)
             {
-                return Side.Player2;
+                return ESide.Player2;
             }
 
             return null;
         }
     }
 
-    public IReadOnlyList<CardName> HandOf(Side side)
+    public IReadOnlyList<ECardName> HandOf(ESide side)
     {
         return DeckAndHandOf(side).Hand.Cards;
     }
 
-    public int DeckCountOf(Side side)
+    public int DeckCountOf(ESide side)
     {
         return DeckAndHandOf(side).Deck.Count;
     }
 
-    public bool HasSubmittedCard(Side side)
+    public bool HasSubmittedCard(ESide side)
     {
         return SubmittedCardOf(side) != null;
     }
 
-    public bool IsAwaitingChoiceFrom(Side side)
+    public bool IsAwaitingChoiceFrom(ESide side)
     {
         if (_round == null)
         {
             return false;
         }
 
-        return _round.ChoiceStatusOf(side) == ChoiceStatus.Awaited;
+        return _round.ChoiceStatusOf(side) == EChoiceStatus.Awaited;
     }
 
     /// <summary>The card this side has to choose for, or null when it owes no choice.
     /// GameState needs it to tell the player what they are choosing about.</summary>
-    public CardName? CardAwaitingChoiceFrom(Side side)
+    public ECardName? CardAwaitingChoiceFrom(ESide side)
     {
         if (!IsAwaitingChoiceFrom(side))
         {
@@ -167,14 +167,14 @@ public sealed class MatchSession
     /// rule that protects the cards that vanish would pay a player for not answering.</summary>
     public RoundReveal? SubmitRandomCardForIdleSides()
     {
-        if (Winner != null || Phase != RoundPhase.AwaitingSubmissions)
+        if (Winner != null || Phase != ERoundPhase.AwaitingSubmissions)
         {
             return null;
         }
 
         // Player 1 first, the same order this class settles everything else in.
-        RoundReveal? reveal = SubmitRandomCardFor(Side.Player1);
-        RoundReveal? afterPlayer2 = SubmitRandomCardFor(Side.Player2);
+        RoundReveal? reveal = SubmitRandomCardFor(ESide.Player1);
+        RoundReveal? afterPlayer2 = SubmitRandomCardFor(ESide.Player2);
         if (afterPlayer2 != null)
         {
             reveal = afterPlayer2;
@@ -183,15 +183,15 @@ public sealed class MatchSession
         return reveal;
     }
 
-    private RoundReveal? SubmitRandomCardFor(Side side)
+    private RoundReveal? SubmitRandomCardFor(ESide side)
     {
         if (HasSubmittedCard(side))
         {
             return null;
         }
 
-        IReadOnlyList<CardName> hand = DeckAndHandOf(side).Hand.Cards;
-        CardName card = hand[_rng.Next(hand.Count)];
+        IReadOnlyList<ECardName> hand = DeckAndHandOf(side).Hand.Cards;
+        ECardName card = hand[_rng.Next(hand.Count)];
         _log?.Invoke($"[timeout] round {RoundNumber}: {side} did not submit, playing {card}");
 
         return SubmitCard(side, card);
@@ -199,14 +199,14 @@ public sealed class MatchSession
 
     /// <summary>Records one side's card. Returns null while waiting on the other side, and
     /// a RoundReveal once both are in.</summary>
-    public RoundReveal? SubmitCard(Side side, CardName card)
+    public RoundReveal? SubmitCard(ESide side, ECardName card)
     {
         if (Winner != null)
         {
             throw new InvalidOperationException("The match is already over.");
         }
 
-        if (Phase != RoundPhase.AwaitingSubmissions)
+        if (Phase != ERoundPhase.AwaitingSubmissions)
         {
             throw new InvalidOperationException("This round is waiting on a choice, not a card.");
         }
@@ -220,7 +220,7 @@ public sealed class MatchSession
         // as it was, or the side would be stuck unable to submit again.
         RoundResolver.ValidateSubmission(card, DeckAndHandOf(side));
 
-        if (side == Side.Player1)
+        if (side == ESide.Player1)
         {
             _player1SubmittedCard = card;
         }
@@ -238,13 +238,13 @@ public sealed class MatchSession
 
         // Read out before anything can finish the round — FinishRoundIfSettled clears both
         // submitted cards on its way out, so these fields are gone by the time it returns.
-        CardName player1Card = _player1SubmittedCard.Value;
-        CardName player2Card = _player2SubmittedCard.Value;
+        ECardName player1Card = _player1SubmittedCard.Value;
+        ECardName player2Card = _player2SubmittedCard.Value;
 
         _round = RoundResolver.Reveal(player1Card, player2Card, _player1, _player2, _rng);
 
-        bool player1MustChoose = _round.ChoiceStatusOf(Side.Player1) == ChoiceStatus.Awaited;
-        bool player2MustChoose = _round.ChoiceStatusOf(Side.Player2) == ChoiceStatus.Awaited;
+        bool player1MustChoose = _round.ChoiceStatusOf(ESide.Player1) == EChoiceStatus.Awaited;
+        bool player2MustChoose = _round.ChoiceStatusOf(ESide.Player2) == EChoiceStatus.Awaited;
 
         _log?.Invoke(
             $"[reveal] round {RoundNumber}: {player1Card} vs {player2Card}"
@@ -262,7 +262,7 @@ public sealed class MatchSession
 
     /// <summary>Records one side's choice. Returns null until every owed choice is settled
     /// and the round can finish.</summary>
-    public RoundResult? SubmitChoice(Side side, CardChoice choice)
+    public RoundResult? SubmitChoice(ESide side, CardChoice choice)
     {
         if (Winner != null)
         {
@@ -274,7 +274,7 @@ public sealed class MatchSession
             throw new InvalidOperationException("No round is waiting on a choice.");
         }
 
-        if (_round.ChoiceStatusOf(side) != ChoiceStatus.Awaited)
+        if (_round.ChoiceStatusOf(side) != EChoiceStatus.Awaited)
         {
             throw new InvalidOperationException($"{side} was not asked to choose this round.");
         }
@@ -292,7 +292,7 @@ public sealed class MatchSession
     /// <summary>Gives up on a side's choice — what a choice timeout calls. The effect
     /// simply does not run, which for 교체 is indistinguishable from swapping nothing.
     /// A no-op for a side that owes nothing, so a timer that fires late is harmless.</summary>
-    public RoundResult? DeclineChoice(Side side)
+    public RoundResult? DeclineChoice(ESide side)
     {
         if (!IsAwaitingChoiceFrom(side))
         {
@@ -342,11 +342,11 @@ public sealed class MatchSession
     /// RoundResolver; this only writes the outcome into the match.</summary>
     private void RecordResolvedRound(RoundResult result)
     {
-        if (result.WinLoss == WinLossResult.Player1Win)
+        if (result.WinLoss == EWinLossResult.Player1Win)
         {
             Player1Score++;
         }
-        else if (result.WinLoss == WinLossResult.Player2Win)
+        else if (result.WinLoss == EWinLossResult.Player2Win)
         {
             Player2Score++;
         }
@@ -390,7 +390,7 @@ public sealed class MatchSession
         }
     }
 
-    private void Deal(Side side)
+    private void Deal(ESide side)
     {
         DeckAndHand player = DeckAndHandOf(side);
         player.Deck.Shuffle(_rng);
@@ -403,14 +403,14 @@ public sealed class MatchSession
         _log?.Invoke($"[deal] {side} mulligan: {Describe(player.Hand.Cards)} (deck {player.Deck.Count})");
     }
 
-    private static string Describe(IReadOnlyList<CardName> cards)
+    private static string Describe(IReadOnlyList<ECardName> cards)
     {
         return string.Join(", ", cards);
     }
 
-    private DeckAndHand DeckAndHandOf(Side side)
+    private DeckAndHand DeckAndHandOf(ESide side)
     {
-        if (side == Side.Player1)
+        if (side == ESide.Player1)
         {
             return _player1;
         }
@@ -418,9 +418,9 @@ public sealed class MatchSession
         return _player2;
     }
 
-    private CardName? SubmittedCardOf(Side side)
+    private ECardName? SubmittedCardOf(ESide side)
     {
-        if (side == Side.Player1)
+        if (side == ESide.Player1)
         {
             return _player1SubmittedCard;
         }
