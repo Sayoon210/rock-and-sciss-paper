@@ -1,6 +1,6 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene format=3 uid="uid://ccup4n547gjdq"]
 
-[ext_resource type="Script" path="res://Scripts/UI/MatchScreenUI.cs" id="1_matchscreenui"]
+[ext_resource type="Script" uid="uid://b2p3d7wo7au8" path="res://Scripts/UI/MatchScreenUI.cs" id="1_matchscreenui"]
 [ext_resource type="PackedScene" path="res://Scenes/Match/HandView.tscn" id="2_handview"]
 [ext_resource type="PackedScene" path="res://Scenes/Match/CardView.tscn" id="3_cardview"]
 [ext_resource type="PackedScene" path="res://Scenes/Match/CardDropZone.tscn" id="4_carddropzone"]
@@ -22,7 +22,7 @@ corner_radius_top_right = 5
 corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 
-[node name="MatchScreen" type="Control"]
+[node name="MatchScreen" type="Control" unique_id=711273631]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -31,7 +31,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_matchscreenui")
 
-[node name="Rows" type="VBoxContainer" parent="."]
+[node name="Rows" type="VBoxContainer" parent="." unique_id=744757526]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -44,62 +44,62 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 10
 
-[node name="OpponentArea" type="HBoxContainer" parent="Rows"]
+[node name="OpponentArea" type="HBoxContainer" parent="Rows" unique_id=191528311]
 custom_minimum_size = Vector2(0, 280)
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="OpponentDeckView" parent="Rows/OpponentArea" instance=ExtResource("5_deckview")]
+[node name="OpponentDeckView" parent="Rows/OpponentArea" unique_id=513256795 instance=ExtResource("5_deckview")]
 layout_mode = 2
 
-[node name="OpponentHandView" parent="Rows/OpponentArea" instance=ExtResource("2_handview")]
+[node name="OpponentHandView" parent="Rows/OpponentArea" unique_id=1269949873 instance=ExtResource("2_handview")]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="OpponentHandCenteringSpacer" type="Control" parent="Rows/OpponentArea"]
+[node name="OpponentHandCenteringSpacer" type="Control" parent="Rows/OpponentArea" unique_id=466927785]
 custom_minimum_size = Vector2(212, 0)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="MiddleRow" type="HBoxContainer" parent="Rows"]
+[node name="MiddleRow" type="HBoxContainer" parent="Rows" unique_id=1478558438]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 16
 
-[node name="ScoreBoard" type="VBoxContainer" parent="Rows/MiddleRow"]
+[node name="ScoreBoard" type="VBoxContainer" parent="Rows/MiddleRow" unique_id=1262888864]
 custom_minimum_size = Vector2(320, 0)
 layout_mode = 2
 size_flags_vertical = 4
 theme_override_constants/separation = 8
 
-[node name="ScoreHeadingLabel" type="Label" parent="Rows/MiddleRow/ScoreBoard"]
+[node name="ScoreHeadingLabel" type="Label" parent="Rows/MiddleRow/ScoreBoard" unique_id=1392776420]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "First to N"
 
-[node name="MyScoreLabel" type="Label" parent="Rows/MiddleRow/ScoreBoard"]
+[node name="MyScoreLabel" type="Label" parent="Rows/MiddleRow/ScoreBoard" unique_id=1274039021]
 layout_mode = 2
 text = "Me"
 
-[node name="MyScorePipRow" type="HBoxContainer" parent="Rows/MiddleRow/ScoreBoard"]
+[node name="MyScorePipRow" type="HBoxContainer" parent="Rows/MiddleRow/ScoreBoard" unique_id=863703485]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="OpponentScoreLabel" type="Label" parent="Rows/MiddleRow/ScoreBoard"]
+[node name="OpponentScoreLabel" type="Label" parent="Rows/MiddleRow/ScoreBoard" unique_id=473008759]
 layout_mode = 2
 text = "Opponent"
 
-[node name="OpponentScorePipRow" type="HBoxContainer" parent="Rows/MiddleRow/ScoreBoard"]
+[node name="OpponentScorePipRow" type="HBoxContainer" parent="Rows/MiddleRow/ScoreBoard" unique_id=1215604878]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="Field" type="HBoxContainer" parent="Rows/MiddleRow"]
+[node name="Field" type="HBoxContainer" parent="Rows/MiddleRow" unique_id=66472105]
 layout_mode = 2
 size_flags_horizontal = 3
-alignment = 1
 theme_override_constants/separation = 24
+alignment = 1
 
-[node name="RoundLabel" type="Label" parent="Rows/MiddleRow/Field"]
+[node name="RoundLabel" type="Label" parent="Rows/MiddleRow/Field" unique_id=721296964]
 custom_minimum_size = Vector2(180, 0)
 layout_mode = 2
 theme_override_font_sizes/font_size = 28
@@ -107,84 +107,83 @@ text = "Round"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="MyPlayedArea" type="VBoxContainer" parent="Rows/MiddleRow/Field"]
+[node name="MyPlayedArea" type="VBoxContainer" parent="Rows/MiddleRow/Field" unique_id=1597975854]
 layout_mode = 2
 theme_override_constants/separation = 4
 
-[node name="MySubmitSlot" type="Control" parent="Rows/MiddleRow/Field/MyPlayedArea"]
+[node name="MySubmitSlot" type="Control" parent="Rows/MiddleRow/Field/MyPlayedArea" unique_id=2019622845]
 custom_minimum_size = Vector2(200, 280)
 layout_mode = 2
 
-[node name="MyOutcomeEffect" parent="Rows/MiddleRow/Field/MyPlayedArea/MySubmitSlot" instance=ExtResource("7_outcomeeffect")]
+[node name="MyOutcomeEffect" parent="Rows/MiddleRow/Field/MyPlayedArea/MySubmitSlot" unique_id=134620847 instance=ExtResource("7_outcomeeffect")]
 
-[node name="MyPlayedCardView" parent="Rows/MiddleRow/Field/MyPlayedArea/MySubmitSlot" instance=ExtResource("3_cardview")]
+[node name="MyPlayedCardView" parent="Rows/MiddleRow/Field/MyPlayedArea/MySubmitSlot" unique_id=1402009481 instance=ExtResource("3_cardview")]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_right = 0.0
+offset_bottom = 0.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="MySubmitDropZone" parent="Rows/MiddleRow/Field/MyPlayedArea/MySubmitSlot" instance=ExtResource("4_carddropzone")]
+[node name="MySubmitDropZone" parent="Rows/MiddleRow/Field/MyPlayedArea/MySubmitSlot" unique_id=2088207425 instance=ExtResource("4_carddropzone")]
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
 
-[node name="MyVanishEffect" parent="Rows/MiddleRow/Field/MyPlayedArea/MySubmitSlot" instance=ExtResource("6_vanisheffect")]
+[node name="MyVanishEffect" parent="Rows/MiddleRow/Field/MyPlayedArea/MySubmitSlot" unique_id=1132526338 instance=ExtResource("6_vanisheffect")]
 
-[node name="MyActionLabel" type="Label" parent="Rows/MiddleRow/Field/MyPlayedArea"]
+[node name="MyActionLabel" type="Label" parent="Rows/MiddleRow/Field/MyPlayedArea" unique_id=840201504]
 layout_mode = 2
 horizontal_alignment = 1
 
-[node name="OpponentPlayedArea" type="VBoxContainer" parent="Rows/MiddleRow/Field"]
+[node name="OpponentPlayedArea" type="VBoxContainer" parent="Rows/MiddleRow/Field" unique_id=1826493982]
 layout_mode = 2
 theme_override_constants/separation = 4
 
-[node name="OpponentSlot" type="Control" parent="Rows/MiddleRow/Field/OpponentPlayedArea"]
+[node name="OpponentSlot" type="Control" parent="Rows/MiddleRow/Field/OpponentPlayedArea" unique_id=196677882]
 custom_minimum_size = Vector2(200, 280)
 layout_mode = 2
 
-[node name="OpponentOutcomeEffect" parent="Rows/MiddleRow/Field/OpponentPlayedArea/OpponentSlot" instance=ExtResource("7_outcomeeffect")]
+[node name="OpponentOutcomeEffect" parent="Rows/MiddleRow/Field/OpponentPlayedArea/OpponentSlot" unique_id=726632273 instance=ExtResource("7_outcomeeffect")]
 
-[node name="OpponentPlayedCardView" parent="Rows/MiddleRow/Field/OpponentPlayedArea/OpponentSlot" instance=ExtResource("3_cardview")]
+[node name="OpponentPlayedCardView" parent="Rows/MiddleRow/Field/OpponentPlayedArea/OpponentSlot" unique_id=153763223 instance=ExtResource("3_cardview")]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_right = 0.0
+offset_bottom = 0.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="OpponentVanishEffect" parent="Rows/MiddleRow/Field/OpponentPlayedArea/OpponentSlot" instance=ExtResource("6_vanisheffect")]
+[node name="OpponentVanishEffect" parent="Rows/MiddleRow/Field/OpponentPlayedArea/OpponentSlot" unique_id=1311853395 instance=ExtResource("6_vanisheffect")]
 
-[node name="OpponentActionLabel" type="Label" parent="Rows/MiddleRow/Field/OpponentPlayedArea"]
+[node name="OpponentActionLabel" type="Label" parent="Rows/MiddleRow/Field/OpponentPlayedArea" unique_id=124569147]
 layout_mode = 2
 horizontal_alignment = 1
 
-[node name="OutcomeLabel" type="Label" parent="Rows/MiddleRow/Field"]
+[node name="OutcomeLabel" type="Label" parent="Rows/MiddleRow/Field" unique_id=1187317961]
 custom_minimum_size = Vector2(180, 0)
 layout_mode = 2
 theme_override_font_sizes/font_size = 40
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="PromptStrip" type="PanelContainer" parent="Rows"]
+[node name="PromptStrip" type="PanelContainer" parent="Rows" unique_id=984854015]
 custom_minimum_size = Vector2(0, 64)
 layout_mode = 2
 
-[node name="PromptRow" type="HBoxContainer" parent="Rows/PromptStrip"]
+[node name="PromptRow" type="HBoxContainer" parent="Rows/PromptStrip" unique_id=853111919]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="PromptLabel" type="Label" parent="Rows/PromptStrip/PromptRow"]
+[node name="PromptLabel" type="Label" parent="Rows/PromptStrip/PromptRow" unique_id=728050030]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 24
 vertical_alignment = 1
 
-[node name="PhaseTimerBar" type="ProgressBar" parent="Rows/PromptStrip/PromptRow"]
+[node name="PhaseTimerBar" type="ProgressBar" parent="Rows/PromptStrip/PromptRow" unique_id=346331242]
 visible = false
 custom_minimum_size = Vector2(260, 26)
 layout_mode = 2
@@ -193,33 +192,33 @@ theme_override_styles/background = SubResource("StyleBoxFlat_phasetimertrack")
 theme_override_styles/fill = SubResource("StyleBoxFlat_phasetimerfill")
 show_percentage = false
 
-[node name="ConfirmButton" type="Button" parent="Rows/PromptStrip/PromptRow"]
+[node name="ConfirmButton" type="Button" parent="Rows/PromptStrip/PromptRow" unique_id=649933066]
 visible = false
 layout_mode = 2
 text = "MATCH_CONFIRM"
 
-[node name="TargetPaletteRow" type="HBoxContainer" parent="Rows/PromptStrip/PromptRow"]
+[node name="TargetPaletteRow" type="HBoxContainer" parent="Rows/PromptStrip/PromptRow" unique_id=1564016448]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="MyArea" type="HBoxContainer" parent="Rows"]
+[node name="MyArea" type="HBoxContainer" parent="Rows" unique_id=879103375]
 custom_minimum_size = Vector2(0, 280)
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="MyHandCenteringSpacer" type="Control" parent="Rows/MyArea"]
+[node name="MyHandCenteringSpacer" type="Control" parent="Rows/MyArea" unique_id=493213077]
 custom_minimum_size = Vector2(212, 0)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="MyHandView" parent="Rows/MyArea" instance=ExtResource("2_handview")]
+[node name="MyHandView" parent="Rows/MyArea" unique_id=184558490 instance=ExtResource("2_handview")]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="MyDeckView" parent="Rows/MyArea" instance=ExtResource("5_deckview")]
+[node name="MyDeckView" parent="Rows/MyArea" unique_id=2092127618 instance=ExtResource("5_deckview")]
 layout_mode = 2
 
-[node name="MatchEndOverlay" type="PanelContainer" parent="."]
+[node name="MatchEndOverlay" type="PanelContainer" parent="." unique_id=1935811047]
 visible = false
 layout_mode = 1
 anchors_preset = 15
@@ -228,29 +227,29 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Center" type="CenterContainer" parent="MatchEndOverlay"]
+[node name="Center" type="CenterContainer" parent="MatchEndOverlay" unique_id=1191780755]
 layout_mode = 2
 
-[node name="Box" type="VBoxContainer" parent="MatchEndOverlay/Center"]
+[node name="Box" type="VBoxContainer" parent="MatchEndOverlay/Center" unique_id=227199872]
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="ResultLabel" type="Label" parent="MatchEndOverlay/Center/Box"]
+[node name="ResultLabel" type="Label" parent="MatchEndOverlay/Center/Box" unique_id=297601194]
 layout_mode = 2
 theme_override_font_sizes/font_size = 48
 horizontal_alignment = 1
 
-[node name="RematchButton" type="Button" parent="MatchEndOverlay/Center/Box"]
+[node name="RematchButton" type="Button" parent="MatchEndOverlay/Center/Box" unique_id=953704138]
 custom_minimum_size = Vector2(300, 56)
 layout_mode = 2
 text = "MATCH_END_REMATCH"
 
-[node name="RematchStatusLabel" type="Label" parent="MatchEndOverlay/Center/Box"]
+[node name="RematchStatusLabel" type="Label" parent="MatchEndOverlay/Center/Box" unique_id=1652010981]
 visible = false
 layout_mode = 2
 horizontal_alignment = 1
 
-[node name="ReturnToTitleButton" type="Button" parent="MatchEndOverlay/Center/Box"]
+[node name="ReturnToTitleButton" type="Button" parent="MatchEndOverlay/Center/Box" unique_id=1532138194]
 custom_minimum_size = Vector2(300, 44)
 layout_mode = 2
 text = "MATCH_END_TITLE_SCREEN"
