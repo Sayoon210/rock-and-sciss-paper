@@ -28,6 +28,7 @@ Design doc will be added separately later — this document covers tech stack / 
 - Full-syncing hidden information through `MultiplayerSynchronizer`.
 - Subclass trees for card variants (`ResetCard : AbilityCard : Card`) — cards are identified by `ECardName`, ability behavior composed via `ICardEffect`.
 - Hardcoding card stats/text in scripts.
+- Committing a third-party asset without a row in [ATTRIBUTIONS.md](ATTRIBUTIONS.md) — where it came from is unrecoverable later.
 - Adding abstractions/scaffolding "in case it's needed later."
 
 ## Project Structure
