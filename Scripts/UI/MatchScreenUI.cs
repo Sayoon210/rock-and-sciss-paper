@@ -377,6 +377,7 @@ public partial class MatchScreenUI : Control
             return;
         }
 
+        AudioManager.Instance!.Play(ESoundName.CardFlip);
         _opponentCardFlip.Play(_opponentPlayedCardView, opponentCard.Value);
     }
 
@@ -453,11 +454,13 @@ public partial class MatchScreenUI : Control
         {
             _myOutcomeEffect.PlayWin(_myPlayedCardView);
             _opponentOutcomeEffect.PlayLoss(_opponentPlayedCardView);
+            AudioManager.Instance!.Play(ESoundName.RoundWon);
         }
         else if (outcome == ERoundOutcome.OpponentWin)
         {
             _opponentOutcomeEffect.PlayWin(_opponentPlayedCardView);
             _myOutcomeEffect.PlayLoss(_myPlayedCardView);
+            AudioManager.Instance!.Play(ESoundName.RoundLost);
         }
     }
 
