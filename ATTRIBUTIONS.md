@@ -1,12 +1,17 @@
-# 사운드 출처
+# 외부 에셋 출처
 
-`Assets/Audio/` 에 들어간 외부 사운드의 출처와 라이선스 기록.
+`Assets/` 에 들어간 외부 에셋의 출처와 라이선스 기록. 사운드로 시작했지만 사운드 전용
+문서는 아니다 — 종류별로 아래에서 나뉜다.
 
 **파일을 커밋할 때 같이 채운다.** 나중에 몰아서 하면 어느 파일이 어디서 왔는지 이미 모른다 —
 받아온 직후가 아니면 복원할 수 없는 정보다. 직접 만들거나 녹음한 소리도 "자작"으로 한 줄
 남긴다. 비워두면 출처를 못 찾은 건지 자작인지 구분이 안 된다.
 
-## 목록
+## 사운드
+
+`Assets/Audio/`.
+
+### 목록
 
 | 파일 | `ESoundName` | 제작자 | 출처 | 라이선스 | 수정 |
 |---|---|---|---|---|---|
@@ -26,6 +31,17 @@
 - **라이선스** — `CC0`, `CC BY 4.0`, `CC BY-SA 4.0`, 상용 라이선스명, `자작` 등.
 - **수정** — 자른 것도, 볼륨만 맞춘 것도 수정이다. 아래 참고.
 
+## UI / 이미지
+
+| 파일 | 제작자 | 출처 | 라이선스 | 수정 |
+|---|---|---|---|---|
+| `Assets/kenney_ui-pack-pixel-adventure/` (전체) | Kenney | ["UI Pack: Pixel Adventure"](https://kenney.nl/assets/ui-pack-pixel-adventure) | CC0 1.0 | 없음 (원본 그대로 커밋) |
+
+타이틀 화면 버튼 다섯 개가 이 팩의 `Tilesheets/Large tiles/Thick outline/tilemap_packed.png`에서
+브라운 타일 한 장(`Rect2(32, 0, 32, 32)`)을 `StyleBoxTexture`로 9-slice 해서 쓴다 —
+[Scenes/Screens/TitleScreen.tscn](Scenes/Screens/TitleScreen.tscn). 팩 자체는 CC0라 표기
+의무는 없다(License.txt에도 "not a requirement"라고 명시).
+
 ## 라이선스별로 실제로 해야 하는 것
 
 **CC BY 계열**은 크레딧 표기가 **의무**다. 표기를 빼면 라이선스 위반이라 그냥 무단 사용이 된다.
@@ -43,7 +59,8 @@
 
 ## 배포용 표기 문구
 
-빌드에 실어야 하는 문장을 원문 그대로 모아두는 자리. 둘 다 CC BY라 **표기가 의무다.**
+빌드에 실어야 하는 문장을 원문 그대로 모아두는 자리. 전부 CC BY라 **표기가 의무다.**
+(UI 팩은 CC0라 여기 없다 — 위 참고.)
 
 ```
 "Level Up 01" by rhodesmas -- https://freesound.org/s/320655/
@@ -65,7 +82,7 @@ https://creativecommons.org/licenses/by/4.0/
 > 이 문구가 갈 곳(타이틀의 크레딧 화면 등)도 같이 정해야 한다. 파일에만 적어두고 빌드에
 > 안 실으면 표기를 안 한 것과 같다.
 
-## 사운드가 아닌 것
+## 아직 정리 안 된 것
 
-이 문서는 사운드만 다룬다. 다만 `Assets/Fonts/MalgunGothic.ttf`도 외부 파일이고 재배포
-조건이 사운드보다 까다로울 수 있으니, 배포를 준비할 때 같이 확인할 것.
+`Assets/Fonts/MalgunGothic.ttf`도 외부 파일이지만 출처·라이선스가 여기 안 적혀 있다.
+재배포 조건이 위 항목들보다 까다로울 수 있으니, 배포를 준비할 때 같이 확인할 것.

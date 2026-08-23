@@ -1,6 +1,32 @@
 [gd_scene format=3 uid="uid://tardm6qunsle"]
 
 [ext_resource type="Script" uid="uid://mspey8mcamqv" path="res://Scripts/UI/TitleScreenUI.cs" id="1_titlescreenui"]
+[ext_resource type="Texture2D" path="res://Assets/kenney_ui-pack-pixel-adventure/Tilesheets/Large tiles/Thick outline/tilemap_packed.png" id="2_uipack"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_brownnormal"]
+texture = ExtResource("2_uipack")
+texture_margin_left = 4.0
+texture_margin_top = 4.0
+texture_margin_right = 4.0
+texture_margin_bottom = 4.0
+region_rect = Rect2(32, 0, 32, 32)
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_brownhover"]
+texture = ExtResource("2_uipack")
+texture_margin_left = 4.0
+texture_margin_top = 4.0
+texture_margin_right = 4.0
+texture_margin_bottom = 4.0
+region_rect = Rect2(32, 0, 32, 32)
+modulate_color = Color(1.15, 1.15, 1.15, 1)
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_brownpressed"]
+texture = ExtResource("2_uipack")
+texture_margin_left = 4.0
+texture_margin_top = 4.0
+texture_margin_right = 4.0
+texture_margin_bottom = 4.0
+region_rect = Rect2(32, 32, 32, 32)
 
 [node name="TitleScreen" type="Control" unique_id=2122772876]
 layout_mode = 3
@@ -32,21 +58,49 @@ horizontal_alignment = 1
 [node name="MatchButton" type="Button" parent="CenterContainer/Buttons" unique_id=1116291792]
 custom_minimum_size = Vector2(300, 60)
 layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.97, 0.9, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 24
+theme_override_styles/normal = SubResource("StyleBoxTexture_brownnormal")
+theme_override_styles/hover = SubResource("StyleBoxTexture_brownhover")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_brownpressed")
 text = "TITLE_PLAY"
 
 [node name="QuitButton" type="Button" parent="CenterContainer/Buttons" unique_id=331504956]
 custom_minimum_size = Vector2(300, 60)
 layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.97, 0.9, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 24
+theme_override_styles/normal = SubResource("StyleBoxTexture_brownnormal")
+theme_override_styles/hover = SubResource("StyleBoxTexture_brownhover")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_brownpressed")
 text = "TITLE_QUIT"
 
 [node name="SettingsButton" type="Button" parent="CenterContainer/Buttons" unique_id=2731847205]
 custom_minimum_size = Vector2(300, 60)
 layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.97, 0.9, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 24
+theme_override_styles/normal = SubResource("StyleBoxTexture_brownnormal")
+theme_override_styles/hover = SubResource("StyleBoxTexture_brownhover")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_brownpressed")
 text = "TITLE_SETTINGS"
 
 [node name="DebugHarnessButton" type="Button" parent="CenterContainer/Buttons" unique_id=1518153499]
-custom_minimum_size = Vector2(300, 40)
+custom_minimum_size = Vector2(300, 60)
 layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.97, 0.9, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 24
+theme_override_styles/normal = SubResource("StyleBoxTexture_brownnormal")
+theme_override_styles/hover = SubResource("StyleBoxTexture_brownhover")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_brownpressed")
 text = "TITLE_DEBUG_HARNESS"
 
 [node name="SettingsOverlay" type="PanelContainer" parent="." unique_id=3390218447]
@@ -95,4 +149,11 @@ step = 0.01
 [node name="CloseSettingsButton" type="Button" parent="SettingsOverlay/Center/Box" unique_id=1560374928]
 custom_minimum_size = Vector2(300, 60)
 layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.97, 0.9, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 24
+theme_override_styles/normal = SubResource("StyleBoxTexture_brownnormal")
+theme_override_styles/hover = SubResource("StyleBoxTexture_brownhover")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_brownpressed")
 text = "TITLE_SETTINGS_CLOSE"
