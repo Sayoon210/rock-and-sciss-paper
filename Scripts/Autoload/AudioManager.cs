@@ -32,6 +32,15 @@ public partial class AudioManager : Node
     /// (a 조커 always does it), so overlap is a supported case, not an edge one.</summary>
     private const int MAX_SIMULTANEOUS_SOUNDS = 16;
 
+    /// <summary>Where the volume sliders an options menu will eventually offer start out —
+    /// pulled down from the 1.0 (every sound at the level it was mixed at) DefaultBusLayout.tres
+    /// itself still specifies. Kept here rather than changed there for the same reason
+    /// PlayMainMenuMusic sets Loop in code instead of leaving it to the .import file: a number
+    /// on a bus resource is invisible from the code whose job it is to explain volume, and this
+    /// is the one place meant to be read for "why is it quieter than it was mixed."</summary>
+    private const float DEFAULT_SOUND_EFFECT_VOLUME = 0.7f;
+    private const float DEFAULT_MUSIC_VOLUME = 0.7f;
+
     public static AudioManager? Instance { get; private set; }
 
     private readonly Dictionary<ESoundName, AudioStream> _streamsByName = new Dictionary<ESoundName, AudioStream>();
@@ -53,6 +62,9 @@ public partial class AudioManager : Node
         LoadSounds();
         CreateSoundEffectPlayer();
         CreateMusicPlayer();
+
+        SetSoundEffectVolume(DEFAULT_SOUND_EFFECT_VOLUME);
+        SetMusicVolume(DEFAULT_MUSIC_VOLUME);
     }
 
     /// <summary>Starts one sound. Overlapping calls mix rather than cut each other off.
@@ -105,6 +117,46 @@ public partial class AudioManager : Node
     public void StopMusic()
     {
         _musicPlayer.Stop();
+    }
+
+    /// <summary>0 is silent, 1 is every sound effect at the level it was mixed at — the range
+    /// an options menu's volume slider should offer, since anything past 1 is clipping rather
+    /// than louder. Held on the SFX bus itself rather than a field here, so AudioServer stays
+    /// the one place this can be read back from, an options menu included.</summary>
+    public void SetSoundEffectVolume(float linearVolume)
+    {
+        SetBusVolume(SOUND_EFFECT_BUS_NAME, linearVolume);
+    }
+
+    public float GetSoundEffectVolume()
+    {
+        return GetBusVolume(SOUND_EFFECT_BUS_NAME);
+    }
+
+    /// <summary>Same range and the same reasoning as SetSoundEffectVolume, for the Music bus.</summary>
+    public void SetMusicVolume(float linearVolume)
+    {
+        SetBusVolume(MUSIC_BUS_NAME, linearVolume);
+    }
+
+    public float GetMusicVolume()
+    {
+        return GetBusVolume(MUSIC_BUS_NAME);
+    }
+
+    // Linear rather than decibels at every call site above, because 0..1 is what a slider and
+    // a saved settings value both want to work in — Mathf.LinearToDb exists specifically so a
+    // volume control can convert at its one edge instead of every caller doing it themselves.
+    private static void SetBusVolume(string busName, float linearVolume)
+    {
+        int busIndex = AudioServer.GetBusIndex(busName);
+        AudioServer.SetBusVolumeDb(busIndex, Mathf.LinearToDb(Mathf.Clamp(linearVolume, 0f, 1f)));
+    }
+
+    private static float GetBusVolume(string busName)
+    {
+        int busIndex = AudioServer.GetBusIndex(busName);
+        return Mathf.DbToLinear(AudioServer.GetBusVolumeDb(busIndex));
     }
 
     /// <summary>Walks the enum and loads the file named after each member, rather than
