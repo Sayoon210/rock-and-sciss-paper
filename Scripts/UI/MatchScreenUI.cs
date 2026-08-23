@@ -28,16 +28,22 @@ public partial class MatchScreenUI : Control
 
     /// <summary>How long the revealed cards stay on the field after the round's outcome
     /// effects begin (the win/loss states, or nothing on a 무승부) before the field is
-    /// emptied for the next round.</summary>
-    private const double FIELD_CLEAR_DELAY_SECONDS = 1.5;
+    /// emptied for the next round.
+    ///
+    /// This is the single longest wait in a round and the one that decides how brisk a match
+    /// feels — everything a card does at the end of a round (going back to the 덱, 소멸ing)
+    /// waits on it, so a generous value here reads as the game pausing rather than as time to
+    /// take the result in.</summary>
+    private const double FIELD_CLEAR_DELAY_SECONDS = 0.7;
 
     /// <summary>How long the opponent's card sits face-down before it turns over. Short
     /// enough to still feel like part of the same beat as the reveal, not a separate wait.</summary>
-    private const double PRE_FLIP_PAUSE_SECONDS = 0.25;
+    private const double PRE_FLIP_PAUSE_SECONDS = 0.15;
 
     /// <summary>How long the field holds still, opponent's card now face-up, before the two
-    /// cards take on their win/loss state.</summary>
-    private const double POST_FLIP_PAUSE_SECONDS = 0.35;
+    /// cards take on their win/loss state. Long enough to read the opponent's card as its own
+    /// beat before the result lands on top of it, and no longer.</summary>
+    private const double POST_FLIP_PAUSE_SECONDS = 0.2;
 
     /// <summary>How much of a timed phase the gauge spends reddening. It stays calm for the
     /// rest: a bar that is always partly red says nothing, and a colour that only means

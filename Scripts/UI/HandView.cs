@@ -58,8 +58,10 @@ public partial class HandView : Control
 
     /// <summary>Extra wait given to every card entering while cards are still on their way back
     /// into the deck. 리셋 and 교체 are "the old hand goes in, a new one comes out" — without
-    /// this the two halves overlap and read as one shuffle at the deck instead of a sequence.</summary>
-    private const float ENTRY_DELAY_AFTER_RETURN_SECONDS = 0.35f;
+    /// this the two halves overlap and read as one shuffle at the deck instead of a sequence.
+    /// Kept only as long as that separation needs, since it lands on top of the round's own
+    /// wait rather than inside it.</summary>
+    private const float ENTRY_DELAY_AFTER_RETURN_SECONDS = 0.22f;
 
     /// <summary>Fires whenever the selection changes in either selection mode, so the owner
     /// can update a count or enable a confirm button without polling every frame.</summary>
