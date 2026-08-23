@@ -39,7 +39,60 @@ custom_minimum_size = Vector2(300, 60)
 layout_mode = 2
 text = "TITLE_QUIT"
 
+[node name="SettingsButton" type="Button" parent="CenterContainer/Buttons" unique_id=2731847205]
+custom_minimum_size = Vector2(300, 60)
+layout_mode = 2
+text = "TITLE_SETTINGS"
+
 [node name="DebugHarnessButton" type="Button" parent="CenterContainer/Buttons" unique_id=1518153499]
 custom_minimum_size = Vector2(300, 40)
 layout_mode = 2
 text = "TITLE_DEBUG_HARNESS"
+
+[node name="SettingsOverlay" type="PanelContainer" parent="." unique_id=3390218447]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Center" type="CenterContainer" parent="SettingsOverlay" unique_id=1697402883]
+layout_mode = 2
+
+[node name="Box" type="VBoxContainer" parent="SettingsOverlay/Center" unique_id=3841927650]
+custom_minimum_size = Vector2(360, 0)
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="SettingsHeadingLabel" type="Label" parent="SettingsOverlay/Center/Box" unique_id=712946380]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "TITLE_SETTINGS"
+horizontal_alignment = 1
+
+[node name="SoundEffectVolumeLabel" type="Label" parent="SettingsOverlay/Center/Box" unique_id=1284759036]
+layout_mode = 2
+text = "TITLE_SETTINGS_SOUND_EFFECTS"
+
+[node name="SoundEffectVolumeSlider" type="HSlider" parent="SettingsOverlay/Center/Box" unique_id=2957183640]
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+max_value = 1.0
+step = 0.01
+
+[node name="MusicVolumeLabel" type="Label" parent="SettingsOverlay/Center/Box" unique_id=671038295]
+layout_mode = 2
+text = "TITLE_SETTINGS_MUSIC"
+
+[node name="MusicVolumeSlider" type="HSlider" parent="SettingsOverlay/Center/Box" unique_id=4082916573]
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+max_value = 1.0
+step = 0.01
+
+[node name="CloseSettingsButton" type="Button" parent="SettingsOverlay/Center/Box" unique_id=1560374928]
+custom_minimum_size = Vector2(300, 60)
+layout_mode = 2
+text = "TITLE_SETTINGS_CLOSE"
