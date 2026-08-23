@@ -1,4 +1,5 @@
 using Godot;
+using RockAndScissPaper.Autoload;
 
 namespace RockAndScissPaper.UI;
 
@@ -18,6 +19,11 @@ public partial class TitleScreenUI : Control
         GetNode<Button>("CenterContainer/Buttons/MatchButton").Pressed += OnMatchPressed;
         GetNode<Button>("CenterContainer/Buttons/QuitButton").Pressed += OnQuitPressed;
         GetNode<Button>("CenterContainer/Buttons/DebugHarnessButton").Pressed += OnDebugHarnessPressed;
+
+        // Started from here rather than from AudioManager itself: the Autoload is a service
+        // and does not know which screen is up. It keeps playing through the connection
+        // screen, since that is still the menu — MatchScreenUI is what stops it.
+        AudioManager.Instance!.PlayMainMenuMusic();
     }
 
     private void OnMatchPressed()

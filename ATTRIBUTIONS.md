@@ -13,6 +13,7 @@
 | `RoundWon.wav` | `RoundWon` | rhodesmas | ["Level Up 01"](https://freesound.org/s/320655/) | CC BY 4.0 | 파일명만 변경 |
 | `RoundLost.wav` | `RoundLost` | AceOfSpadesProduc100 | ["8-bit "failure" sound"](https://freesound.org/s/333785/) | CC BY 4.0 | 파일명만 변경 |
 | `Joker.wav` | `Joker` | bulbastre | ["Evil laughter joker"](https://freesound.org/s/103987/) | CC BY 4.0 | 파일명만 변경 |
+| `MainMenuBGM.ogg` | `-` | Alexander Nakarada ft. Kevin MacLeod | ["Tavern Brawl"](https://creatorchords.com/music/tavern-brawl-ft-kevin-macleod/) (chosic.com 경유) | CC BY 4.0 | 파일명 변경, **ogg로 변환** |
 
 `RoundWon.wav`는 한때 같은 소리의 [mp3 재업로드본(337049)](https://freesound.org/s/337049/)을
 쓰다가 rhodesmas의 원본으로 교체한 것이다. 재업로더가 아니라 **원작자를 표기하는 게 맞고**,
@@ -53,6 +54,11 @@
 
 Evil laughter joker.wav by bulbastre -- https://freesound.org/s/103987/
 -- License: Attribution 4.0
+
+Tavern Brawl by Alexander Nakarada ft. Kevin MacLeod | https://creatorchords.com
+Music promoted by https://www.chosic.com/free-music/all/
+Creative Commons CC BY 4.0
+https://creativecommons.org/licenses/by/4.0/
 ```
 
 > 아직 게임 안에 크레딧을 보여줄 화면이 없다. 표기 의무가 있는 소리를 처음 넣는 시점에

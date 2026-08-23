@@ -21,6 +21,13 @@ public partial class AudioManager : Node
     private const string SOUND_FILE_EXTENSION = ".wav";
     private const string SOUND_EFFECT_BUS_NAME = "SFX";
 
+    /// <summary>Music is named by path rather than through ESoundName. That enum exists so a
+    /// sound can be asked for by name and found on disk by the same name, which needs every
+    /// entry to share one extension — music is .ogg (streamed and compressed, since a looping
+    /// track as .wav is tens of megabytes) while the effects are .wav.</summary>
+    private const string MAIN_MENU_MUSIC_PATH = "res://Assets/Audio/MainMenuBGM.ogg";
+    private const string MUSIC_BUS_NAME = "Music";
+
     /// <summary>How many sounds may overlap. Both cards vanishing at once is normal here
     /// (a 조커 always does it), so overlap is a supported case, not an edge one.</summary>
     private const int MAX_SIMULTANEOUS_SOUNDS = 16;
@@ -32,6 +39,10 @@ public partial class AudioManager : Node
     private AudioStreamPlayer _soundEffectPlayer = null!;
     private AudioStreamPlaybackPolyphonic _soundEffectPlayback = null!;
 
+    // Its own player on its own bus, so music and effects can be mixed against each other
+    // later without one being a special case of the other.
+    private AudioStreamPlayer _musicPlayer = null!;
+
     public override void _EnterTree()
     {
         Instance = this;
@@ -41,6 +52,7 @@ public partial class AudioManager : Node
     {
         LoadSounds();
         CreateSoundEffectPlayer();
+        CreateMusicPlayer();
     }
 
     /// <summary>Starts one sound. Overlapping calls mix rather than cut each other off.
@@ -54,6 +66,45 @@ public partial class AudioManager : Node
         }
 
         _soundEffectPlayback.PlayStream(stream);
+    }
+
+    /// <summary>Starts the title music, and does nothing if it is already the thing playing.
+    /// Coming back to the title from a finished match runs TitleScreenUI._Ready a second time,
+    /// and starting the track over from the top there would be heard as the music stuttering
+    /// rather than as a new screen.</summary>
+    public void PlayMainMenuMusic()
+    {
+        if (_musicPlayer.Playing)
+        {
+            return;
+        }
+
+        if (!ResourceLoader.Exists(MAIN_MENU_MUSIC_PATH))
+        {
+            GD.Print($"AudioManager: no music file at {MAIN_MENU_MUSIC_PATH}.");
+            return;
+        }
+
+        AudioStream stream = GD.Load<AudioStream>(MAIN_MENU_MUSIC_PATH);
+
+        // Set here rather than left to the .import file. Looping is what makes this menu music
+        // instead of a one-shot, and an import setting is invisible from the code that depends
+        // on it — a track that quietly stops partway through the title screen would send
+        // someone looking through this class for a bug that is not in it.
+        if (stream is AudioStreamOggVorbis oggStream)
+        {
+            oggStream.Loop = true;
+        }
+
+        _musicPlayer.Stream = stream;
+        _musicPlayer.Play();
+    }
+
+    /// <summary>Stops whatever music is playing. The title track is menu music, so the match
+    /// screen silences it on the way in.</summary>
+    public void StopMusic()
+    {
+        _musicPlayer.Stop();
     }
 
     /// <summary>Walks the enum and loads the file named after each member, rather than
@@ -98,5 +149,15 @@ public partial class AudioManager : Node
         // silence that stays open for the session, not a sound.
         _soundEffectPlayer.Play();
         _soundEffectPlayback = (AudioStreamPlaybackPolyphonic)_soundEffectPlayer.GetStreamPlayback();
+    }
+
+    // No stream and nothing playing until something asks for music. Unlike the effects player
+    // there is no mixer to open here — one track plays at a time, so the stream is swapped in
+    // when it is wanted.
+    private void CreateMusicPlayer()
+    {
+        _musicPlayer = new AudioStreamPlayer();
+        _musicPlayer.Bus = MUSIC_BUS_NAME;
+        AddChild(_musicPlayer);
     }
 }

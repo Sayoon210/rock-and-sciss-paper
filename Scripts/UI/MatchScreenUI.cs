@@ -137,6 +137,10 @@ public partial class MatchScreenUI : Control
 
     public override void _Ready()
     {
+        // The title track is menu music and carries through the connection screen, but a match
+        // has its own sounds to be heard over — and no music of its own yet.
+        AudioManager.Instance!.StopMusic();
+
         _opponentDeckView = GetNode<DeckView>("Rows/OpponentArea/OpponentDeckView");
         _opponentHandView = GetNode<HandView>("Rows/OpponentArea/OpponentHandView");
         _scoreHeadingLabel = GetNode<Label>("Rows/MiddleRow/ScoreBoard/ScoreHeadingLabel");
