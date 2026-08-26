@@ -22,20 +22,28 @@ public partial class MatchScreenUI : Control
 
     private const string TITLE_SCENE_PATH = "res://Scenes/Screens/TitleScreen.tscn";
 
+    private const string JOKER_DEVOUR_EFFECT_SCENE_PATH = "res://Scenes/Match/JokerDevourEffect.tscn";
+
     private const int SCORE_PIP_SIZE = 18;
 
     /// <summary>How long the revealed cards stay on the field after the round's outcome
     /// effects begin (the win/loss states, or nothing on a 무승부) before the field is
-    /// emptied for the next round.</summary>
-    private const double FIELD_CLEAR_DELAY_SECONDS = 1.5;
+    /// emptied for the next round.
+    ///
+    /// This is the single longest wait in a round and the one that decides how brisk a match
+    /// feels — everything a card does at the end of a round (going back to the 덱, 소멸ing)
+    /// waits on it, so a generous value here reads as the game pausing rather than as time to
+    /// take the result in.</summary>
+    private const double FIELD_CLEAR_DELAY_SECONDS = 0.7;
 
     /// <summary>How long the opponent's card sits face-down before it turns over. Short
     /// enough to still feel like part of the same beat as the reveal, not a separate wait.</summary>
-    private const double PRE_FLIP_PAUSE_SECONDS = 0.25;
+    private const double PRE_FLIP_PAUSE_SECONDS = 0.15;
 
     /// <summary>How long the field holds still, opponent's card now face-up, before the two
-    /// cards take on their win/loss state.</summary>
-    private const double POST_FLIP_PAUSE_SECONDS = 0.35;
+    /// cards take on their win/loss state. Long enough to read the opponent's card as its own
+    /// beat before the result lands on top of it, and no longer.</summary>
+    private const double POST_FLIP_PAUSE_SECONDS = 0.2;
 
     /// <summary>How much of a timed phase the gauge spends reddening. It stays calm for the
     /// rest: a bar that is always partly red says nothing, and a colour that only means
@@ -60,6 +68,11 @@ public partial class MatchScreenUI : Control
     private CardFlipEffect _opponentCardFlip = null!;
     private CardSlideInEffect _opponentCardSlideIn = null!;
     private CardOutcomeEffect _opponentOutcomeEffect = null!;
+
+    // One node for both cards, unlike the per-side vanish effects: a 조커 round is the one
+    // case where the two played cards are part of a single effect, one being pulled into
+    // the other.
+    private JokerDevourEffect _jokerDevourEffect = null!;
     private Label _opponentActionLabel = null!;
     private Label _outcomeLabel = null!;
     private Label _promptLabel = null!;
@@ -124,6 +137,10 @@ public partial class MatchScreenUI : Control
 
     public override void _Ready()
     {
+        // The title track is menu music and carries through the connection screen, but a match
+        // has its own sounds to be heard over — and no music of its own yet.
+        AudioManager.Instance!.StopMusic();
+
         _opponentDeckView = GetNode<DeckView>("Rows/OpponentArea/OpponentDeckView");
         _opponentHandView = GetNode<HandView>("Rows/OpponentArea/OpponentHandView");
         _scoreHeadingLabel = GetNode<Label>("Rows/MiddleRow/ScoreBoard/ScoreHeadingLabel");
@@ -145,6 +162,9 @@ public partial class MatchScreenUI : Control
         _opponentCardSlideIn = new CardSlideInEffect();
         AddChild(_opponentCardSlideIn);
         _opponentOutcomeEffect = GetNode<CardOutcomeEffect>("Rows/MiddleRow/Field/OpponentPlayedArea/OpponentSlot/OpponentOutcomeEffect");
+        _jokerDevourEffect = GD.Load<PackedScene>(JOKER_DEVOUR_EFFECT_SCENE_PATH).Instantiate<JokerDevourEffect>();
+        _jokerDevourEffect.Finished += OnJokerDevourFinished;
+        AddChild(_jokerDevourEffect);
         _opponentActionLabel = GetNode<Label>("Rows/MiddleRow/Field/OpponentPlayedArea/OpponentActionLabel");
         _outcomeLabel = GetNode<Label>("Rows/MiddleRow/Field/OutcomeLabel");
         _promptLabel = GetNode<Label>("Rows/PromptStrip/PromptRow/PromptLabel");
@@ -303,6 +323,7 @@ public partial class MatchScreenUI : Control
         _postFlipPauseTimer.Stop();
         _opponentCardFlip.Stop();
         _opponentCardSlideIn.Stop();
+        _jokerDevourEffect.Stop();
         _myOutcomeEffect.Stop();
         _opponentOutcomeEffect.Stop();
         _opponentCardFlipPending = false;
@@ -347,6 +368,7 @@ public partial class MatchScreenUI : Control
         _postFlipPauseTimer.Stop();
         _opponentCardFlip.Stop();
         _opponentCardSlideIn.Stop();
+        _jokerDevourEffect.Stop();
 
         _fieldClearTimer.Stop();
         _fieldCleared = false;
@@ -407,10 +429,79 @@ public partial class MatchScreenUI : Control
     {
         PlayRoundOutcomeEffects();
 
+        // A 조커 round runs its own choreography instead, and it is longer than the pause
+        // below — the field has to stay up until the 조커 has finished bursting, so the clear
+        // is started from that effect's Finished rather than here. Nothing is lost by
+        // skipping the call above for those rounds: a 조커 round has no winner to mark.
+        if (PlayJokerEffectsAndReportIfDevouring())
+        {
+            return;
+        }
+
         // Started here rather than the moment the round resolves: the field needs to stay up
         // through the reveal's own pauses and turn, not just for FIELD_CLEAR_DELAY_SECONDS
         // after an outcome nobody has seen yet.
         _fieldClearTimer.Start();
+    }
+
+    /// <summary>Plays whatever this round owes a 조커 — the cue for any 조커 at all, and the
+    /// devouring choreography when there is a card to devour — and says whether that
+    /// choreography started, since the field must then wait for it rather than clear on a
+    /// timer.
+    ///
+    /// Called only once both cards are face-up. The effect is one card being pulled into the
+    /// other, which reads as nothing at all while either is still face-down, and the cue is
+    /// deliberately tied to the same beat so a 조커 sounds the same whoever played it.</summary>
+    private bool PlayJokerEffectsAndReportIfDevouring()
+    {
+        MatchView view = GameState.Instance!.View;
+
+        if (!view.MyCard.HasValue || !view.OpponentCard.HasValue)
+        {
+            return false;
+        }
+
+        bool mineIsJoker = view.MyCard.Value == ECardName.Joker;
+        bool opponentIsJoker = view.OpponentCard.Value == ECardName.Joker;
+
+        if (!mineIsJoker && !opponentIsJoker)
+        {
+            return false;
+        }
+
+        // One cue for the whole round, wherever the 조커 came from. It used to be played from
+        // two places -- my own at the moment I dropped it, the opponent's as it turned over --
+        // which made the same card sound like two different events depending on who played it.
+        // Here it lands with the devouring, which is the beat the effect below is built around.
+        AudioManager.Instance!.Play(ESoundName.Joker);
+
+        // Two 조커 destroy each other without either devouring anything (DESIGN.md), so the
+        // cue above still plays but there is no card to pull in -- the ordinary 소멸 handles
+        // both of them.
+        if (mineIsJoker && opponentIsJoker)
+        {
+            return false;
+        }
+
+        CardView jokerCardView = mineIsJoker ? _myPlayedCardView : _opponentPlayedCardView;
+        CardView victimCardView = mineIsJoker ? _opponentPlayedCardView : _myPlayedCardView;
+
+        _jokerDevourEffect.Play(jokerCardView, victimCardView);
+        return true;
+    }
+
+    /// <summary>The 조커 has finished bursting and both cards are off the field.
+    ///
+    /// Cleared at once rather than after FIELD_CLEAR_DELAY_SECONDS. That delay exists to hold
+    /// the two cards on the field while their win/loss states are read, and then they leave;
+    /// here they have already left, so waiting would just be empty slots for that long. The
+    /// shards keep flying either way — they belong to the effect node, not to the cards.
+    ///
+    /// SendPlayedCardsWhereTheyWent, inside this, finds both cards already hidden and leaves
+    /// them alone, which is what keeps the devoured card from also being dissolved.</summary>
+    private void OnJokerDevourFinished()
+    {
+        OnFieldClearTimeout();
     }
 
     private void OnChoiceRequired()
@@ -745,33 +836,41 @@ public partial class MatchScreenUI : Control
             return;
         }
 
-        _myPlayedCardView.Visible = true;
-        _opponentPlayedCardView.Visible = true;
+        // The 조커 연출 owns both played cards while it runs — one is being wound into the
+        // other and that one is coming apart — so an unrelated refresh must not put them back
+        // at full size in their own slots. Same rule as _opponentCardFlipPending below, for
+        // both cards at once rather than one. The labels underneath are still refreshed,
+        // since nothing about the effect touches them.
+        if (!_jokerDevourEffect.IsPlaying)
+        {
+            _myPlayedCardView.Visible = true;
+            _opponentPlayedCardView.Visible = true;
 
-        // Null before both sides have submitted: nothing is revealed yet, so the field shows
-        // backs rather than an empty gap that would shift the row when a card lands.
-        if (view.MyCard.HasValue)
-        {
-            _myPlayedCardView.ShowFaceUp(view.MyCard.Value);
-        }
-        else
-        {
-            _myPlayedCardView.ShowFaceDown();
-        }
-
-        // While the flip choreography is running, it owns this card's face and Scale --
-        // OnRoundRevealed already set it face-down as that choreography's starting point,
-        // and an unrelated refresh landing mid-turn (a hand change, a score update) must not
-        // stomp it back to a flat ShowFaceUp/ShowFaceDown call.
-        if (!_opponentCardFlipPending)
-        {
-            if (view.OpponentCard.HasValue)
+            // Null before both sides have submitted: nothing is revealed yet, so the field
+            // shows backs rather than an empty gap that would shift the row when a card lands.
+            if (view.MyCard.HasValue)
             {
-                _opponentPlayedCardView.ShowFaceUp(view.OpponentCard.Value);
+                _myPlayedCardView.ShowFaceUp(view.MyCard.Value);
             }
             else
             {
-                _opponentPlayedCardView.ShowFaceDown();
+                _myPlayedCardView.ShowFaceDown();
+            }
+
+            // While the flip choreography is running, it owns this card's face and Scale --
+            // OnRoundRevealed already set it face-down as that choreography's starting point,
+            // and an unrelated refresh landing mid-turn (a hand change, a score update) must
+            // not stomp it back to a flat ShowFaceUp/ShowFaceDown call.
+            if (!_opponentCardFlipPending)
+            {
+                if (view.OpponentCard.HasValue)
+                {
+                    _opponentPlayedCardView.ShowFaceUp(view.OpponentCard.Value);
+                }
+                else
+                {
+                    _opponentPlayedCardView.ShowFaceDown();
+                }
             }
         }
 

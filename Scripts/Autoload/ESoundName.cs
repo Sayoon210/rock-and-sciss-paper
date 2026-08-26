@@ -12,4 +12,5 @@ public enum ESoundName
     CardFlip = 1,
     RoundWon = 2,
     RoundLost = 3,
+    Joker = 4,
 }

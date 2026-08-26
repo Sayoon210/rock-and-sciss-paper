@@ -18,8 +18,10 @@ public partial class CardVanishEffect : Node2D
 {
     private const string DISSOLVE_MATERIAL_PATH = "res://Assets/Materials/CardDissolve.tres";
 
-    /// <summary>How long a card takes to come apart.</summary>
-    private const float DISSOLVE_SECONDS = 0.5f;
+    /// <summary>How long a card takes to come apart. It plays after the round is already
+    /// decided, so it is the tail of a round rather than part of it — long enough to be seen
+    /// crumbling, short enough not to be waited on.</summary>
+    private const float DISSOLVE_SECONDS = 0.35f;
 
     private CpuParticles2D _dustParticles = null!;
     private ShaderMaterial _dissolveMaterial = null!;

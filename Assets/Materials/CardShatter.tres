@@ -1,0 +1,10 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3]
+
+[ext_resource type="Shader" path="res://Shaders/CardShatter.gdshader" id="1_cardshatter"]
+
+[resource]
+shader = ExtResource("1_cardshatter")
+shader_parameter/progress = 0.0
+shader_parameter/shard_size = 26.0
+shader_parameter/flash_color = Color(1, 0.94, 0.78, 1)
+shader_parameter/flash_lead = 0.15
