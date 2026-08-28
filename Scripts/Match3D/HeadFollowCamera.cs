@@ -10,6 +10,13 @@ namespace RockAndScissPaper.Match3D;
 /// and rotation both. The resulting delta is also broadcast over the network (throttled), so the
 /// opponent's screen shows the same head turn — see RemoteHeadLook, the receiving half.
 ///
+/// Space blends the camera off the head and onto Field/CardRest/HandViewCamera, and back again
+/// (DESIGN.md's round flow: "스페이스바를 누르면 카드 있는 쪽으로 카메라 블렌드 전환"). That
+/// second camera is only ever a pose to aim at — this one stays the rendering camera the whole
+/// time, since Godot has no built-in blend between two Camera3Ds and switching between them
+/// would cut rather than travel. Mouse-look keeps driving the head bone throughout, so the head
+/// still turns (and the opponent still sees it) while its owner is reading their own hand.
+///
 /// The bone is turned via BoneLookRotator (Skeleton3D.SetBonePoseRotation, a LOCAL/parent-
 /// relative pose setter) — not the deprecated SetBoneGlobalPoseOverride an earlier version of
 /// this used. That one produced a confirmed, reproducible bug (the character's own face
@@ -33,9 +40,14 @@ public partial class HeadFollowCamera : Camera3D
 {
     private const string SKELETON_PATH = "../Character/Armature/Skeleton3D";
     private const string HEAD_BONE_NAME = "mixamorig10_Head";
+    private const string HAND_VIEW_CAMERA_PATH = "../../Field/CardRest/HandViewCamera";
+    private const string HEAD_FADE_PATH = "../Character/HeadFade";
 
     private const float MOUSE_SENSITIVITY_DEGREES_PER_PIXEL = 0.1f;
     private const float MAX_LOOK_DEGREES = 60f;
+
+    // How long the trip between the head and the hand takes, each way.
+    private const float HAND_VIEW_BLEND_SECONDS = 0.35f;
 
     // Cosmetic-only network traffic (BoneLookRotator/GameState.SendMyLookDirection) — sent on
     // a timer well under the render rate rather than every _Process, since a dropped or
@@ -43,15 +55,20 @@ public partial class HeadFollowCamera : Camera3D
     private const double LOOK_SEND_INTERVAL_SECONDS = 1.0 / 15.0;
 
     private Skeleton3D _skeleton = null!;
+    private Camera3D _handViewCamera = null!;
+    private CharacterHeadFade _headFade = null!;
     private int _headBoneIndex;
     private int _headBoneParentIndex;
     private Basis _restCameraWorldBasis;
     private Basis _restBoneWorldBasis;
     private Vector3 _restCameraWorldPosition;
     private Vector3 _restBoneWorldPosition;
+    private float _restFieldOfView;
     private float _yawDegrees;
     private float _pitchDegrees;
     private double _timeUntilNextLookSend;
+    private bool _isHandViewHeld;
+    private float _handViewBlend;
 
     public override void _Ready()
     {
@@ -63,6 +80,19 @@ public partial class HeadFollowCamera : Camera3D
         // character's own geometry). Read before anything below touches GlobalTransform.
         _restCameraWorldBasis = GlobalTransform.Basis;
         _restCameraWorldPosition = GlobalTransform.Origin;
+        _restFieldOfView = Fov;
+
+        // A pose marker, not a second renderer. Godot has no built-in Camera3D blend, so the
+        // hand view is reached by moving THIS camera onto that one's transform rather than by
+        // switching between the two — which is also what makes a partial blend a thing at all.
+        // It stays a Camera3D because that is what lets the pose be framed through the editor's
+        // own preview; ticking that preview writes current = true into the scene, hence the
+        // explicit correction here.
+        _handViewCamera = GetNode<Camera3D>(HAND_VIEW_CAMERA_PATH);
+        _handViewCamera.Current = false;
+        MakeCurrent();
+
+        _headFade = GetNode<CharacterHeadFade>(HEAD_FADE_PATH);
 
         _skeleton = GetNode<Skeleton3D>(SKELETON_PATH);
         _headBoneIndex = _skeleton.FindBone(HEAD_BONE_NAME);
@@ -89,9 +119,30 @@ public partial class HeadFollowCamera : Camera3D
                 _pitchDegrees - mouseMotion.Relative.Y * MOUSE_SENSITIVITY_DEGREES_PER_PIXEL,
                 -MAX_LOOK_DEGREES, MAX_LOOK_DEGREES);
         }
-        else if (@event is InputEventKey key && key.Pressed && key.Keycode == Key.Escape)
+        else if (@event is InputEventKey key && key.Pressed && !key.Echo)
         {
-            Input.MouseMode = Input.MouseModeEnum.Visible;
+            if (key.Keycode == Key.Escape)
+            {
+                Input.MouseMode = Input.MouseModeEnum.Visible;
+            }
+            else if (key.Keycode == Key.Space)
+            {
+                _isHandViewHeld = !_isHandViewHeld;
+
+                // The two views want the mouse for different things and cannot share it: the
+                // head view spends it on look (captured, no cursor), the hand view on pointing
+                // at cards (free cursor). Switched at the key rather than at the end of the
+                // blend so the cursor is there for the whole trip, and so the head stops
+                // turning the instant the player stops steering with it.
+                if (_isHandViewHeld)
+                {
+                    Input.MouseMode = Input.MouseModeEnum.Visible;
+                }
+                else
+                {
+                    Input.MouseMode = Input.MouseModeEnum.Captured;
+                }
+            }
         }
     }
 
@@ -115,8 +166,25 @@ public partial class HeadFollowCamera : Camera3D
         Vector3 animatedBoneWorldPosition = _skeleton.GlobalTransform * _skeleton.GetBoneGlobalPose(_headBoneIndex).Origin;
         Vector3 boneOffsetFromRest = animatedBoneWorldPosition - _restBoneWorldPosition;
         Vector3 cameraPosition = _restCameraWorldPosition + boneOffsetFromRest;
+        Transform3D headPose = new Transform3D(lookBasis, cameraPosition);
 
-        GlobalTransform = new Transform3D(lookBasis, cameraPosition);
+        // Smoothstepped so the trip eases out of one pose and into the other rather than
+        // starting and stopping at full speed — this is the "왔다갔다" of it.
+        _handViewBlend = Mathf.MoveToward(
+            _handViewBlend, _isHandViewHeld ? 1f : 0f, (float)delta / HAND_VIEW_BLEND_SECONDS);
+        float easedBlend = Mathf.SmoothStep(0f, 1f, _handViewBlend);
+
+        // Orthonormalized because the hand view camera sits under CardRest, whose 0.5 scale it
+        // cancels with a 2.0 of its own. That cancellation is easy to break from the editor, and
+        // a camera whose basis carries scale renders a distorted projection rather than failing.
+        Transform3D handViewPose = _handViewCamera.GlobalTransform.Orthonormalized();
+
+        GlobalTransform = headPose.InterpolateWith(handViewPose, easedBlend);
+        Fov = Mathf.Lerp(_restFieldOfView, _handViewCamera.Fov, easedBlend);
+
+        // The head fade exists to keep the player's own head out of their own first-person
+        // view; the hand view is not that, so the fade relaxes as the camera leaves the head.
+        _headFade.SetFadeStrength(1f - easedBlend);
 
         _timeUntilNextLookSend -= delta;
         if (_timeUntilNextLookSend <= 0)

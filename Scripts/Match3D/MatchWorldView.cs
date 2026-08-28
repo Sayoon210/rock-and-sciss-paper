@@ -36,6 +36,12 @@ public partial class MatchWorldView : Node3D
 
     public override void _Ready()
     {
+        // Off by default in Godot, and nothing in 3D reports a hover or a click without it —
+        // this is what makes CardView's own Area3D signals fire at all. Set on the scene root
+        // rather than by a card, since it is one switch for the whole viewport and no card
+        // should be the one deciding it for every other card.
+        GetViewport().PhysicsObjectPicking = true;
+
         _myAnimation = new CharacterAnimationController(
             GetNode<AnimationPlayer>("MySeat/Character/AnimationPlayer"));
         _opponentAnimation = new CharacterAnimationController(

@@ -31,23 +31,39 @@ public static class RoundedCardMesh
     // taste; everything else follows from it.
     public const float CORNER_RADIUS = 0.002f;
 
+    // How far the hover outline stands out past the card's own edge, all the way round.
+    private const float HIGHLIGHT_BORDER_WIDTH = 0.0015f;
+
     private const int SEGMENTS_PER_CORNER = 6;
 
     /// <summary>The rounded rectangle, facing +Z and sitting at the card's front. The Back node
     /// uses this same mesh turned 180 degrees about Y, which both faces it the other way and
     /// mirrors it horizontally — the way a real card reads when flipped.</summary>
-    public static readonly ArrayMesh FACE_MESH = BuildFaceMesh();
+    public static readonly ArrayMesh FACE_MESH = BuildFaceMesh(
+        CARD_SIZE, CORNER_RADIUS, CARD_THICKNESS / 2f);
 
     /// <summary>The side wall alone — no caps, since FACE_MESH already covers both openings.</summary>
     public static readonly ArrayMesh EDGE_MESH = BuildEdgeMesh();
 
+    /// <summary>The hover outline: the same silhouette grown by a constant border on every
+    /// side — grown in size AND corner radius together, which is what keeps the border an even
+    /// width around the corners instead of pinching there the way a scaled-up copy would.
+    ///
+    /// A solid plate rather than a ring, sitting on the card's own centre plane. The card's
+    /// front face is a quarter-millimetre in front of it and opaque, so only the grown border
+    /// is ever actually seen; a ring would be more geometry for an identical picture.</summary>
+    public static readonly ArrayMesh HIGHLIGHT_MESH = BuildFaceMesh(
+        CARD_SIZE + new Vector2(HIGHLIGHT_BORDER_WIDTH, HIGHLIGHT_BORDER_WIDTH) * 2f,
+        CORNER_RADIUS + HIGHLIGHT_BORDER_WIDTH,
+        0f);
+
     /// <summary>The card's silhouette, counter-clockwise as seen from +Z. Each corner
     /// contributes its own arc endpoints rather than sharing them, so the straight edges fall
     /// out as the segments between one corner's last point and the next corner's first.</summary>
-    private static Vector2[] BuildOutline()
+    private static Vector2[] BuildOutline(Vector2 size, float cornerRadius)
     {
-        float insetHalfWidth = CARD_SIZE.X / 2f - CORNER_RADIUS;
-        float insetHalfHeight = CARD_SIZE.Y / 2f - CORNER_RADIUS;
+        float insetHalfWidth = size.X / 2f - cornerRadius;
+        float insetHalfHeight = size.Y / 2f - cornerRadius;
         Vector2[] cornerCenters =
         {
             new Vector2(insetHalfWidth, insetHalfHeight),
@@ -62,7 +78,7 @@ public static class RoundedCardMesh
             for (int step = 0; step <= SEGMENTS_PER_CORNER; step++)
             {
                 float angle = Mathf.Pi / 2f * (corner + (float)step / SEGMENTS_PER_CORNER);
-                Vector2 armFromCenter = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * CORNER_RADIUS;
+                Vector2 armFromCenter = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * cornerRadius;
                 outline.Add(cornerCenters[corner] + armFromCenter);
             }
         }
@@ -70,10 +86,9 @@ public static class RoundedCardMesh
         return outline.ToArray();
     }
 
-    private static ArrayMesh BuildFaceMesh()
+    private static ArrayMesh BuildFaceMesh(Vector2 size, float cornerRadius, float z)
     {
-        Vector2[] outline = BuildOutline();
-        float halfThickness = CARD_THICKNESS / 2f;
+        Vector2[] outline = BuildOutline(size, cornerRadius);
 
         SurfaceTool surface = new SurfaceTool();
         surface.Begin(Mesh.PrimitiveType.Triangles);
@@ -88,27 +103,27 @@ public static class RoundedCardMesh
             // against QuadMesh's own arrays, not assumed — so the counter-clockwise outline is
             // walked backwards here. Getting this the other way round renders the card
             // invisible from the front and visible from behind.
-            AddFaceVertex(surface, Vector2.Zero, halfThickness);
-            AddFaceVertex(surface, next, halfThickness);
-            AddFaceVertex(surface, current, halfThickness);
+            AddFaceVertex(surface, Vector2.Zero, size, z);
+            AddFaceVertex(surface, next, size, z);
+            AddFaceVertex(surface, current, size, z);
         }
 
         return surface.Commit();
     }
 
-    /// <summary>UV laid out the way QuadMesh lays its own out — origin at the top-left of the
-    /// card — so CardView's existing atlas UV1 scale/offset crop still lands correctly.</summary>
-    private static void AddFaceVertex(SurfaceTool surface, Vector2 point, float z)
+    /// <summary>UV laid out the way QuadMesh lays its own out — origin at the top-left — so
+    /// CardView's existing atlas UV1 scale/offset crop still lands correctly.</summary>
+    private static void AddFaceVertex(SurfaceTool surface, Vector2 point, Vector2 size, float z)
     {
         surface.SetUV(new Vector2(
-            (point.X + CARD_SIZE.X / 2f) / CARD_SIZE.X,
-            (CARD_SIZE.Y / 2f - point.Y) / CARD_SIZE.Y));
+            (point.X + size.X / 2f) / size.X,
+            (size.Y / 2f - point.Y) / size.Y));
         surface.AddVertex(new Vector3(point.X, point.Y, z));
     }
 
     private static ArrayMesh BuildEdgeMesh()
     {
-        Vector2[] outline = BuildOutline();
+        Vector2[] outline = BuildOutline(CARD_SIZE, CORNER_RADIUS);
         float halfThickness = CARD_THICKNESS / 2f;
 
         SurfaceTool surface = new SurfaceTool();

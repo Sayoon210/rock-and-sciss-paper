@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Godot;
 
 namespace RockAndScissPaper.Match3D;
@@ -47,6 +48,15 @@ public partial class CharacterHeadFade : Node3D
     private const float FADE_MIN_DISTANCE = 0.3f;
     private const float FADE_MAX_DISTANCE = 0.4f;
 
+    // Where the band slides to when the fade is fully relaxed — the hand view is meant to show
+    // the character normally, since the fade only exists to keep the player's own head out of
+    // their own first-person view. Not zero-width, for the divide-by-zero reason above: a 1cm
+    // band is past anything a camera will ever be, so it reads as "no fade" without being one.
+    private const float RELAXED_FADE_MIN_DISTANCE = 0f;
+    private const float RELAXED_FADE_MAX_DISTANCE = 0.01f;
+
+    private readonly List<StandardMaterial3D> _fadedMaterials = new List<StandardMaterial3D>();
+
     public override void _Ready()
     {
         foreach (string meshName in HEAD_AREA_MESH_NAMES)
@@ -55,7 +65,22 @@ public partial class CharacterHeadFade : Node3D
         }
     }
 
-    private static void ApplyFade(MeshInstance3D meshInstance)
+    /// <summary>1 keeps the normal near-camera fade; 0 relaxes it away entirely. Takes a
+    /// continuous value rather than a bool so a camera moving off the head can dissolve it back
+    /// in over the move instead of popping it at the end — see HeadFollowCamera's hand-view
+    /// blend, the only caller.</summary>
+    public void SetFadeStrength(float fadeStrength)
+    {
+        foreach (StandardMaterial3D material in _fadedMaterials)
+        {
+            material.DistanceFadeMinDistance =
+                Mathf.Lerp(RELAXED_FADE_MIN_DISTANCE, FADE_MIN_DISTANCE, fadeStrength);
+            material.DistanceFadeMaxDistance =
+                Mathf.Lerp(RELAXED_FADE_MAX_DISTANCE, FADE_MAX_DISTANCE, fadeStrength);
+        }
+    }
+
+    private void ApplyFade(MeshInstance3D meshInstance)
     {
         if (meshInstance.GetActiveMaterial(0) is not StandardMaterial3D material)
         {
@@ -70,5 +95,6 @@ public partial class CharacterHeadFade : Node3D
         faded.DistanceFadeMinDistance = FADE_MIN_DISTANCE;
         faded.DistanceFadeMaxDistance = FADE_MAX_DISTANCE;
         meshInstance.SetSurfaceOverrideMaterial(0, faded);
+        _fadedMaterials.Add(faded);
     }
 }
