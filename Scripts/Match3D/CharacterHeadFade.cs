@@ -25,11 +25,10 @@ namespace RockAndScissPaper.Match3D;
 /// no "editable children" override since it is a new node, not an edit to one already inside
 /// the imported scene.
 ///
-/// [Tool] on purpose — the fade only actually applies against whatever camera is currently
-/// rendering the viewport, and without this it never applies while just orbiting the editor's
-/// own camera close to the head to check it; it would only take effect once the game were
-/// actually run with the scene's own Camera3D active.</summary>
-[Tool]
+/// Not [Tool] — it only takes effect once the game is actually run with the scene's own
+/// Camera3D active, not while just orbiting the editor's own camera. [Tool] usage on scripts
+/// in this scene is being kept to CharacterIdlePose only for now, to narrow down a runtime
+/// freeze.</summary>
 public partial class CharacterHeadFade : Node3D
 {
     private static readonly string[] HEAD_AREA_MESH_NAMES =
@@ -39,12 +38,13 @@ public partial class CharacterHeadFade : Node3D
         "Ch28_Hair",
     };
 
-    // Fully hidden inside this distance, fully visible past it, dithered in between. Wider
-    // than the measured 0.18m camera-to-head distance needs while framing is still being
-    // tuned. Watch this once hands/cards are placed on the table — MAX this wide could start
-    // fading a hand that reaches close to a head-level camera too. Tighten once the final
-    // head-camera framing is locked in.
-    private const float FADE_MIN_DISTANCE = 0.4f;
+    // Fully hidden inside MIN, fully visible past MAX, dithered in between. MIN and MAX must
+    // stay meaningfully apart — the shader computes the dither ratio as
+    // (distance - MIN) / (MAX - MIN), so a near-zero-width band divides by (near) zero and the
+    // fade stops being reliable. Camera-to-head rest distance measures ~0.40m (HeadFollowCamera
+    // was pulled back from an original ~0.13m, which put the camera inside the head volume for
+    // most mouse-look angles) — MIN sits comfortably above that.
+    private const float FADE_MIN_DISTANCE = 0.3f;
     private const float FADE_MAX_DISTANCE = 0.4f;
 
     public override void _Ready()

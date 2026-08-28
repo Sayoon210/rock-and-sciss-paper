@@ -92,6 +92,12 @@ public partial class GameState : Node
     /// RoundResolved would render the previous round's hand and never correct it.</summary>
     [Signal] public delegate void MyHandChangedEventHandler();
 
+    /// <summary>The opponent's own head-look direction just changed. Purely cosmetic — not
+    /// part of match state, never validated, and does not touch MatchView — so MatchWorldView
+    /// (or whatever is showing the opponent's character) listens directly rather than this
+    /// being folded into a round update.</summary>
+    [Signal] public delegate void OpponentLookChangedEventHandler(Quaternion deltaFromRest);
+
     public override void _EnterTree()
     {
         Instance = this;
@@ -224,6 +230,22 @@ public partial class GameState : Node
         }
     }
 
+    /// <summary>Relays my own head-look direction to the opponent, so it shows on their
+    /// screen too. Not a match action — no session involvement, no validation, works
+    /// identically whether I am host or client, which RequestCardPlay/RequestChoice's
+    /// server-resolves-locally shape does not fit. deltaFromRest is a world-space rotation off
+    /// my own rest facing, already self-contained (Scripts/Match3D/BoneLookRotator.cs) — the
+    /// receiver applies it to the opponent's own head bone without needing to know anything
+    /// about my camera's own axis convention.</summary>
+    public void SendMyLookDirection(Quaternion deltaFromRest)
+    {
+        long? targetPeerId = Multiplayer.IsServer() ? ClientPeerId() : 1;
+        if (targetPeerId.HasValue)
+        {
+            RpcId(targetPeerId.Value, MethodName.OpponentLookChangedRpc, deltaFromRest);
+        }
+    }
+
     private void OnPeerConnected(long peerId)
     {
         // Only the host assigns sides
@@ -316,6 +338,17 @@ public partial class GameState : Node
         }
 
         HandleChoice(side, choice, fromPeerId);
+    }
+
+    /// <summary>Either side to the other: my current head-look direction. AnyPeer because
+    /// either side calls this on the other — host and client are symmetric here, unlike the
+    /// match-rule RPCs above, which are always client-to-host. Unreliable — the next update is
+    /// due within LOOK_SEND_INTERVAL_SECONDS regardless, so a dropped packet is not worth
+    /// paying for guaranteed delivery.</summary>
+    [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.UnreliableOrdered)]
+    private void OpponentLookChangedRpc(Quaternion deltaFromRest)
+    {
+        EmitSignalOpponentLookChanged(deltaFromRest);
     }
 
     /// <summary>Host to one peer: that request was rejected, with a reason. Covers a
