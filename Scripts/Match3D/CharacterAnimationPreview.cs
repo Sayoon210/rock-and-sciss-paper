@@ -2,32 +2,48 @@ using Godot;
 
 namespace RockAndScissPaper.Match3D;
 
-/// <summary>Plays one clip of the character over and over so an animation authored in
-/// Blender can be judged under the game's own renderer rather than Blender's viewport.
-/// It knows nothing about a match — a real round decides which animation runs from a
-/// GameState signal, and this scene exists only so the model can be looked at.</summary>
+/// <summary>One button per clip the character was imported with, each playing that clip once,
+/// so an animation authored in Blender can be judged under the game's own renderer rather
+/// than Blender's viewport. It knows nothing about a match — a real round decides which
+/// animation runs from a GameState signal.
+///
+/// The buttons are built from AnimationPlayer.GetAnimationList rather than written out, so a
+/// re-export from Blender that adds or renames a clip needs no edit here — which matters
+/// while the clip list is still changing every time the .glb is rebuilt.
+///
+/// Button text is plain English on purpose. This is a debug harness like MatchDebugUI, which
+/// does the same; no player ever reads these, so they are not translation symbols.</summary>
 public partial class CharacterAnimationPreview : Node3D
 {
-    /// <summary>Which clip to watch. These names come from the NLA tracks the .glb was
-    /// exported with, so they change whenever Blender re-exports under new track names.</summary>
-    [Export] public string AnimationName { get; set; } = "Anim_Punch_Baked";
-
     private AnimationPlayer _animationPlayer = null!;
+    private VBoxContainer _animationButtons = null!;
 
     public override void _Ready()
     {
         _animationPlayer = GetNode<AnimationPlayer>("MainCharacter/AnimationPlayer");
+        _animationButtons = GetNode<VBoxContainer>("DebugInterface/AnimationButtons");
 
-        // Every imported clip arrives one-shot because glTF carries no loop flag, and
-        // that is the right default for the real scene — a punch should not repeat.
-        // Restarting on the signal loops it here without editing the imported animation,
-        // which would change how it behaves everywhere it is used.
-        _animationPlayer.AnimationFinished += OnAnimationFinished;
-        _animationPlayer.Play(AnimationName);
+        BuildAnimationButtons();
     }
 
-    private void OnAnimationFinished(StringName finishedAnimationName)
+    private void BuildAnimationButtons()
     {
-        _animationPlayer.Play(AnimationName);
+        foreach (string animationName in _animationPlayer.GetAnimationList())
+        {
+            Button button = new Button();
+            button.Text = animationName;
+
+            // Plays from the start every press, so pressing the same button twice replays it
+            // instead of doing nothing once the clip has run out.
+            button.Pressed += () => PlayFromStart(animationName);
+
+            _animationButtons.AddChild(button);
+        }
+    }
+
+    private void PlayFromStart(string animationName)
+    {
+        _animationPlayer.Stop();
+        _animationPlayer.Play(animationName);
     }
 }

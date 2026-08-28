@@ -24,3 +24,12 @@ shadow_enabled = true
 transform = Transform3D(1, 0, 0, 0, 0.99, -0.139, 0, 0.139, 0.99, 0, 1.3, 2.2)
 
 [node name="MainCharacter" parent="." instance=ExtResource("2_character")]
+
+[node name="DebugInterface" type="CanvasLayer" parent="."]
+
+[node name="AnimationButtons" type="VBoxContainer" parent="DebugInterface"]
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 300.0
+offset_bottom = 220.0
+theme_override_constants/separation = 8
