@@ -18,8 +18,18 @@ public partial class MatchWorldView : Node3D
     private const string ROCK_WIN_ANIMATION = "Anim_Punch_Baked";
     private const string SCISSORS_WIN_ANIMATION = "Anim_StabScissor_Baked";
 
+    private const string CARD_VIEW_SCENE_PATH = "res://Scenes/Match3D/CardView.tscn";
+
+    // Cards lie flat on the table, so the slab is turned face-up out of its default upright
+    // pose. My card is turned to read from my side; the opponent's is turned the other way,
+    // the way a card pushed across a table faces whoever pushed it.
+    private static readonly Vector3 MY_CARD_ROTATION = new Vector3(-Mathf.Pi / 2f, 0f, 0f);
+    private static readonly Vector3 OPPONENT_CARD_ROTATION = new Vector3(-Mathf.Pi / 2f, Mathf.Pi, 0f);
+
     private AnimationPlayer _myAnimationPlayer = null!;
     private AnimationPlayer _opponentAnimationPlayer = null!;
+    private CardView _myPlayedCard = null!;
+    private CardView _opponentPlayedCard = null!;
     private Label _roundLabel = null!;
     private Label _myScoreLabel = null!;
     private Label _opponentScoreLabel = null!;
@@ -32,7 +42,11 @@ public partial class MatchWorldView : Node3D
         _myScoreLabel = GetNode<Label>("MatchInterface/Readout/MyScoreLabel");
         _opponentScoreLabel = GetNode<Label>("MatchInterface/Readout/OpponentScoreLabel");
 
+        _myPlayedCard = AddCardToSlot("Field/MyCardSlot", MY_CARD_ROTATION);
+        _opponentPlayedCard = AddCardToSlot("Field/OpponentCardSlot", OPPONENT_CARD_ROTATION);
+
         GameState.Instance!.MatchStarted += OnMatchStarted;
+        GameState.Instance.RoundRevealed += OnRoundRevealed;
         GameState.Instance.RoundResolved += OnRoundResolved;
 
         // The menu music plays through the connection screen and stops here, because this
@@ -49,13 +63,47 @@ public partial class MatchWorldView : Node3D
         if (GameState.Instance != null)
         {
             GameState.Instance.MatchStarted -= OnMatchStarted;
+            GameState.Instance.RoundRevealed -= OnRoundRevealed;
             GameState.Instance.RoundResolved -= OnRoundResolved;
         }
     }
 
+    private CardView AddCardToSlot(string slotPath, Vector3 rotation)
+    {
+        CardView card = GD.Load<PackedScene>(CARD_VIEW_SCENE_PATH).Instantiate<CardView>();
+        card.Rotation = rotation;
+        GetNode<Node3D>(slotPath).AddChild(card);
+        return card;
+    }
+
     private void OnMatchStarted()
     {
+        // A card left face up from the previous match would be showing something that is no
+        // longer in play, and a rematch reuses this scene.
+        _myPlayedCard.ShowFaceDown();
+        _opponentPlayedCard.ShowFaceDown();
         RefreshReadout();
+    }
+
+    /// <summary>Both played cards become known at the same moment, to both sides — the reveal
+    /// is what ends the round's hidden phase, so this is the first point either card may show
+    /// a face.</summary>
+    private void OnRoundRevealed()
+    {
+        MatchView view = GameState.Instance!.View;
+        ShowPlayedCard(_myPlayedCard, view.MyCard);
+        ShowPlayedCard(_opponentPlayedCard, view.OpponentCard);
+    }
+
+    private static void ShowPlayedCard(CardView cardView, ECardName? playedCard)
+    {
+        if (playedCard == null)
+        {
+            cardView.ShowFaceDown();
+            return;
+        }
+
+        cardView.ShowFaceUp(playedCard.Value);
     }
 
     private void OnRoundResolved()
