@@ -10,7 +10,7 @@ config_version=5
 
 [application]
 
-config/name="RockAndScissPaper"
+config/name="RockAndScissPaper 3D"
 run/main_scene="res://Scenes/Screens/TitleScreen.tscn"
 config/features=PackedStringArray("4.7", "C#", "Forward Plus")
 config/icon="res://icon.svg"
@@ -41,6 +41,10 @@ project/assembly_name="RockAndScissPaper"
 [editor]
 
 run/main_run_args="--resolution 960x600"
+
+[filesystem]
+
+import/blender/enabled=false
 
 [gui]
 
