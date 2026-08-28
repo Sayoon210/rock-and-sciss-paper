@@ -16,7 +16,7 @@ public class MatchSessionLogTests
         session.SubmitCard(ESide.Player1, ECardName.Rock);
         session.SubmitCard(ESide.Player2, ECardName.Scissors);
 
-        Assert.Equal(1, session.Player1Score);
+        Assert.Equal(MatchSession.STARTING_HEALTH - WinLossRules.ROCK_WIN_DAMAGE, session.Player2Health);
     }
 
     [Fact]
@@ -36,7 +36,7 @@ public class MatchSessionLogTests
         Assert.Equal(2, lines.FindAll(line => line.StartsWith("[submit]")).Count);
         Assert.Single(lines.FindAll(line => line.StartsWith("[resolve]")));
         Assert.Single(lines.FindAll(line => line.StartsWith("[hands]")));
-        Assert.Contains(lines, line => line.Contains("Player1Win") && line.Contains("score 1-0"));
+        Assert.Contains(lines, line => line.Contains("Player1Win") && line.Contains($"damage {WinLossRules.ROCK_WIN_DAMAGE}, health {MatchSession.STARTING_HEALTH}-{MatchSession.STARTING_HEALTH - WinLossRules.ROCK_WIN_DAMAGE}"));
     }
 
     [Fact]
@@ -49,13 +49,14 @@ public class MatchSessionLogTests
             new Random(1),
             lines.Add);
 
-        for (int round = 0; round < MatchSession.WINS_NEEDED_FOR_MATCH; round++)
+        int roundsNeeded = MatchSession.STARTING_HEALTH / WinLossRules.ROCK_WIN_DAMAGE;
+        for (int round = 0; round < roundsNeeded; round++)
         {
             session.SubmitCard(ESide.Player1, ECardName.Rock);
             session.SubmitCard(ESide.Player2, ECardName.Scissors);
         }
 
-        Assert.Contains(lines, line => line.StartsWith("[match]") && line.Contains($"Player1 wins {MatchSession.WINS_NEEDED_FOR_MATCH}-0"));
+        Assert.Contains(lines, line => line.StartsWith("[match]") && line.Contains($"Player1 wins, health {MatchSession.STARTING_HEALTH}-0"));
     }
 
     private static List<ECardName> Repeated(ECardName card, int count)

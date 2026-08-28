@@ -159,7 +159,7 @@ public partial class MatchWorldView : Node3D
     {
         MatchView view = GameState.Instance!.View;
         _roundLabel.Text = string.Format(Tr("MATCH_ROUND"), view.RoundNumber);
-        _myScoreLabel.Text = string.Format(Tr("MATCH_MY_SCORE"), view.MyScore, MatchSession.WINS_NEEDED_FOR_MATCH);
-        _opponentScoreLabel.Text = string.Format(Tr("MATCH_OPPONENT_SCORE"), view.OpponentScore, MatchSession.WINS_NEEDED_FOR_MATCH);
+        _myScoreLabel.Text = string.Format(Tr("MATCH_MY_HEALTH"), view.MyHealth, MatchSession.STARTING_HEALTH);
+        _opponentScoreLabel.Text = string.Format(Tr("MATCH_OPPONENT_HEALTH"), view.OpponentHealth, MatchSession.STARTING_HEALTH);
     }
 }

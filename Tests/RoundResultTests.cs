@@ -13,6 +13,7 @@ public class RoundResultTests
             player1CardFate: ECardFate.ReturnedToDeckBottom,
             player2CardFate: ECardFate.ReturnedToDeckBottom,
             winLoss: EWinLossResult.Player1Win,
+            damageDealt: WinLossRules.ROCK_WIN_DAMAGE,
             player1Hand: new[] { ECardName.Paper },
             player2Hand: new[] { ECardName.Blank, ECardName.Joker },
             player1DeckCount: 12,
@@ -28,6 +29,7 @@ public class RoundResultTests
         Assert.Equal(ECardFate.ReturnedToDeckBottom, result.Player1CardFate);
         Assert.Equal(ECardFate.ReturnedToDeckBottom, result.Player2CardFate);
         Assert.Equal(EWinLossResult.Player1Win, result.WinLoss);
+        Assert.Equal(WinLossRules.ROCK_WIN_DAMAGE, result.DamageDealt);
         Assert.Equal(new[] { ECardName.Paper }, result.Player1Hand);
         Assert.Equal(new[] { ECardName.Blank, ECardName.Joker }, result.Player2Hand);
         Assert.Equal(12, result.Player1DeckCount);
@@ -48,6 +50,7 @@ public class RoundResultTests
             player1CardFate: ECardFate.Vanished,
             player2CardFate: ECardFate.Vanished,
             winLoss: null,
+            damageDealt: 0,
             player1Hand: Array.Empty<ECardName>(),
             player2Hand: Array.Empty<ECardName>(),
             player1DeckCount: 0,
@@ -72,6 +75,7 @@ public class RoundResultTests
             player1CardFate: ECardFate.ReturnedToDeckBottom,
             player2CardFate: ECardFate.ReturnedToDeckBottom,
             winLoss: EWinLossResult.Draw,
+            damageDealt: 0,
             player1Hand: hand.Cards,
             player2Hand: Array.Empty<ECardName>(),
             player1DeckCount: 1,

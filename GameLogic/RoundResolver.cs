@@ -86,6 +86,7 @@ public static class RoundResolver
         ECardFate player1Fate;
         ECardFate player2Fate;
         EWinLossResult? winLoss;
+        int damageDealt;
         bool runEffects;
 
         if (player1Card == ECardName.Joker || player2Card == ECardName.Joker)
@@ -95,6 +96,7 @@ public static class RoundResolver
             player1Fate = ECardFate.Vanished;
             player2Fate = ECardFate.Vanished;
             winLoss = null;
+            damageDealt = 0;
             runEffects = false;
         }
         else
@@ -104,11 +106,27 @@ public static class RoundResolver
 
             if (player1Card.IsNormal() && player2Card.IsNormal())
             {
-                winLoss = WinLossRules.Judge(player1Card.ToNormalCard(), player2Card.ToNormalCard());
+                ENormalCard normalPlayer1Card = player1Card.ToNormalCard();
+                ENormalCard normalPlayer2Card = player2Card.ToNormalCard();
+                winLoss = WinLossRules.Judge(normalPlayer1Card, normalPlayer2Card);
+
+                if (winLoss == EWinLossResult.Player1Win)
+                {
+                    damageDealt = WinLossRules.DamageOf(normalPlayer1Card);
+                }
+                else if (winLoss == EWinLossResult.Player2Win)
+                {
+                    damageDealt = WinLossRules.DamageOf(normalPlayer2Card);
+                }
+                else
+                {
+                    damageDealt = 0;
+                }
             }
             else
             {
                 winLoss = null;
+                damageDealt = 0;
             }
 
             runEffects = true;
@@ -141,6 +159,7 @@ public static class RoundResolver
             player1Fate,
             player2Fate,
             winLoss,
+            damageDealt,
             player1MustChoose,
             player2MustChoose,
             resetApplied);
@@ -169,6 +188,7 @@ public static class RoundResolver
             round.Player1CardFate,
             round.Player2CardFate,
             round.WinLoss,
+            round.DamageDealt,
             player1.Hand.Cards,
             player2.Hand.Cards,
             player1.Deck.Count,

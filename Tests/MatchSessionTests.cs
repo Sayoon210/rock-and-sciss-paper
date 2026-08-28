@@ -76,12 +76,12 @@ public class MatchSessionTests
     }
 
     [Fact]
-    public void A_new_match_has_no_score_and_no_winner()
+    public void A_new_match_starts_at_full_health_with_no_winner()
     {
         MatchSession session = NewSession();
 
-        Assert.Equal(0, session.Player1Score);
-        Assert.Equal(0, session.Player2Score);
+        Assert.Equal(MatchSession.STARTING_HEALTH, session.Player1Health);
+        Assert.Equal(MatchSession.STARTING_HEALTH, session.Player2Health);
         Assert.Equal(1, session.RoundNumber);
         Assert.Null(session.Winner);
         Assert.Equal(ERoundPhase.AwaitingSubmissions, session.Phase);
@@ -131,7 +131,7 @@ public class MatchSessionTests
     }
 
     [Fact]
-    public void A_win_increments_only_the_winners_score()
+    public void A_win_damages_only_the_losers_health()
     {
         var session = new MatchSession(
             Repeated(ECardName.Rock, 8),
@@ -142,12 +142,13 @@ public class MatchSessionTests
         RoundReveal? reveal = session.SubmitCard(ESide.Player2, ECardName.Scissors);
 
         Assert.Equal(EWinLossResult.Player1Win, reveal!.Result!.WinLoss);
-        Assert.Equal(1, session.Player1Score);
-        Assert.Equal(0, session.Player2Score);
+        Assert.Equal(WinLossRules.ROCK_WIN_DAMAGE, reveal.Result.DamageDealt);
+        Assert.Equal(MatchSession.STARTING_HEALTH, session.Player1Health);
+        Assert.Equal(MatchSession.STARTING_HEALTH - WinLossRules.ROCK_WIN_DAMAGE, session.Player2Health);
     }
 
     [Fact]
-    public void A_round_with_no_win_loss_does_not_change_the_score()
+    public void A_round_with_no_win_loss_does_not_change_health()
     {
         var session = new MatchSession(
             Repeated(ECardName.Blank, 8),
@@ -158,23 +159,25 @@ public class MatchSessionTests
         RoundReveal? reveal = session.SubmitCard(ESide.Player2, ECardName.Rock);
 
         Assert.Null(reveal!.Result!.WinLoss);
-        Assert.Equal(0, session.Player1Score);
-        Assert.Equal(0, session.Player2Score);
+        Assert.Equal(MatchSession.STARTING_HEALTH, session.Player1Health);
+        Assert.Equal(MatchSession.STARTING_HEALTH, session.Player2Health);
     }
 
     [Fact]
-    public void Winner_is_set_once_a_player_reaches_the_needed_wins()
+    public void Winner_is_set_once_a_players_health_reaches_zero()
     {
-        MatchSession session = PlayRounds(MatchSession.WINS_NEEDED_FOR_MATCH);
+        int roundsToDefeat = MatchSession.STARTING_HEALTH / WinLossRules.ROCK_WIN_DAMAGE;
+        MatchSession session = PlayRounds(roundsToDefeat);
 
-        Assert.Equal(MatchSession.WINS_NEEDED_FOR_MATCH, session.Player1Score);
+        Assert.Equal(0, session.Player2Health);
         Assert.Equal(ESide.Player1, session.Winner);
     }
 
     [Fact]
     public void SubmitCard_throws_once_the_match_is_over()
     {
-        MatchSession session = PlayRounds(MatchSession.WINS_NEEDED_FOR_MATCH);
+        int roundsToDefeat = MatchSession.STARTING_HEALTH / WinLossRules.ROCK_WIN_DAMAGE;
+        MatchSession session = PlayRounds(roundsToDefeat);
 
         Assert.Throws<InvalidOperationException>(
             () => session.SubmitCard(ESide.Player1, session.HandOf(ESide.Player1)[0]));

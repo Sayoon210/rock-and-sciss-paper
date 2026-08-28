@@ -10,8 +10,7 @@ public enum ECardFate
 }
 
 /// <summary>What happened in one round. WinLoss is null whenever a ability, blank, or
-/// Joker card was involved — those rounds have no win/loss and do not count toward the
-/// 10-win score.
+/// Joker card was involved — those rounds have no win/loss and deal no damage.
 ///
 /// The hands are the full post-round contents rather than "what each player drew",
 /// because Reset replaces both hands outright and Draw adds two extra cards, so a single
@@ -29,6 +28,11 @@ public sealed class RoundResult
     public ECardFate Player1CardFate { get; }
     public ECardFate Player2CardFate { get; }
     public EWinLossResult? WinLoss { get; }
+
+    /// <summary>Health lost by whichever side WinLoss says lost — WinLossRules.DamageOf,
+    /// keyed on the card that won. Zero whenever WinLoss is null.</summary>
+    public int DamageDealt { get; }
+
     public IReadOnlyList<ECardName> Player1Hand { get; }
     public IReadOnlyList<ECardName> Player2Hand { get; }
     public int Player1DeckCount { get; }
@@ -55,6 +59,7 @@ public sealed class RoundResult
         ECardFate player1CardFate,
         ECardFate player2CardFate,
         EWinLossResult? winLoss,
+        int damageDealt,
         IEnumerable<ECardName> player1Hand,
         IEnumerable<ECardName> player2Hand,
         int player1DeckCount,
@@ -70,6 +75,7 @@ public sealed class RoundResult
         Player1CardFate = player1CardFate;
         Player2CardFate = player2CardFate;
         WinLoss = winLoss;
+        DamageDealt = damageDealt;
 
         // Copied, not referenced — Hand.Cards is a live view over a list that keeps
         // changing as the match goes on.

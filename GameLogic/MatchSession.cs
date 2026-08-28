@@ -16,7 +16,7 @@ public enum ERoundPhase
     AwaitingChoices,
 }
 
-/// <summary>One match, from the opening mulligan to a player reaching ten wins.
+/// <summary>One match, from the opening mulligan to a player's health reaching zero.
 /// Instantiated on the host only, once both players are known.
 ///
 /// Rounds are simultaneous: each side submits independently, and nothing is revealed until
@@ -29,7 +29,7 @@ public enum ERoundPhase
 /// catch and drop them rather than let a malformed or malicious request reach here twice.</summary>
 public sealed class MatchSession
 {
-    public const int WINS_NEEDED_FOR_MATCH = 10;
+    public const int STARTING_HEALTH = 10;
     public const int MULLIGAN_HAND_SIZE = 4;
 
     private readonly DeckAndHand _player1;
@@ -41,8 +41,8 @@ public sealed class MatchSession
     private ECardName? _player2SubmittedCard;
     private RoundInProgress? _round;
 
-    // Sticky once set — a side that ran out of cards has lost regardless of score, and
-    // score alone can never turn back on. Checked in Winner ahead of the score-based result.
+    // Sticky once set — a side that ran out of cards has lost regardless of health, and
+    // health alone can never turn back on. Checked in Winner ahead of the health-based result.
     private bool _player1Exhausted;
     private bool _player2Exhausted;
 
@@ -68,8 +68,8 @@ public sealed class MatchSession
         Deal(ESide.Player2);
     }
 
-    public int Player1Score { get; private set; }
-    public int Player2Score { get; private set; }
+    public int Player1Health { get; private set; } = STARTING_HEALTH;
+    public int Player2Health { get; private set; } = STARTING_HEALTH;
     public int RoundNumber { get; private set; } = 1;
 
     public ERoundPhase Phase
@@ -85,8 +85,9 @@ public sealed class MatchSession
         }
     }
 
-    /// <summary>The side that won — ten wins, or the other side running out of cards
-    /// (DESIGN.md, "덱 고갈"), whichever happened. Null while the match is still running.
+    /// <summary>The side that won — the other side's health reaching zero, or the other
+    /// side running out of cards (DESIGN.md, "덱 고갈"), whichever happened. Null while the
+    /// match is still running.
     ///
     /// Exhaustion is checked first. If both sides exhaust in the same round, Player 1's
     /// exhaustion is the one that resolves it — the same "Player 1 first" tie-break this
@@ -106,12 +107,12 @@ public sealed class MatchSession
                 return ESide.Player1;
             }
 
-            if (Player1Score >= WINS_NEEDED_FOR_MATCH)
+            if (Player2Health <= 0)
             {
                 return ESide.Player1;
             }
 
-            if (Player2Score >= WINS_NEEDED_FOR_MATCH)
+            if (Player1Health <= 0)
             {
                 return ESide.Player2;
             }
@@ -337,18 +338,21 @@ public sealed class MatchSession
         }
     }
 
-    /// <summary>Closes out a resolved round: records its score, notes whether either deck
+    /// <summary>Closes out a resolved round: applies its damage, notes whether either deck
     /// just ran dry, and moves the round counter on. The rules of the round itself belong to
     /// RoundResolver; this only writes the outcome into the match.</summary>
     private void RecordResolvedRound(RoundResult result)
     {
+        // The loser takes the damage — WinLoss says who lost, DamageDealt says how much.
+        // Clamped at zero rather than allowed to go negative, so a health reading is always
+        // something Winner can compare against 0 without a second check.
         if (result.WinLoss == EWinLossResult.Player1Win)
         {
-            Player1Score++;
+            Player2Health = Math.Max(0, Player2Health - result.DamageDealt);
         }
         else if (result.WinLoss == EWinLossResult.Player2Win)
         {
-            Player2Score++;
+            Player1Health = Math.Max(0, Player1Health - result.DamageDealt);
         }
 
         // Checked off the result's counts, not by re-reading the live decks — same reason
@@ -378,7 +382,7 @@ public sealed class MatchSession
                 verdict = result.WinLoss.ToString()!;
             }
 
-            _log($"[resolve] round {RoundNumber}: {result.Player1Card} ({result.Player1CardFate}) vs {result.Player2Card} ({result.Player2CardFate}) -> {verdict}, score {Player1Score}-{Player2Score}");
+            _log($"[resolve] round {RoundNumber}: {result.Player1Card} ({result.Player1CardFate}) vs {result.Player2Card} ({result.Player2CardFate}) -> {verdict}, damage {result.DamageDealt}, health {Player1Health}-{Player2Health}");
             _log($"[hands]   P1 {Describe(result.Player1Hand)} (deck {result.Player1DeckCount}) | P2 {Describe(result.Player2Hand)} (deck {result.Player2DeckCount})");
         }
 
@@ -386,7 +390,7 @@ public sealed class MatchSession
 
         if (Winner != null)
         {
-            _log?.Invoke($"[match]   {Winner} wins {Player1Score}-{Player2Score}");
+            _log?.Invoke($"[match]   {Winner} wins, health {Player1Health}-{Player2Health}");
         }
     }
 

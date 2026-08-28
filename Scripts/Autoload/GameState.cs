@@ -38,7 +38,7 @@ public partial class GameState : Node
 
     /// <summary>How long a round waits for cards before the host plays for whoever has not
     /// submitted. Longer than the choice limit because submitting is decided from the whole
-    /// board — both scores, the field, and every card in hand — where a choice is made from
+    /// board — both healths, the field, and every card in hand — where a choice is made from
     /// one already-narrowed set. Public for the same reason CHOICE_TIMEOUT_SECONDS is: the
     /// screen counts the same number down on its own.</summary>
     public const double SUBMIT_TIMEOUT_SECONDS = 20.0;
@@ -379,8 +379,8 @@ public partial class GameState : Node
         bool player1TransformApplied,
         bool player2TransformApplied,
         bool resetApplied,
-        int player1Score,
-        int player2Score,
+        int player1Health,
+        int player2Health,
         int roundNumber,
         int winnerSide)
     {
@@ -409,8 +409,8 @@ public partial class GameState : Node
             player1TransformApplied,
             player2TransformApplied,
             resetApplied,
-            player1Score,
-            player2Score,
+            player1Health,
+            player2Health,
             roundNumber,
             winner);
 
@@ -761,8 +761,8 @@ public partial class GameState : Node
             result.Player1TransformApplied,
             result.Player2TransformApplied,
             result.ResetApplied,
-            _session.Player1Score,
-            _session.Player2Score,
+            _session.Player1Health,
+            _session.Player2Health,
             _session.RoundNumber,
             winnerSide);
 
@@ -779,8 +779,8 @@ public partial class GameState : Node
             result.Player1TransformApplied,
             result.Player2TransformApplied,
             result.ResetApplied,
-            _session.Player1Score,
-            _session.Player2Score,
+            _session.Player1Health,
+            _session.Player2Health,
             _session.RoundNumber,
             _session.Winner);
 
@@ -844,8 +844,8 @@ public partial class GameState : Node
         bool player1TransformApplied,
         bool player2TransformApplied,
         bool resetApplied,
-        int player1Score,
-        int player2Score,
+        int player1Health,
+        int player2Health,
         int roundNumber,
         ESide? winner)
     {
@@ -860,8 +860,8 @@ public partial class GameState : Node
             View.OpponentSwappedCardCount = player2SwappedCardCount;
             View.MyTransformApplied = player1TransformApplied;
             View.OpponentTransformApplied = player2TransformApplied;
-            View.MyScore = player1Score;
-            View.OpponentScore = player2Score;
+            View.MyHealth = player1Health;
+            View.OpponentHealth = player2Health;
         }
         else
         {
@@ -874,8 +874,8 @@ public partial class GameState : Node
             View.OpponentSwappedCardCount = player1SwappedCardCount;
             View.MyTransformApplied = player2TransformApplied;
             View.OpponentTransformApplied = player1TransformApplied;
-            View.MyScore = player2Score;
-            View.OpponentScore = player1Score;
+            View.MyHealth = player2Health;
+            View.OpponentHealth = player1Health;
         }
 
         View.ResetApplied = resetApplied;

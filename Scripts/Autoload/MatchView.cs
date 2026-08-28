@@ -68,8 +68,11 @@ public sealed class MatchView
     /// the played cards, so it cannot get the rule wrong on its own.</summary>
     public bool ResetApplied { get; set; }
 
-    public int MyScore { get; set; }
-    public int OpponentScore { get; set; }
+    // Health, not win count — MatchSession.STARTING_HEALTH each, ticking down as rounds are
+    // lost. Defaulted here rather than left at 0 so a screen built before the first
+    // RoundResolved (right after MatchStarted) shows full health instead of empty.
+    public int MyHealth { get; set; } = MatchSession.STARTING_HEALTH;
+    public int OpponentHealth { get; set; } = MatchSession.STARTING_HEALTH;
     public int RoundNumber { get; set; }
 
     public EMatchOutcome? MatchResult { get; set; }

@@ -388,7 +388,7 @@ public partial class MatchDebugUI : Control
         MatchView view = GameState.Instance!.View;
 
         _statusLabel.Text =
-            $"[{DescribeRole()}]  round {view.RoundNumber}   score {view.MyScore}-{view.OpponentScore}\n"
+            $"[{DescribeRole()}]  round {view.RoundNumber}   health {view.MyHealth}-{view.OpponentHealth}\n"
             + $"my deck {view.MyDeckCount}   opponent deck {view.OpponentDeckCount}   opponent hand {view.OpponentHandCount}\n"
             + $"last round: {DescribeLastRound(view)}\n"
             + $"{DescribeChoiceState(view)}";

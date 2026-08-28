@@ -26,6 +26,10 @@ public sealed class RoundInProgress
     public ECardFate Player2CardFate { get; }
     public EWinLossResult? WinLoss { get; }
 
+    /// <summary>Health lost by whichever side WinLoss says lost. Zero whenever WinLoss is
+    /// null — a draw, or a round with no normal-card matchup at all.</summary>
+    public int DamageDealt { get; }
+
     private EChoiceStatus _player1ChoiceStatus;
     private EChoiceStatus _player2ChoiceStatus;
     private CardChoice? _player1Choice;
@@ -44,6 +48,7 @@ public sealed class RoundInProgress
         ECardFate player1CardFate,
         ECardFate player2CardFate,
         EWinLossResult? winLoss,
+        int damageDealt,
         bool player1MustChoose,
         bool player2MustChoose,
         bool resetApplied)
@@ -53,6 +58,7 @@ public sealed class RoundInProgress
         Player1CardFate = player1CardFate;
         Player2CardFate = player2CardFate;
         WinLoss = winLoss;
+        DamageDealt = damageDealt;
         ResetApplied = resetApplied;
 
         if (player1MustChoose)
