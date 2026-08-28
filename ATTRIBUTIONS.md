@@ -42,6 +42,21 @@
 [Scenes/Screens/TitleScreen.tscn](Scenes/Screens/TitleScreen.tscn). 팩 자체는 CC0라 표기
 의무는 없다(License.txt에도 "not a requirement"라고 명시).
 
+## 3D / 캐릭터
+
+| 파일 | 제작자 | 출처 | 라이선스 | 수정 |
+|---|---|---|---|---|
+| `Assets/Models/MainCharacter.glb` (+ 딸린 `MainCharacter_Ch28_1001_*.png`) | Adobe (Mixamo) | [Mixamo](https://www.mixamo.com/) 캐릭터 `Ch28` | Mixamo 라이선스 — CC0 아님. **재배포 금지, 게임에 포함하는 것은 무료·무제한** | 앉은 자세로 리깅 조정, 애니메이션 자작 3종 추가, `.glb`로 재익스포트 |
+
+**재배포 금지가 무슨 뜻이냐면** — 완성된 게임에 넣어 파는 것은 허용되지만, 이 파일 자체를
+에셋팩처럼 따로 배포하는 것은 안 된다. 소스 저장소가 공개로 바뀌면 이 `.glb`가 사실상
+재배포에 해당할 수 있으니 그때 다시 확인할 것.
+
+애니메이션(`Anim_Punch_Baked`, `Anim_StabScissor_Baked`, `Anim_NoNoNoFinger`)은 Mixamo
+프리셋이 아니라 **Blender에서 직접 만든 자작**이다. 작업 파일은 `Assets/_Source/`에 있고
+`.gitignore`로 저장소에서 빠져 있다 — 그 폴더의 `.gdignore`는 Godot도 그 안을 임포트하지
+않게 하려고 둔 것이다.
+
 ## 라이선스별로 실제로 해야 하는 것
 
 **CC BY 계열**은 크레딧 표기가 **의무**다. 표기를 빼면 라이선스 위반이라 그냥 무단 사용이 된다.

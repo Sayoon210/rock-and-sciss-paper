@@ -6,3 +6,11 @@
 bin/
 obj/
 *.user
+
+# Art sources. Only the exported .glb belongs in the repo — these are the
+# files it was made from, and they live in Assets/_Source/, which carries a
+# .gdignore so Godot does not import them either.
+# .blend1/.blend2 are Blender's own save-time backups.
+*.blend
+*.blend[0-9]
+*.fbx
