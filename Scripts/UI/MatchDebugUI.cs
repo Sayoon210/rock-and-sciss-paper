@@ -421,7 +421,12 @@ public partial class MatchDebugUI : Control
 
     private string DescribeRole()
     {
-        if (Multiplayer.MultiplayerPeer == null)
+        // Not just a null check: on a drop the peer object is still assigned while the
+        // connection under it is already gone, and IsServer() asks that dead peer for its
+        // unique id — which pushes "The multiplayer instance isn't currently active" every
+        // time this refreshes. OnOpponentLeft refreshes on exactly that edge.
+        if (Multiplayer.MultiplayerPeer == null
+            || Multiplayer.MultiplayerPeer.GetConnectionStatus() != MultiplayerPeer.ConnectionStatus.Connected)
         {
             return "not connected";
         }
