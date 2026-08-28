@@ -6,6 +6,7 @@
 [ext_resource type="Script" uid="uid://w1ypfpogo53j" path="res://Scripts/Match3D/CharacterIdlePose.cs" id="4_idlepose"]
 [ext_resource type="Script" uid="uid://wnbq0587kv1x" path="res://Scripts/Match3D/CharacterHeadFade.cs" id="5_headfade"]
 [ext_resource type="Script" uid="uid://of5lvvyhktkk" path="res://Scripts/Match3D/HeadFollowCamera.cs" id="6_headfollow"]
+[ext_resource type="Script" uid="uid://belkibd1xfnox" path="res://Scripts/Match3D/DebugHandPreview.cs" id="7_debughand"]
 
 [sub_resource type="Environment" id="Environment_match"]
 background_mode = 1
@@ -65,17 +66,21 @@ script = ExtResource("5_headfade")
 [node name="Field" type="Node3D" parent="." unique_id=14686278]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.72, 0)
 
-[node name="MyCardSlot" type="Node3D" parent="Field" unique_id=1061693325]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.25)
+[node name="CardRest2" parent="Field" unique_id=1993400193 instance=ExtResource("3_cardrest")]
+transform = Transform3D(-0.5, 0, -4.371139e-08, 0, 0.5, 0, 4.371139e-08, 0, -0.5, -0.0055994317, 0, -0.3283155)
 
-[node name="CardRest" parent="Field/MyCardSlot" unique_id=1211110127 instance=ExtResource("3_cardrest")]
-transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0.018, 0, 0.096470654)
+[node name="OpponentCardSlot" type="Node3D" parent="Field/CardRest2" unique_id=1860115794]
+transform = Transform3D(-2, 0, 1.7484555e-07, 0, 2, 0, -1.7484555e-07, 0, -2, -0.011198849, 0, -0.156631)
 
-[node name="OpponentCardSlot" type="Node3D" parent="Field" unique_id=1860115794]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.25)
+[node name="CardRest" parent="Field" unique_id=1211110127 instance=ExtResource("3_cardrest")]
+transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0.018, 0, 0.34647065)
 
-[node name="CardRest" parent="Field/OpponentCardSlot" unique_id=1993400193 instance=ExtResource("3_cardrest")]
-transform = Transform3D(-0.5, 0, -4.371139e-08, 0, 0.5, 0, 4.371139e-08, 0, -0.5, -0.0055994317, 0, -0.0783155)
+[node name="MyCardSlot" type="Node3D" parent="Field/CardRest" unique_id=1061693325]
+transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, -0.036, 0, -0.19294131)
+
+[node name="DebugHandPreview" type="Node3D" parent="Field/CardRest" unique_id=906581897]
+transform = Transform3D(1, 0, 0, 0, 0.90172476, 0.43231076, 0, -0.43231076, 0.90172476, 0, -0.19224954, -0.27267984)
+script = ExtResource("7_debughand")
 
 [node name="MatchInterface" type="CanvasLayer" parent="." unique_id=1442123972]
 
@@ -98,9 +103,9 @@ text = "Me"
 layout_mode = 2
 text = "Opponent"
 
-[node name="DebugInterface" type="CanvasLayer" parent="."]
+[node name="DebugInterface" type="CanvasLayer" parent="." unique_id=1419643423]
 
-[node name="AnimationButtons" type="VBoxContainer" parent="DebugInterface"]
+[node name="AnimationButtons" type="VBoxContainer" parent="DebugInterface" unique_id=1739684824]
 offset_left = 24.0
 offset_top = 140.0
 offset_right = 400.0

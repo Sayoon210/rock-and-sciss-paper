@@ -1,34 +1,24 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://6mg5lk666cfk"]
 
-[ext_resource type="Script" path="res://Scripts/Match3D/CardView.cs" id="1_cardview"]
-[ext_resource type="Texture2D" path="res://Assets/Cards/CardBackImage.png" id="2_cardback"]
-
-[sub_resource type="BoxMesh" id="BoxMesh_rim"]
-size = Vector3(0.0635, 0.0889, 0.004)
+[ext_resource type="Script" uid="uid://5e4mlpy8pajm" path="res://Scripts/Match3D/CardView.cs" id="1_cardview"]
+[ext_resource type="Texture2D" uid="uid://ra32r4rca4u1" path="res://Assets/Cards/CardBackImage.png" id="2_cardback"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rim"]
 albedo_color = Color(0.16, 0.15, 0.14, 1)
 roughness = 0.8
 
-[sub_resource type="QuadMesh" id="QuadMesh_face"]
-size = Vector2(0.0635, 0.0889)
-
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_back"]
 albedo_texture = ExtResource("2_cardback")
 roughness = 0.7
 
-[node name="CardView" type="Node3D"]
+[node name="CardView" type="Node3D" unique_id=777042523]
 script = ExtResource("1_cardview")
 
-[node name="Rim" type="MeshInstance3D" parent="."]
-mesh = SubResource("BoxMesh_rim")
-surface_material_override/0 = SubResource("StandardMaterial3D_rim")
+[node name="Rim" type="MeshInstance3D" parent="." unique_id=1693173646]
+material_override = SubResource("StandardMaterial3D_rim")
 
-[node name="Front" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.0021)
-mesh = SubResource("QuadMesh_face")
+[node name="Front" type="MeshInstance3D" parent="." unique_id=10668957]
 
-[node name="Back" type="MeshInstance3D" parent="."]
-transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, -0.0021)
-mesh = SubResource("QuadMesh_face")
-surface_material_override/0 = SubResource("StandardMaterial3D_back")
+[node name="Back" type="MeshInstance3D" parent="." unique_id=1146160554]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0)
+material_override = SubResource("StandardMaterial3D_back")

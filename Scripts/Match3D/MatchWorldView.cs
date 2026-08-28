@@ -26,17 +26,6 @@ public partial class MatchWorldView : Node3D
     private static readonly Vector3 MY_CARD_ROTATION = new Vector3(-Mathf.Pi / 2f, 0f, 0f);
     private static readonly Vector3 OPPONENT_CARD_ROTATION = new Vector3(-Mathf.Pi / 2f, Mathf.Pi, 0f);
 
-    // TEMP DEBUG — a static mockup of a hand fanned out on Field/MyCardSlot/CardRest, to judge
-    // card-versus-rest scale/spacing before the real hand-in-3D system exists. One of each
-    // card type just so the spread is visually distinguishable. Remove once real hand cards
-    // are placed here instead (checklist: "손패를 3D 씬에 배치").
-    private static readonly ECardName[] DEBUG_HAND_CARDS =
-    {
-        ECardName.Rock, ECardName.Paper, ECardName.Scissors, ECardName.Blank, ECardName.Joker,
-    };
-    private static readonly Vector3 DEBUG_HAND_REST_LOCAL_CENTER = new Vector3(0.0184f, 0.078f, 0.2778f);
-    private const float DEBUG_HAND_CARD_SPACING = 0.07f;
-
     private CharacterAnimationController _myAnimation = null!;
     private CharacterAnimationController _opponentAnimation = null!;
     private CardView _myPlayedCard = null!;
@@ -55,10 +44,9 @@ public partial class MatchWorldView : Node3D
         _myScoreLabel = GetNode<Label>("MatchInterface/Readout/MyScoreLabel");
         _opponentScoreLabel = GetNode<Label>("MatchInterface/Readout/OpponentScoreLabel");
 
-        _myPlayedCard = AddCardToSlot("Field/MyCardSlot", MY_CARD_ROTATION);
-        _opponentPlayedCard = AddCardToSlot("Field/OpponentCardSlot", OPPONENT_CARD_ROTATION);
+        _myPlayedCard = AddCardToSlot("Field/CardRest/MyCardSlot", MY_CARD_ROTATION);
+        _opponentPlayedCard = AddCardToSlot("Field/CardRest2/OpponentCardSlot", OPPONENT_CARD_ROTATION);
 
-        SpawnDebugHandOnRest();
         AnimationDebugPanel.BuildInto(
             GetNode<VBoxContainer>("DebugInterface/AnimationButtons"),
             GetNode<AnimationPlayer>("MySeat/Character/AnimationPlayer"));
@@ -92,25 +80,6 @@ public partial class MatchWorldView : Node3D
         card.Rotation = rotation;
         GetNode<Node3D>(slotPath).AddChild(card);
         return card;
-    }
-
-    // TEMP DEBUG — see DEBUG_HAND_CARDS.
-    private void SpawnDebugHandOnRest()
-    {
-        Node3D myCardSlot = GetNode<Node3D>("Field/MyCardSlot");
-        float startX = DEBUG_HAND_REST_LOCAL_CENTER.X - (DEBUG_HAND_CARDS.Length - 1) * DEBUG_HAND_CARD_SPACING / 2f;
-
-        for (int i = 0; i < DEBUG_HAND_CARDS.Length; i++)
-        {
-            CardView card = GD.Load<PackedScene>(CARD_VIEW_SCENE_PATH).Instantiate<CardView>();
-            card.Rotation = MY_CARD_ROTATION;
-            card.Position = new Vector3(
-                startX + i * DEBUG_HAND_CARD_SPACING,
-                DEBUG_HAND_REST_LOCAL_CENTER.Y,
-                DEBUG_HAND_REST_LOCAL_CENTER.Z);
-            myCardSlot.AddChild(card);
-            card.ShowFaceUp(DEBUG_HAND_CARDS[i]);
-        }
     }
 
     private void OnMatchStarted()
