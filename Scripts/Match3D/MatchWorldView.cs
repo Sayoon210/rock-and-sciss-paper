@@ -26,8 +26,8 @@ public partial class MatchWorldView : Node3D
     private static readonly Vector3 MY_CARD_ROTATION = new Vector3(-Mathf.Pi / 2f, 0f, 0f);
     private static readonly Vector3 OPPONENT_CARD_ROTATION = new Vector3(-Mathf.Pi / 2f, Mathf.Pi, 0f);
 
-    private AnimationPlayer _myAnimationPlayer = null!;
-    private AnimationPlayer _opponentAnimationPlayer = null!;
+    private CharacterAnimationController _myAnimation = null!;
+    private CharacterAnimationController _opponentAnimation = null!;
     private CardView _myPlayedCard = null!;
     private CardView _opponentPlayedCard = null!;
     private Label _roundLabel = null!;
@@ -36,8 +36,10 @@ public partial class MatchWorldView : Node3D
 
     public override void _Ready()
     {
-        _myAnimationPlayer = GetNode<AnimationPlayer>("MySeat/Character/AnimationPlayer");
-        _opponentAnimationPlayer = GetNode<AnimationPlayer>("OpponentSeat/Character/AnimationPlayer");
+        _myAnimation = new CharacterAnimationController(
+            GetNode<AnimationPlayer>("MySeat/Character/AnimationPlayer"));
+        _opponentAnimation = new CharacterAnimationController(
+            GetNode<AnimationPlayer>("OpponentSeat/Character/AnimationPlayer"));
         _roundLabel = GetNode<Label>("MatchInterface/Readout/RoundLabel");
         _myScoreLabel = GetNode<Label>("MatchInterface/Readout/MyScoreLabel");
         _opponentScoreLabel = GetNode<Label>("MatchInterface/Readout/OpponentScoreLabel");
@@ -136,8 +138,8 @@ public partial class MatchWorldView : Node3D
             return;
         }
 
-        AnimationPlayer winnerAnimationPlayer = didIWin ? _myAnimationPlayer : _opponentAnimationPlayer;
-        winnerAnimationPlayer.Play(animationName);
+        CharacterAnimationController winnerAnimation = didIWin ? _myAnimation : _opponentAnimation;
+        winnerAnimation.PlayBlow(animationName);
     }
 
     private static string? FindAnimationForWinningCard(ECardName winningCard)

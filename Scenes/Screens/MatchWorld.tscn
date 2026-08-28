@@ -1,7 +1,10 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://bdihi2lewlw2k"]
 
-[ext_resource type="Script" path="res://Scripts/Match3D/MatchWorldView.cs" id="1_matchworldview"]
+[ext_resource type="Script" uid="uid://cfap4uxe24c2u" path="res://Scripts/Match3D/MatchWorldView.cs" id="1_matchworldview"]
 [ext_resource type="PackedScene" uid="uid://gpgmiwxrq3gj" path="res://Assets/Models/MainCharacter.glb" id="2_character"]
+[ext_resource type="PackedScene" uid="uid://rlamac0gftew" path="res://Assets/Models/CardRest.glb" id="3_cardrest"]
+[ext_resource type="Script" uid="uid://w1ypfpogo53j" path="res://Scripts/Match3D/CharacterIdlePose.cs" id="4_idlepose"]
+[ext_resource type="Script" uid="uid://wnbq0587kv1x" path="res://Scripts/Match3D/CharacterHeadFade.cs" id="5_headfade"]
 
 [sub_resource type="Environment" id="Environment_match"]
 background_mode = 1
@@ -11,70 +14,83 @@ ambient_light_color = Color(0.6, 0.62, 0.68, 1)
 ambient_light_energy = 1.2
 
 [sub_resource type="BoxMesh" id="BoxMesh_table"]
-size = Vector3(1.4, 0.05, 0.9)
+size = Vector3(1.4, 0.05, 1.3866822)
 
-[node name="MatchWorld" type="Node3D"]
+[node name="MatchWorld" type="Node3D" unique_id=2029126377]
 script = ExtResource("1_matchworldview")
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=2105080709]
 environment = SubResource("Environment_match")
 
-[node name="KeyLight" type="SpotLight3D" parent="."]
+[node name="KeyLight" type="SpotLight3D" parent="." unique_id=1753912055]
 transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 1.8, 0)
 light_energy = 4.0
 shadow_enabled = true
 spot_range = 6.0
-spot_angle = 45.0
 
-[node name="DebugFillLight" type="DirectionalLight3D" parent="."]
+[node name="DebugFillLight" type="DirectionalLight3D" parent="." unique_id=949984593]
 transform = Transform3D(1, 0, 0, 0, 0.766, -0.643, 0, 0.643, 0.766, 0, 3, 3)
 light_energy = 1.2
 
-[node name="Table" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.695, 0)
+[node name="Table" type="MeshInstance3D" parent="." unique_id=1492602356]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.695, 0.00014042854)
 mesh = SubResource("BoxMesh_table")
 
-[node name="MySeat" type="Node3D" parent="."]
+[node name="MySeat" type="Node3D" parent="." unique_id=1189686537]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.8)
 
-[node name="Character" parent="MySeat" instance=ExtResource("2_character")]
+[node name="Character" parent="MySeat" unique_id=690174408 instance=ExtResource("2_character")]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0)
+script = ExtResource("4_idlepose")
 
-[node name="Camera3D" type="Camera3D" parent="MySeat"]
-transform = Transform3D(1, 0, 0, 0, 0.99, -0.139, 0, 0.139, 0.99, 0, 1.5, 1)
+[node name="HeadFade" type="Node3D" parent="MySeat/Character" unique_id=1635903871]
+script = ExtResource("5_headfade")
 
-[node name="OpponentSeat" type="Node3D" parent="."]
+[node name="Camera3D" type="Camera3D" parent="MySeat" unique_id=1537568626]
+transform = Transform3D(1, 0, 0, 0, 0.77526677, 0.6316338, 0, -0.6316338, 0.77526677, 0, 1.3125579, 0.00624007)
+
+[node name="OpponentSeat" type="Node3D" parent="." unique_id=1489395047]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, -0.8)
 
-[node name="Character" parent="OpponentSeat" instance=ExtResource("2_character")]
+[node name="Character" parent="OpponentSeat" unique_id=1949186802 instance=ExtResource("2_character")]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0)
+script = ExtResource("4_idlepose")
 
-[node name="Field" type="Node3D" parent="."]
+[node name="HeadFade" type="Node3D" parent="OpponentSeat/Character" unique_id=1179745497]
+script = ExtResource("5_headfade")
+
+[node name="Field" type="Node3D" parent="." unique_id=14686278]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.72, 0)
 
-[node name="MyCardSlot" type="Node3D" parent="Field"]
+[node name="MyCardSlot" type="Node3D" parent="Field" unique_id=1061693325]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.25)
 
-[node name="OpponentCardSlot" type="Node3D" parent="Field"]
+[node name="CardRest" parent="Field/MyCardSlot" unique_id=1211110127 instance=ExtResource("3_cardrest")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.1)
+
+[node name="OpponentCardSlot" type="Node3D" parent="Field" unique_id=1860115794]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.25)
 
-[node name="MatchInterface" type="CanvasLayer" parent="."]
+[node name="CardRest" parent="Field/OpponentCardSlot" unique_id=1993400193 instance=ExtResource("3_cardrest")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, -0.1)
 
-[node name="Readout" type="VBoxContainer" parent="MatchInterface"]
+[node name="MatchInterface" type="CanvasLayer" parent="." unique_id=1442123972]
+
+[node name="Readout" type="VBoxContainer" parent="MatchInterface" unique_id=1559222291]
 offset_left = 24.0
 offset_top = 20.0
 offset_right = 360.0
 offset_bottom = 128.0
 
-[node name="RoundLabel" type="Label" parent="MatchInterface/Readout"]
+[node name="RoundLabel" type="Label" parent="MatchInterface/Readout" unique_id=291211321]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "Round"
 
-[node name="MyScoreLabel" type="Label" parent="MatchInterface/Readout"]
+[node name="MyScoreLabel" type="Label" parent="MatchInterface/Readout" unique_id=1994745969]
 layout_mode = 2
 text = "Me"
 
-[node name="OpponentScoreLabel" type="Label" parent="MatchInterface/Readout"]
+[node name="OpponentScoreLabel" type="Label" parent="MatchInterface/Readout" unique_id=902346682]
 layout_mode = 2
 text = "Opponent"
