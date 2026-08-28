@@ -45,7 +45,7 @@ public partial class CharacterHeadFade : Node3D
     // fading a hand that reaches close to a head-level camera too. Tighten once the final
     // head-camera framing is locked in.
     private const float FADE_MIN_DISTANCE = 0.4f;
-    private const float FADE_MAX_DISTANCE = 0.8f;
+    private const float FADE_MAX_DISTANCE = 0.4f;
 
     public override void _Ready()
     {
