@@ -1,0 +1,74 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Scripts/Match3D/MatchWorldView.cs" id="1_matchworldview"]
+[ext_resource type="PackedScene" uid="uid://gpgmiwxrq3gj" path="res://Assets/Models/MainCharacter.glb" id="2_character"]
+
+[sub_resource type="Environment" id="Environment_match"]
+background_mode = 1
+background_color = Color(0.02, 0.02, 0.03, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.15, 0.16, 0.2, 1)
+ambient_light_energy = 0.15
+
+[sub_resource type="BoxMesh" id="BoxMesh_table"]
+size = Vector3(1.4, 0.05, 0.9)
+
+[node name="MatchWorld" type="Node3D"]
+script = ExtResource("1_matchworldview")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_match")
+
+[node name="KeyLight" type="SpotLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0, -1, 0, 1, 0, 0, 1.8, 0)
+light_energy = 4.0
+shadow_enabled = true
+spot_range = 6.0
+spot_angle = 45.0
+
+[node name="Table" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.695, 0)
+mesh = SubResource("BoxMesh_table")
+
+[node name="MySeat" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.8)
+
+[node name="Character" parent="MySeat" instance=ExtResource("2_character")]
+
+[node name="Camera3D" type="Camera3D" parent="MySeat"]
+transform = Transform3D(1, 0, 0, 0, 0.966, -0.259, 0, 0.259, 0.966, 0, 1.2, 0)
+
+[node name="OpponentSeat" type="Node3D" parent="."]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, -0.8)
+
+[node name="Character" parent="OpponentSeat" instance=ExtResource("2_character")]
+
+[node name="Field" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.72, 0)
+
+[node name="MyCardSlot" type="Node3D" parent="Field"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.25)
+
+[node name="OpponentCardSlot" type="Node3D" parent="Field"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.25)
+
+[node name="MatchInterface" type="CanvasLayer" parent="."]
+
+[node name="Readout" type="VBoxContainer" parent="MatchInterface"]
+offset_left = 24.0
+offset_top = 20.0
+offset_right = 360.0
+offset_bottom = 128.0
+
+[node name="RoundLabel" type="Label" parent="MatchInterface/Readout"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Round"
+
+[node name="MyScoreLabel" type="Label" parent="MatchInterface/Readout"]
+layout_mode = 2
+text = "Me"
+
+[node name="OpponentScoreLabel" type="Label" parent="MatchInterface/Readout"]
+layout_mode = 2
+text = "Opponent"

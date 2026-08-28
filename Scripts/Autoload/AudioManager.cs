@@ -11,8 +11,9 @@ namespace RockAndScissPaper.Autoload;
 /// signals and playing sounds off them — cannot express the reveal sequence: the win/loss
 /// beat is the rendezvous of two independently timed events (the opponent's card finishing
 /// its turn, and the round resolving), and which of them lands second changes with the kind
-/// of round. Knowing that here would mean keeping a second copy of MatchScreenUI's
-/// _opponentCardFlipPending / _roundAlreadyResolved interlock, and that interlock has already
+/// of round. Knowing that here would mean keeping a second copy of the match screen's
+/// reveal interlock (MatchScreenUI's _opponentCardFlipPending / _roundAlreadyResolved, now
+/// in Deprecated/ along with the rest of the 2D screen), and that interlock has already
 /// produced one bug (DevLogDoc/2026-08-21-round-reveal-choreography.md). So whoever already
 /// holds the timing calls Play instead, and this class stays a service. See IDEAS.md §5.</summary>
 public partial class AudioManager : Node

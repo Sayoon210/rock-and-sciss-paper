@@ -34,7 +34,7 @@ public partial class TitleScreenUI : Control
 
         // Started from here rather than from AudioManager itself: the Autoload is a service
         // and does not know which screen is up. It keeps playing through the connection
-        // screen, since that is still the menu — MatchScreenUI is what stops it.
+        // screen, since that is still the menu — MatchWorldView is what stops it.
         AudioManager.Instance!.PlayMainMenuMusic();
     }
 

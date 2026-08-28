@@ -10,7 +10,7 @@ namespace RockAndScissPaper.UI;
 public partial class ConnectionScreenUI : Control
 {
     private const string DEFAULT_ADDRESS = "127.0.0.1";
-    private const string MATCH_SCENE_PATH = "res://Scenes/Screens/MatchScreen.tscn";
+    private const string MATCH_SCENE_PATH = "res://Scenes/Screens/MatchWorld.tscn";
 
     private Button _createRoomButton = null!;
     private LineEdit _addressField = null!;
