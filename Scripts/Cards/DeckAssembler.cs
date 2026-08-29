@@ -1,44 +1,34 @@
-using System;
 using System.Collections.Generic;
-using RockAndScissPaper.Autoload;
 using RockAndScissPaper.GameLogic;
 
 namespace RockAndScissPaper.Cards;
 
-/// <summary>Builds one player's deck per DESIGN.md's fixed composition: 3 each of
-/// Rock/Paper/Scissors, 2 Blank, 2 Joker, and every currently-loaded ability card. The
-/// ability-card portion reads CardDatabase.LoadedCardNames rather than listing CardNames
-/// itself — DESIGN.md's "확장성" section calls out a future ability-card pool expansion, and
-/// listing names here would need editing every time that pool grows (see root CLAUDE.md).</summary>
+/// <summary>Builds one player's deck: 3 each of Rock/Paper/Scissors and nothing else.
+///
+/// 공백, 조커 and the four ability cards were all taken out of the deck. None of them are
+/// deleted — ECardName still names them, RoundResolver still resolves them, and their tests
+/// still pass — so putting any of them back is an AddCopies line here rather than a
+/// re-implementation. What they had in common is that a round containing one has no win and
+/// no loss (RoundResult.WinLoss is null for blank, Joker and ability rounds alike), which
+/// made a plain rock-paper-scissors outcome the exception rather than the rule. DESIGN.md
+/// already had the ability cards leaving for the item system; blank and 조커 followed so that
+/// every round now produces a real verdict, damage, and the animation that shows it.
+///
+/// That also means this no longer reads CardDatabase.LoadedCardNames. The "don't hardcode the
+/// ability roster" rule in the root CLAUDE.md exists so a growing ability pool needs no edit
+/// here — with no ability cards in the deck at all, there is no roster left to read, and the
+/// lookup would just be a Godot dependency this no longer has any use for.</summary>
 public static class DeckAssembler
 {
     private const int NORMAL_CARD_COPIES = 3;
-    private const int DUMMY_CARD_COPIES = 2;
-    private const int JOKER_CARD_COPIES = 2;
 
     public static List<ECardName> BuildDeck()
     {
-        CardDatabase? cardDatabase = CardDatabase.Instance;
-        if (cardDatabase == null)
-        {
-            throw new InvalidOperationException("DeckAssembler: CardDatabase autoload is not available yet.");
-        }
-
         List<ECardName> deck = new List<ECardName>();
 
         AddCopies(deck, ECardName.Rock, NORMAL_CARD_COPIES);
         AddCopies(deck, ECardName.Paper, NORMAL_CARD_COPIES);
         AddCopies(deck, ECardName.Scissors, NORMAL_CARD_COPIES);
-        AddCopies(deck, ECardName.Blank, DUMMY_CARD_COPIES);
-        AddCopies(deck, ECardName.Joker, JOKER_CARD_COPIES);
-
-        foreach (ECardName cardName in cardDatabase.LoadedCardNames)
-        {
-            if (cardName.GetCardType() == ECardType.Ability)
-            {
-                deck.Add(cardName);
-            }
-        }
 
         return deck;
     }
