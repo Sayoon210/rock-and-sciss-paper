@@ -27,7 +27,7 @@ public partial class HandView : Node3D
 {
 	private const string CARD_VIEW_SCENE_PATH = "res://Scenes/Match3D/CardView.tscn";
 	private const string HEAD_CAMERA_PATH = "../../../MySeat/Camera3D";
-	private const string MY_CARD_SLOT_PATH = "../MyCardSlot";
+	private const string MY_CARD_SLOT_PATH = "../../../Table/MyCardSlot";
 
 	// The exact spots the debug mockup hand stood on, kept verbatim — the layout was already
 	// tuned against the rest and the hand view camera. Local to this node, whose own transform

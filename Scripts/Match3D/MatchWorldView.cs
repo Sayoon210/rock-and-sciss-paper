@@ -106,8 +106,8 @@ public partial class MatchWorldView : Node3D
 		_myScoreLabel = GetNode<Label>("MatchInterface/Readout/MyScoreLabel");
 		_opponentScoreLabel = GetNode<Label>("MatchInterface/Readout/OpponentScoreLabel");
 
-		_myPlayedCard = AddCardToSlot("Field/CardRest/MyCardSlot", MY_CARD_ROTATION);
-		_opponentPlayedCard = AddCardToSlot("Field/CardRest2/OpponentCardSlot", OPPONENT_CARD_ROTATION);
+		_myPlayedCard = AddCardToSlot("Table/MyCardSlot", MY_CARD_ROTATION);
+		_opponentPlayedCard = AddCardToSlot("Table/OpponentCardSlot", OPPONENT_CARD_ROTATION);
 
 		// Empty table until someone actually submits — the slabs exist from scene load but
 		// stay invisible, so an open round shows an empty rest rather than a blank card.
@@ -163,6 +163,13 @@ public partial class MatchWorldView : Node3D
 		}
 	}
 
+	/// <summary>The two slots hang off the Table rather than off the card rests they used to sit
+	/// under. The rests are props with a 0.5 scale and, on the opponent's side, a 180 degree
+	/// turn, so a slot parented to one needed a counter-scale and counter-rotation baked into
+	/// its own transform just to come out upright and life-sized — and nudging a rest for looks
+	/// silently dragged the played card with it. On the table the same two spots are plain
+	/// (0, 0.025, +/-0.15): dead centre, half the table's own thickness up, which is its top
+	/// face.</summary>
 	private CardView AddCardToSlot(string slotPath, Vector3 rotation)
 	{
 		CardView card = GD.Load<PackedScene>(CARD_VIEW_SCENE_PATH).Instantiate<CardView>();

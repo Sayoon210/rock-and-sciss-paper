@@ -23,6 +23,14 @@ ambient_light_energy = 1.2
 [sub_resource type="BoxMesh" id="BoxMesh_table"]
 size = Vector3(1.4, 0.05, 0.8474709)
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cardslot"]
+transparency = 1
+shading_mode = 0
+albedo_color = Color(0.3, 1, 0.45, 0.15)
+
+[sub_resource type="BoxMesh" id="BoxMesh_cardslot"]
+size = Vector3(0.1397, 0.004, 0.19558)
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_healthfill"]
 bg_color = Color(0.29, 0.78, 0.36, 1)
 
@@ -45,6 +53,22 @@ light_energy = 1.2
 [node name="Table" type="MeshInstance3D" parent="." unique_id=1492602356]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.695, 0)
 mesh = SubResource("BoxMesh_table")
+
+[node name="MyCardSlot" type="Node3D" parent="Table" unique_id=1120044530]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.025, 0.15)
+
+[node name="Footprint" type="MeshInstance3D" parent="Table/MyCardSlot" unique_id=1120044531]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.002, 0)
+material_override = SubResource("StandardMaterial3D_cardslot")
+mesh = SubResource("BoxMesh_cardslot")
+
+[node name="OpponentCardSlot" type="Node3D" parent="Table" unique_id=1120044532]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.025, -0.15)
+
+[node name="Footprint" type="MeshInstance3D" parent="Table/OpponentCardSlot" unique_id=1120044533]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.002, 0)
+material_override = SubResource("StandardMaterial3D_cardslot")
+mesh = SubResource("BoxMesh_cardslot")
 
 [node name="MySeat" type="Node3D" parent="." unique_id=1189686537]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.55)
@@ -80,17 +104,11 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.72, 0)
 [node name="CardRest2" parent="Field" unique_id=1993400193 instance=ExtResource("3_cardrest")]
 transform = Transform3D(-0.5, 0, -4.371139e-08, 0, 0.5, 0, 4.371139e-08, 0, -0.5, -0.0055994317, 0, -0.3283155)
 
-[node name="OpponentCardSlot" type="Node3D" parent="Field/CardRest2" unique_id=1860115794]
-transform = Transform3D(-2, 0, 1.7484555e-07, 0, 2, 0, -1.7484555e-07, 0, -2, -0.011198849, 0, -0.156631)
-
 [node name="CardRest" parent="Field" unique_id=1211110127 instance=ExtResource("3_cardrest")]
 transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0.018, 0, 0.34647065)
 
 [node name="HandViewCamera" type="Camera3D" parent="Field/CardRest" unique_id=98608705]
 transform = Transform3D(2, 0, 0, 0, 1.803665, 0.8641715, 0, -0.8641715, 1.803665, 0, 0.25054348, 0.30415833)
-
-[node name="MyCardSlot" type="Node3D" parent="Field/CardRest" unique_id=1061693325]
-transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, -0.036, 0, -0.19294131)
 
 [node name="HandView" type="Node3D" parent="Field/CardRest" unique_id=906581897]
 transform = Transform3D(1, 0, 0, 0, 0.90172476, 0.43231076, 0, -0.43231076, 0.90172476, 0, -0.19224954, -0.27267984)
