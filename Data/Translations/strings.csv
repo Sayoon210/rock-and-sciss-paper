@@ -77,3 +77,4 @@ MATCH_LOG_NO_CONTEST,No contest,승패 없음
 MATCH_LOG_HEALTH_LINE,"      health  me {0} / opponent {1}","      체력  나 {0} / 상대 {1}"
 MATCH_LOG_MATCH_WON,=== Match won ===,=== 매치 승리 ===
 MATCH_LOG_MATCH_LOST,=== Match lost ===,=== 매치 패배 ===
+MATCH_SUBMIT_TIMEOUT,Next round in {0}s,다음 라운드까지 {0}초

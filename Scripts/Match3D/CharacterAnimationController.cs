@@ -1,3 +1,4 @@
+using System;
 using Godot;
 
 namespace RockAndScissPaper.Match3D;
@@ -25,8 +26,28 @@ public sealed class CharacterAnimationController
         HoldIdle();
     }
 
-    public void PlayBlow(string clipName)
+    /// <summary>onFinished, if given, fires once — when clipName's own playthrough finishes,
+    /// not on whatever the next AnimationFinished happens to be (HoldIdle's own Play/Stop
+    /// cycle uses the same signal). Lets the round-flow state machine in MatchWorldView know
+    /// exactly when a blow is done playing, rather than guessing at a fixed duration — the two
+    /// win clips run 1.0s and 2.5s, different enough that one constant would either cut the
+    /// longer one short or make the shorter one drag.</summary>
+    public void PlayBlow(string clipName, Action? onFinished = null)
     {
+        if (onFinished != null)
+        {
+            void OnClipFinished(StringName finishedAnimation)
+            {
+                if (finishedAnimation == clipName)
+                {
+                    _animationPlayer.AnimationFinished -= OnClipFinished;
+                    onFinished();
+                }
+            }
+
+            _animationPlayer.AnimationFinished += OnClipFinished;
+        }
+
         _animationPlayer.Play(clipName);
     }
 

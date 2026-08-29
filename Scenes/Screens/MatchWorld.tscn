@@ -10,6 +10,7 @@
 [ext_resource type="Script" uid="uid://vjv5yyipv70h" path="res://Scripts/Match3D/RemoteHeadLook.cs" id="8_remotelook"]
 [ext_resource type="Script" uid="uid://di130osdbh2xn" path="res://Scripts/Match3D/HealthBarsUI.cs" id="9_healthbars"]
 [ext_resource type="Script" uid="uid://dtnsbvtqkjrwm" path="res://Scripts/Match3D/MatchLogPanel.cs" id="10_matchlog"]
+[ext_resource type="Script" uid="uid://6qbwvxpmy42l" path="res://Scripts/Match3D/SubmitTimeoutGaugeUI.cs" id="11_submittimeout"]
 
 [sub_resource type="Environment" id="Environment_match"]
 background_mode = 1
@@ -113,13 +114,14 @@ layout_mode = 2
 text = "Opponent"
 
 [node name="HealthBars" type="Control" parent="MatchInterface" unique_id=1120044501]
+layout_mode = 3
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
 offset_left = -320.0
 offset_top = 20.0
 offset_right = -24.0
-offset_bottom = 130.0
+offset_bottom = 165.0
 grow_horizontal = 0
 script = ExtResource("9_healthbars")
 
@@ -160,7 +162,28 @@ max_value = 10.0
 value = 10.0
 show_percentage = false
 
+[node name="SubmitTimeout" type="VBoxContainer" parent="MatchInterface/HealthBars" unique_id=1120044520]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 120.0
+offset_bottom = 163.0
+grow_horizontal = 2
+script = ExtResource("11_submittimeout")
+
+[node name="Label" type="Label" parent="MatchInterface/HealthBars/SubmitTimeout" unique_id=1120044521]
+layout_mode = 2
+text = "Next round in..."
+
+[node name="Bar" type="ProgressBar" parent="MatchInterface/HealthBars/SubmitTimeout" unique_id=1120044522]
+custom_minimum_size = Vector2(0, 18)
+layout_mode = 2
+max_value = 45.0
+value = 45.0
+show_percentage = false
+
 [node name="MatchLog" type="Control" parent="MatchInterface" unique_id=1120044510]
+layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -200,6 +223,37 @@ size_flags_vertical = 3
 layout_mode = 2
 size_flags_horizontal = 3
 text = "No rounds played yet."
+
+[node name="RoundIntro" type="Control" parent="MatchInterface" unique_id=1120044530]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Dim" type="ColorRect" parent="MatchInterface/RoundIntro" unique_id=1120044531]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0.6)
+
+[node name="Label" type="Label" parent="MatchInterface/RoundIntro" unique_id=1120044532]
+layout_mode = 0
+anchor_top = 0.4
+anchor_right = 1.0
+anchor_bottom = 0.6
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 64
+text = "Round"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="DebugInterface" type="CanvasLayer" parent="." unique_id=1419643423]
 

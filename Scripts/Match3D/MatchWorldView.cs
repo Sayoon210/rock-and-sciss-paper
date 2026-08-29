@@ -1,3 +1,4 @@
+using System;
 using Godot;
 using RockAndScissPaper.Autoload;
 using RockAndScissPaper.GameLogic;
@@ -10,158 +11,223 @@ namespace RockAndScissPaper.Match3D;
 ///
 /// This reads GameState.View and nothing else, on the host too (Scripts/CLAUDE.md), and it
 /// decides no rules: which side won and with what card is already settled by the time
-/// RoundResolved arrives, and all this does is pick the animation that shows it.</summary>
+/// RoundResolved arrives, and all this does is pick the animation that shows it.
+///
+/// Also owns the round-flow pacing: a "Round N" splash blocking entry to the hand view, cards
+/// staying facedown until the flip finishes before any blow plays, and a settle beat before
+/// the next round's splash. GameState's own round-open timing (SubmissionPhaseActive, the
+/// submit timer) runs on its own the whole time regardless of this — the phases below are a
+/// purely client-side presentation layered on top of an already-open round, the same way
+/// SubmitTimeoutGaugeUI's countdown keeps ticking straight through the splash rather than
+/// pausing for it.</summary>
 public partial class MatchWorldView : Node3D
 {
-    // The clip names the .glb was exported with. 보 has no animation yet — the design calls
-    // for a desk slam that has not been authored, so a 보 win currently plays nothing.
-    private const string ROCK_WIN_ANIMATION = "Anim_Punch_Baked";
-    private const string SCISSORS_WIN_ANIMATION = "Anim_StabScissor_Baked";
+	// The clip names the .glb was exported with. 보 has no animation yet — the design calls
+	// for a desk slam that has not been authored, so a 보 win currently plays nothing.
+	private const string ROCK_WIN_ANIMATION = "Anim_Punch_Baked";
+	private const string SCISSORS_WIN_ANIMATION = "Anim_StabScissor_Baked";
 
-    private const string CARD_VIEW_SCENE_PATH = "res://Scenes/Match3D/CardView.tscn";
+	private const string CARD_VIEW_SCENE_PATH = "res://Scenes/Match3D/CardView.tscn";
+	private const string HEAD_CAMERA_PATH = "MySeat/Camera3D";
+	private const string ROUND_INTRO_PATH = "MatchInterface/RoundIntro";
+	private const string ROUND_INTRO_LABEL_PATH = "MatchInterface/RoundIntro/Label";
 
-    // Cards lie flat on the table, so the slab is turned face-up out of its default upright
-    // pose. My card is turned to read from my side; the opponent's is turned the other way,
+	// Cards lie flat on the table, so the slab is turned face-up out of its default upright
+	// pose. My card is turned to read from my side; the opponent's is turned the other way,
     // the way a card pushed across a table faces whoever pushed it.
     private static readonly Vector3 MY_CARD_ROTATION = new Vector3(-Mathf.Pi / 2f, 0f, 0f);
     private static readonly Vector3 OPPONENT_CARD_ROTATION = new Vector3(-Mathf.Pi / 2f, Mathf.Pi, 0f);
 
-    // The same two poses turned facedown - a submitted card sits on the table back-up until
-    // the reveal flips it. MY side is public because HandView's submit flight targets this
-    // exact pose, so the landing hand card and the slab that replaces it line up perfectly.
-    public static readonly Vector3 MY_CARD_FACEDOWN_ROTATION = new Vector3(Mathf.Pi / 2f, 0f, 0f);
-    private static readonly Vector3 OPPONENT_CARD_FACEDOWN_ROTATION = new Vector3(Mathf.Pi / 2f, Mathf.Pi, 0f);
+    // The same two poses turned facedown — a submitted card sits on the table back-up until
+	// the reveal flips it. MY side is public because HandView's submit flight targets this
+	// exact pose, so the landing hand card and the slab that replaces it line up perfectly.
+	public static readonly Vector3 MY_CARD_FACEDOWN_ROTATION = new Vector3(Mathf.Pi / 2f, 0f, 0f);
+	private static readonly Vector3 OPPONENT_CARD_FACEDOWN_ROTATION = new Vector3(Mathf.Pi / 2f, Mathf.Pi, 0f);
 
-    private const float REVEAL_FLIP_SECONDS = 0.35f;
-    private const float REVEAL_FLIP_ARC_METERS = 0.05f;
+	private const float REVEAL_FLIP_SECONDS = 0.35f;
+	private const float REVEAL_FLIP_ARC_METERS = 0.05f;
 
-    private CharacterAnimationController _myAnimation = null!;
-    private CharacterAnimationController _opponentAnimation = null!;
-    private CardView _myPlayedCard = null!;
-    private CardView _opponentPlayedCard = null!;
-    private HandView _handView = null!;
-    private Label _roundLabel = null!;
-    private Label _myScoreLabel = null!;
-    private Label _opponentScoreLabel = null!;
+	// Round-flow pacing. See the phase machine below for how these compose. The intro's own
+	// length is GameState.ROUND_INTRO_SECONDS rather than a constant here, because the host
+	// adds that same figure to its submit timer -- the splash is unplayable time, and the two
+	// have to be the same number or the round clock quietly disagrees with the screen.
+	private const float ROUND_INTRO_FADE_SECONDS = 0.3f;
+	private const float NO_ANIMATION_RESULT_HOLD_SECONDS = 1.0f;
+	private const float RESULT_SETTLE_SECONDS = 0.5f;
 
-    public override void _Ready()
-    {
-        // Off by default in Godot, and nothing in 3D reports a hover or a click without it —
-        // this is what makes CardView's own Area3D signals fire at all. Set on the scene root
-        // rather than by a card, since it is one switch for the whole viewport and no card
-        // should be the one deciding it for every other card.
-        GetViewport().PhysicsObjectPicking = true;
+	/// <summary>Where the round-flow pacing currently is. Intro and the two result phases are
+	/// timed (see _phaseSecondsRemaining); Open and Reveal end on a GameState signal instead
+	/// (both submitted, and the reveal flip's own callback respectively — Reveal is technically
+	/// timed too, by REVEAL_FLIP_SECONDS, but is named for what the player sees during it).</summary>
+	private enum ERoundPhase
+	{
+		Intro,
+		Open,
+		Reveal,
+		ResultHold,
+		ResultSettle,
+	}
 
-        _myAnimation = new CharacterAnimationController(
-            GetNode<AnimationPlayer>("MySeat/Character/AnimationPlayer"));
-        _opponentAnimation = new CharacterAnimationController(
-            GetNode<AnimationPlayer>("OpponentSeat/Character/AnimationPlayer"));
-        _roundLabel = GetNode<Label>("MatchInterface/Readout/RoundLabel");
-        _myScoreLabel = GetNode<Label>("MatchInterface/Readout/MyScoreLabel");
-        _opponentScoreLabel = GetNode<Label>("MatchInterface/Readout/OpponentScoreLabel");
+	private CharacterAnimationController _myAnimation = null!;
+	private CharacterAnimationController _opponentAnimation = null!;
+	private CardView _myPlayedCard = null!;
+	private CardView _opponentPlayedCard = null!;
+	private HandView _handView = null!;
+	private HeadFollowCamera _headCamera = null!;
+	private Control _roundIntroOverlay = null!;
+	private Label _roundIntroLabel = null!;
+	private Label _roundLabel = null!;
+	private Label _myScoreLabel = null!;
+	private Label _opponentScoreLabel = null!;
 
-        _myPlayedCard = AddCardToSlot("Field/CardRest/MyCardSlot", MY_CARD_ROTATION);
-        _opponentPlayedCard = AddCardToSlot("Field/CardRest2/OpponentCardSlot", OPPONENT_CARD_ROTATION);
+	// Starts in Open rather than Intro: nothing below ever advances this without a GameState
+	// signal, and the scene runs standalone too (HandView's own fallback hand, for judging the
+	// grab/submit feel with no match at all) — Open is the phase where the hand view already
+	// works exactly as before this state machine existed.
+	private ERoundPhase _phase = ERoundPhase.Open;
+	private float _phaseSecondsRemaining;
 
-        // Empty table until someone actually submits - the slabs exist from scene load but
-        // stay invisible, so an open round shows an empty rest rather than a blank card.
-        _myPlayedCard.Visible = false;
-        _opponentPlayedCard.Visible = false;
+	public override void _Ready()
+	{
+		// Off by default in Godot, and nothing in 3D reports a hover or a click without it —
+		// this is what makes CardView's own Area3D signals fire at all. Set on the scene root
+		// rather than by a card, since it is one switch for the whole viewport and no card
+		// should be the one deciding it for every other card.
+		GetViewport().PhysicsObjectPicking = true;
 
-        // HandView events share this scene's lifetime (both are freed together), unlike the
-        // Autoload signals below, so they need no _ExitTree unhooking.
-        _handView = GetNode<HandView>("Field/CardRest/HandView");
-        _handView.MyCardLanded += OnMyCardLanded;
-        _handView.MySubmissionRejected += OnMySubmissionRejected;
+		_myAnimation = new CharacterAnimationController(
+			GetNode<AnimationPlayer>("MySeat/Character/AnimationPlayer"));
+		_opponentAnimation = new CharacterAnimationController(
+			GetNode<AnimationPlayer>("OpponentSeat/Character/AnimationPlayer"));
+		_headCamera = GetNode<HeadFollowCamera>(HEAD_CAMERA_PATH);
+		_roundIntroOverlay = GetNode<Control>(ROUND_INTRO_PATH);
+		_roundIntroLabel = GetNode<Label>(ROUND_INTRO_LABEL_PATH);
+		_roundLabel = GetNode<Label>("MatchInterface/Readout/RoundLabel");
+		_myScoreLabel = GetNode<Label>("MatchInterface/Readout/MyScoreLabel");
+		_opponentScoreLabel = GetNode<Label>("MatchInterface/Readout/OpponentScoreLabel");
 
-        AnimationDebugPanel.BuildInto(
-            GetNode<VBoxContainer>("DebugInterface/AnimationButtons"),
-            GetNode<AnimationPlayer>("MySeat/Character/AnimationPlayer"));
+		_myPlayedCard = AddCardToSlot("Field/CardRest/MyCardSlot", MY_CARD_ROTATION);
+		_opponentPlayedCard = AddCardToSlot("Field/CardRest2/OpponentCardSlot", OPPONENT_CARD_ROTATION);
 
-        GameState.Instance!.MatchStarted += OnMatchStarted;
-        GameState.Instance.RoundRevealed += OnRoundRevealed;
-        GameState.Instance.RoundResolved += OnRoundResolved;
-        GameState.Instance.OpponentSubmitted += OnOpponentSubmitted;
+		// Empty table until someone actually submits — the slabs exist from scene load but
+		// stay invisible, so an open round shows an empty rest rather than a blank card.
+		_myPlayedCard.Visible = false;
+		_opponentPlayedCard.Visible = false;
 
-        // The menu music plays through the connection screen and stops here, because this
-        // is the first screen that is no longer the menu. TitleScreenUI starts it.
-        AudioManager.Instance!.StopMusic();
+		// HandView events share this scene's lifetime (both are freed together), unlike the
+		// Autoload signals below, so they need no _ExitTree unhooking.
+		_handView = GetNode<HandView>("Field/CardRest/HandView");
+		_handView.MyCardLanded += OnMyCardLanded;
+		_handView.MySubmissionRejected += OnMySubmissionRejected;
 
-        RefreshReadout();
-    }
+		AnimationDebugPanel.BuildInto(
+			GetNode<VBoxContainer>("DebugInterface/AnimationButtons"),
+			GetNode<AnimationPlayer>("MySeat/Character/AnimationPlayer"));
 
-    /// <summary>A freed node still connected to a session-lifetime Autoload signal is a
-    /// crash waiting for the next emit (Scripts/Autoload/CLAUDE.md).</summary>
-    public override void _ExitTree()
-    {
-        if (GameState.Instance != null)
-        {
-            GameState.Instance.MatchStarted -= OnMatchStarted;
-            GameState.Instance.RoundRevealed -= OnRoundRevealed;
-            GameState.Instance.RoundResolved -= OnRoundResolved;
-            GameState.Instance.OpponentSubmitted -= OnOpponentSubmitted;
-        }
-    }
+		GameState.Instance!.MatchStarted += OnMatchStarted;
+		GameState.Instance.RoundRevealed += OnRoundRevealed;
+		GameState.Instance.RoundResolved += OnRoundResolved;
+		GameState.Instance.OpponentSubmitted += OnOpponentSubmitted;
 
-    private CardView AddCardToSlot(string slotPath, Vector3 rotation)
-    {
-        CardView card = GD.Load<PackedScene>(CARD_VIEW_SCENE_PATH).Instantiate<CardView>();
-        card.Rotation = rotation;
-        GetNode<Node3D>(slotPath).AddChild(card);
-        return card;
-    }
+		// The menu music plays through the connection screen and stops here, because this
+		// is the first screen that is no longer the menu. TitleScreenUI starts it.
+		AudioManager.Instance!.StopMusic();
 
-    private void OnMatchStarted()
-    {
-        // A card left face up from the previous match would be showing something that is no
-        // longer in play, and a rematch reuses this scene.
-        _myPlayedCard.ShowFaceDown();
-        _opponentPlayedCard.ShowFaceDown();
-        _myPlayedCard.Visible = false;
-        _opponentPlayedCard.Visible = false;
-        RefreshReadout();
-    }
+		RefreshReadout();
 
-    private void OnMyCardLanded()
-    {
-        PresentFacedown(_myPlayedCard, MY_CARD_FACEDOWN_ROTATION);
-    }
+		// Round 1's intro cannot come from the MatchStarted signal: ConnectionScreenUI is what
+		// listens for it, and what it does with it is change the scene to this one -- so by the
+		// time this node exists to subscribe, that signal has already been and gone. Round 2
+		// onward come from the phase machine itself (EnterNextRoundOrIdle) and were always
+		// fine, which is exactly why only the first one was missing its splash.
+		//
+		// SubmissionPhaseActive is the test for "a match is actually underway", the same
+		// question HandView answers with View.MyHand -- it is false when this scene is run on
+		// its own for visual work, which is the case that must stay in Open.
+		if (GameState.Instance.View.SubmissionPhaseActive)
+		{
+			EnterIntroPhase();
+		}
+	}
 
-    private void OnOpponentSubmitted()
-    {
-        PresentFacedown(_opponentPlayedCard, OPPONENT_CARD_FACEDOWN_ROTATION);
-    }
+	/// <summary>A freed node still connected to a session-lifetime Autoload signal is a
+	/// crash waiting for the next emit (Scripts/Autoload/CLAUDE.md).</summary>
+	public override void _ExitTree()
+	{
+		if (GameState.Instance != null)
+		{
+			GameState.Instance.MatchStarted -= OnMatchStarted;
+			GameState.Instance.RoundRevealed -= OnRoundRevealed;
+			GameState.Instance.RoundResolved -= OnRoundResolved;
+			GameState.Instance.OpponentSubmitted -= OnOpponentSubmitted;
+		}
+	}
 
-    private void OnMySubmissionRejected()
-    {
-        // Only while the round is still taking cards - after the reveal a rejection can only
-        // be about a choice, which has nothing to do with the slab.
-        if (GameState.Instance!.View.SubmissionPhaseActive)
-        {
-            _myPlayedCard.Visible = false;
-        }
-    }
+	private CardView AddCardToSlot(string slotPath, Vector3 rotation)
+	{
+		CardView card = GD.Load<PackedScene>(CARD_VIEW_SCENE_PATH).Instantiate<CardView>();
+		card.Rotation = rotation;
+		GetNode<Node3D>(slotPath).AddChild(card);
+		return card;
+	}
 
-    private static void PresentFacedown(CardView cardView, Vector3 facedownRotation)
-    {
-        cardView.CancelPoseAnimation();
-        cardView.ShowFaceDown();
-        cardView.Rotation = facedownRotation;
-        cardView.Visible = true;
-    }
+	private void OnMatchStarted()
+	{
+		// A card left face up from the previous match would be showing something that is no
+		// longer in play, and a rematch reuses this scene.
+		_myPlayedCard.ShowFaceDown();
+		_opponentPlayedCard.ShowFaceDown();
+		_myPlayedCard.Visible = false;
+		_opponentPlayedCard.Visible = false;
+		RefreshReadout();
+		EnterIntroPhase();
+	}
 
-    /// <summary>Both played cards become known at the same moment, to both sides — the reveal
-    /// is what ends the round's hidden phase, so this is the first point either card may show
-    /// a face.</summary>
+	private void OnMyCardLanded()
+	{
+		PresentFacedown(_myPlayedCard, MY_CARD_FACEDOWN_ROTATION);
+	}
+
+	private void OnOpponentSubmitted()
+	{
+		PresentFacedown(_opponentPlayedCard, OPPONENT_CARD_FACEDOWN_ROTATION);
+	}
+
+	private void OnMySubmissionRejected()
+	{
+		// Only while the round is still taking cards — after the reveal a rejection can only
+		// be about a choice, which has nothing to do with the slab.
+		if (GameState.Instance!.View.SubmissionPhaseActive)
+		{
+			_myPlayedCard.Visible = false;
+		}
+	}
+
+	private static void PresentFacedown(CardView cardView, Vector3 facedownRotation)
+	{
+		cardView.CancelPoseAnimation();
+		cardView.ShowFaceDown();
+		cardView.Rotation = facedownRotation;
+		cardView.Visible = true;
+	}
+
+	/// <summary>Both played cards become known at the same moment, to both sides — the reveal
+	/// is what ends the round's hidden phase, so this is the first point either card may show
+    /// a face. Also where the Reveal phase starts: the winning blow (if any) is deliberately
+    /// deferred until the flip animation started here actually finishes — see the phase
+    /// machine below.</summary>
     private void OnRoundRevealed()
     {
         MatchView view = GameState.Instance!.View;
         RevealPlayedCard(_myPlayedCard, view.MyCard, MY_CARD_FACEDOWN_ROTATION, MY_CARD_ROTATION);
         RevealPlayedCard(_opponentPlayedCard, view.OpponentCard, OPPONENT_CARD_FACEDOWN_ROTATION, OPPONENT_CARD_ROTATION);
+
+        _phase = ERoundPhase.Reveal;
+        _phaseSecondsRemaining = REVEAL_FLIP_SECONDS;
     }
 
     /// <summary>Flips one slab from facedown to face up. A slab not on the table yet (its
-    /// owner never submitted in person - the submit timer filled the card in) appears facedown
+    /// owner never submitted in person — the submit timer filled the card in) appears facedown
     /// first, so the flip always starts from the same place. Setting the face BEFORE the flip
     /// is safe: the art points at the table until the rotation carries it past edge-on.</summary>
     private static void RevealPlayedCard(
@@ -184,60 +250,191 @@ public partial class MatchWorldView : Node3D
         cardView.BeginPoseAnimation(faceUpPose, REVEAL_FLIP_SECONDS, REVEAL_FLIP_ARC_METERS, null);
     }
 
-    private void OnRoundResolved()
-    {
-        PlayWinningBlow();
-        RefreshReadout();
+    /// <summary>Only the health/round readout — the winning blow itself no longer plays from
+	/// here. It waits for the Reveal phase's flip to finish first (see the phase machine),
+	/// which this signal on its own cannot express: RoundRevealed and RoundResolved fire on
+	/// the same call today (no ability card leaves a choice pending), so playing the blow
+	/// straight from here would start it while the cards are still mid-flip.</summary>
+	private void OnRoundResolved()
+	{
+		RefreshReadout();
+	}
+
+	/// <summary>Plays the blow on the side that won, chosen by the card it won with — 바위
+	/// punches, 가위 stabs. A draw plays nothing, and so does a win with a card whose
+	/// animation is not authored yet. Returns whether one actually started, so the caller
+	/// (EnterResultHoldPhase) knows whether to wait on onFinished or fall back to a timed
+	/// hold that will never otherwise be cleared.</summary>
+	private bool PlayWinningBlow(Action onFinished)
+	{
+		MatchView view = GameState.Instance!.View;
+		if (view.LastRoundOutcome == null || view.LastRoundOutcome == ERoundOutcome.Draw)
+		{
+			return false;
+		}
+
+		bool didIWin = view.LastRoundOutcome == ERoundOutcome.MyWin;
+		ECardName? winningCard = didIWin ? view.MyCard : view.OpponentCard;
+		if (winningCard == null)
+		{
+			return false;
+		}
+
+		string? animationName = FindAnimationForWinningCard(winningCard.Value);
+		if (animationName == null)
+		{
+			return false;
+		}
+
+		CharacterAnimationController winnerAnimation = didIWin ? _myAnimation : _opponentAnimation;
+		winnerAnimation.PlayBlow(animationName, onFinished);
+		return true;
+	}
+
+	private static string? FindAnimationForWinningCard(ECardName winningCard)
+	{
+		switch (winningCard)
+		{
+			case ECardName.Rock:
+				return ROCK_WIN_ANIMATION;
+
+			case ECardName.Scissors:
+				return SCISSORS_WIN_ANIMATION;
+
+			default:
+				return null;
+		}
+	}
+
+	private void RefreshReadout()
+	{
+		MatchView view = GameState.Instance!.View;
+		_roundLabel.Text = string.Format(Tr("MATCH_ROUND"), view.RoundNumber);
+		_myScoreLabel.Text = string.Format(Tr("MATCH_MY_HEALTH"), view.MyHealth, MatchSession.STARTING_HEALTH);
+		_opponentScoreLabel.Text = string.Format(Tr("MATCH_OPPONENT_HEALTH"), view.OpponentHealth, MatchSession.STARTING_HEALTH);
+	}
+
+	// ---- Round-flow phase machine ----
+	//
+	// Intro (2s, splash + hand-view locked) -> Open (unchanged existing play) ->
+	// [RoundRevealed] -> Reveal (0.35s flip) -> ResultHold (blow, or a fixed hold if there is
+	// none) -> ResultSettle (0.5s beat) -> Intro for the next round, or idle if the match just
+	// ended. Only Intro/Reveal/ResultHold(no-blow)/ResultSettle carry a countdown
+	// (_phaseSecondsRemaining); Open and a blow-driven ResultHold end on a callback instead.
+
+	public override void _Process(double delta)
+	{
+		if (_phase == ERoundPhase.Intro)
+		{
+			UpdateIntroFade();
+		}
+
+		if (_phaseSecondsRemaining <= 0f)
+		{
+			return;
+		}
+
+		_phaseSecondsRemaining -= (float)delta;
+		if (_phaseSecondsRemaining <= 0f)
+		{
+			AdvancePhase();
+		}
+	}
+
+	private void AdvancePhase()
+	{
+		switch (_phase)
+		{
+			case ERoundPhase.Intro:
+				EnterOpenPhase();
+				break;
+
+			case ERoundPhase.Reveal:
+				EnterResultHoldPhase();
+				break;
+
+			case ERoundPhase.ResultHold:
+				// Only reached for a round with no blow to wait on — a blow-driven hold clears
+				// itself via PlayWinningBlow's onFinished callback instead of this timer.
+                EnterResultSettlePhase();
+                break;
+
+            case ERoundPhase.ResultSettle:
+                EnterNextRoundOrIdle();
+                break;
+        }
     }
 
-    /// <summary>Plays the blow on the side that won, chosen by the card it won with — 바위
-    /// punches, 가위 stabs. A draw plays nothing, and so does a win with a card whose
-    /// animation is not authored yet.</summary>
-    private void PlayWinningBlow()
+    private void EnterIntroPhase()
     {
-        MatchView view = GameState.Instance!.View;
-        if (view.LastRoundOutcome == null || view.LastRoundOutcome == ERoundOutcome.Draw)
+        _phase = ERoundPhase.Intro;
+        _phaseSecondsRemaining = (float)GameState.ROUND_INTRO_SECONDS;
+        _headCamera.SetRoundIntroLocked(true);
+
+        _roundIntroLabel.Text = string.Format(Tr("MATCH_ROUND"), GameState.Instance!.View.RoundNumber);
+        _roundIntroOverlay.Visible = true;
+        _roundIntroOverlay.Modulate = new Color(1f, 1f, 1f, 0f);
+    }
+
+    /// <summary>Fades the whole splash (dim backdrop and text together, since both are
+    /// children of the one Control this sets Modulate on) in over the first
+    /// ROUND_INTRO_FADE_SECONDS, holds, then out over the last ROUND_INTRO_FADE_SECONDS.</summary>
+    private void UpdateIntroFade()
+    {
+        float elapsed = (float)GameState.ROUND_INTRO_SECONDS - _phaseSecondsRemaining;
+        float alpha;
+        if (elapsed < ROUND_INTRO_FADE_SECONDS)
         {
+            alpha = elapsed / ROUND_INTRO_FADE_SECONDS;
+        }
+        else if (_phaseSecondsRemaining < ROUND_INTRO_FADE_SECONDS)
+        {
+            alpha = _phaseSecondsRemaining / ROUND_INTRO_FADE_SECONDS;
+        }
+        else
+        {
+            alpha = 1f;
+        }
+
+        _roundIntroOverlay.Modulate = new Color(1f, 1f, 1f, Mathf.Clamp(alpha, 0f, 1f));
+    }
+
+    private void EnterOpenPhase()
+    {
+        _phase = ERoundPhase.Open;
+        _phaseSecondsRemaining = 0f;
+        _headCamera.SetRoundIntroLocked(false);
+        _roundIntroOverlay.Visible = false;
+    }
+
+    private void EnterResultHoldPhase()
+    {
+        _phase = ERoundPhase.ResultHold;
+
+        bool isBlowPlaying = PlayWinningBlow(EnterResultSettlePhase);
+        // A blow already in flight clears this phase through its own onFinished callback
+		// instead — see AdvancePhase's ResultHold case.
+		_phaseSecondsRemaining = isBlowPlaying ? 0f : NO_ANIMATION_RESULT_HOLD_SECONDS;
+	}
+
+	private void EnterResultSettlePhase()
+	{
+		_phase = ERoundPhase.ResultSettle;
+		_phaseSecondsRemaining = RESULT_SETTLE_SECONDS;
+	}
+
+	/// <summary>No dedicated match-end screen yet — MatchLogPanel's own "=== Match won/lost
+    /// ===" line (Tab to see it) is the whole of it for now. So a finished match just settles
+    /// here: camera unlocked, splash stays down, nothing left to submit.</summary>
+    private void EnterNextRoundOrIdle()
+    {
+        if (GameState.Instance!.View.MatchResult.HasValue)
+        {
+            _phase = ERoundPhase.Open;
+            _headCamera.SetRoundIntroLocked(false);
             return;
         }
 
-        bool didIWin = view.LastRoundOutcome == ERoundOutcome.MyWin;
-        ECardName? winningCard = didIWin ? view.MyCard : view.OpponentCard;
-        if (winningCard == null)
-        {
-            return;
-        }
-
-        string? animationName = FindAnimationForWinningCard(winningCard.Value);
-        if (animationName == null)
-        {
-            return;
-        }
-
-        CharacterAnimationController winnerAnimation = didIWin ? _myAnimation : _opponentAnimation;
-        winnerAnimation.PlayBlow(animationName);
-    }
-
-    private static string? FindAnimationForWinningCard(ECardName winningCard)
-    {
-        switch (winningCard)
-        {
-            case ECardName.Rock:
-                return ROCK_WIN_ANIMATION;
-
-            case ECardName.Scissors:
-                return SCISSORS_WIN_ANIMATION;
-
-            default:
-                return null;
-        }
-    }
-
-    private void RefreshReadout()
-    {
-        MatchView view = GameState.Instance!.View;
-        _roundLabel.Text = string.Format(Tr("MATCH_ROUND"), view.RoundNumber);
-        _myScoreLabel.Text = string.Format(Tr("MATCH_MY_HEALTH"), view.MyHealth, MatchSession.STARTING_HEALTH);
-        _opponentScoreLabel.Text = string.Format(Tr("MATCH_OPPONENT_HEALTH"), view.OpponentHealth, MatchSession.STARTING_HEALTH);
+        EnterIntroPhase();
     }
 }

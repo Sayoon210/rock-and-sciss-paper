@@ -41,7 +41,15 @@ public partial class GameState : Node
     /// board — both healths, the field, and every card in hand — where a choice is made from
     /// one already-narrowed set. Public for the same reason CHOICE_TIMEOUT_SECONDS is: the
     /// screen counts the same number down on its own.</summary>
-    public const double SUBMIT_TIMEOUT_SECONDS = 20.0;
+    public const double SUBMIT_TIMEOUT_SECONDS = 45.0;
+
+    /// <summary>Dead time at the start of every round, before the submission clock begins.
+    /// The screen fills it with its "Round N" splash (MatchWorldView), but the number lives
+    /// here rather than there because it is not only presentation: submissions are not
+    /// possible during it, so it is time the host must not count against a player. The submit
+    /// timer below is armed for this plus SUBMIT_TIMEOUT_SECONDS for exactly that reason —
+    /// a round's real clock is 45 seconds of playable time, not 45 including the splash.</summary>
+    public const double ROUND_INTRO_SECONDS = 2.0;
 
     public static GameState? Instance { get; private set; }
 
@@ -129,7 +137,10 @@ public partial class GameState : Node
 
         _submitTimer = new Timer();
         _submitTimer.OneShot = true;
-        _submitTimer.WaitTime = SUBMIT_TIMEOUT_SECONDS;
+        // Intro plus play, not just play — see ROUND_INTRO_SECONDS. The splash is unskippable
+        // and blocks the hand view, so counting it against the submission clock would quietly
+        // shorten every round by that much.
+        _submitTimer.WaitTime = ROUND_INTRO_SECONDS + SUBMIT_TIMEOUT_SECONDS;
         _submitTimer.Timeout += OnSubmitTimedOut;
         AddChild(_submitTimer);
     }
