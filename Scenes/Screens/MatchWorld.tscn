@@ -296,6 +296,7 @@ layout_mode = 2
 text = "MATCH_END_TITLE_SCREEN"
 
 [node name="DebugInterface" type="CanvasLayer" parent="." unique_id=1419643423]
+visible = false
 
 [node name="AnimationButtons" type="VBoxContainer" parent="DebugInterface" unique_id=1739684824]
 offset_left = 24.0
