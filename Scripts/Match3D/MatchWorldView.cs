@@ -25,12 +25,15 @@ public partial class MatchWorldView : Node3D
 	// The clip names the .glb was exported with. 보 has no animation yet — the design calls
 	// for a desk slam that has not been authored, so a 보 win currently plays nothing.
 	private const string ROCK_WIN_ANIMATION = "Anim_Punch_Baked";
-	private const string SCISSORS_WIN_ANIMATION = "Anim_StabScissor_Baked";
 
 	private const string CARD_VIEW_SCENE_PATH = "res://Scenes/Match3D/CardView.tscn";
 	private const string HEAD_CAMERA_PATH = "MySeat/Camera3D";
 	private const string ROUND_INTRO_PATH = "MatchInterface/RoundIntro";
 	private const string ROUND_INTRO_LABEL_PATH = "MatchInterface/RoundIntro/Label";
+
+	/// <summary>Relative to a seat's Character node: the pose a pair of scissors is pinned to
+	/// when that seat's occupant is the one who got stabbed.</summary>
+	private const string STUCK_TARGET_PATH = "ScissorsStuckTarget";
 
 	// Cards lie flat on the table, so the slab is turned face-up out of its default upright
 	// pose. My card is turned to read from my side; the opponent's is turned the other way,
@@ -77,6 +80,12 @@ public partial class MatchWorldView : Node3D
 
 	private CharacterAnimationController _myAnimation = null!;
 	private CharacterAnimationController _opponentAnimation = null!;
+	private Node3D _myCharacter = null!;
+	private Node3D _opponentCharacter = null!;
+	private ScissorsController _myScissors = null!;
+	private ScissorsController _opponentScissors = null!;
+	private Node3D _myStuckTarget = null!;
+	private Node3D _opponentStuckTarget = null!;
 	private CardView _myPlayedCard = null!;
 	private CardView _opponentPlayedCard = null!;
 	private HandView _handView = null!;
@@ -102,10 +111,31 @@ public partial class MatchWorldView : Node3D
 		// should be the one deciding it for every other card.
 		GetViewport().PhysicsObjectPicking = true;
 
+		_myCharacter = GetNode<Node3D>("MySeat/Character");
+		_opponentCharacter = GetNode<Node3D>("OpponentSeat/Character");
 		_myAnimation = new CharacterAnimationController(
-			GetNode<AnimationPlayer>("MySeat/Character/AnimationPlayer"));
+			_myCharacter.GetNode<AnimationPlayer>("AnimationPlayer"));
 		_opponentAnimation = new CharacterAnimationController(
-			GetNode<AnimationPlayer>("OpponentSeat/Character/AnimationPlayer"));
+			_opponentCharacter.GetNode<AnimationPlayer>("AnimationPlayer"));
+		_myScissors = GetNode<ScissorsController>("Table/MyScissors");
+		_opponentScissors = GetNode<ScissorsController>("Table/OpponentScissors");
+
+		// Only MyScissors is placed by hand; the opponent's pair is that placement reflected
+		// across the table. The reflection is read off the two seats themselves rather than
+		// written down as numbers, so moving a seat carries the scissors with it. Children are
+		// _Ready before their parent, so both have already banked their authored rest pose by
+		// now and this replaces the one that was only ever a stand-in.
+		_opponentScissors.MirrorRestFrom(
+			_myScissors, _opponentCharacter.GlobalTransform * _myCharacter.GlobalTransform.Inverse());
+
+		// Where a pair ends up planted when this seat's occupant loses. One marker per seat, but
+		// only MySeat's is authored: the two characters sit in identical local frames, so the
+		// same LOCAL transform is the same spot on either of them, and copying it across means
+		// dragging one gizmo in the editor moves both. (The scissors above need a reflection for
+		// the same job because they hang off the Table, in world terms, rather than off a seat.)
+		_myStuckTarget = _myCharacter.GetNode<Node3D>(STUCK_TARGET_PATH);
+		_opponentStuckTarget = _opponentCharacter.GetNode<Node3D>(STUCK_TARGET_PATH);
+		_opponentStuckTarget.Transform = _myStuckTarget.Transform;
 		_headCamera = GetNode<HeadFollowCamera>(HEAD_CAMERA_PATH);
 		_roundIntroOverlay = GetNode<Control>(ROUND_INTRO_PATH);
 		_roundIntroLabel = GetNode<Label>(ROUND_INTRO_LABEL_PATH);
@@ -194,6 +224,13 @@ public partial class MatchWorldView : Node3D
 		_opponentPlayedCard.ShowFaceDown();
 		_myPlayedCard.Visible = false;
 		_opponentPlayedCard.Visible = false;
+
+		// Same reasoning for a pair left planted from the last match, except that this one has
+		// to be the unconditional send-home rather than the counted one — round 1 of a rematch
+		// must not inherit half of the previous match's planted round.
+		_myScissors.ReturnToRest();
+		_opponentScissors.ReturnToRest();
+
 		RefreshReadout();
 		EnterIntroPhase();
 	}
@@ -228,51 +265,51 @@ public partial class MatchWorldView : Node3D
 
 	/// <summary>Both played cards become known at the same moment, to both sides — the reveal
 	/// is what ends the round's hidden phase, so this is the first point either card may show
-    /// a face. Also where the Reveal phase starts: the winning blow (if any) is deliberately
-    /// deferred until the flip animation started here actually finishes — see the phase
-    /// machine below.</summary>
-    private void OnRoundRevealed()
-    {
-        MatchView view = GameState.Instance!.View;
-        RevealPlayedCard(_myPlayedCard, view.MyCard, MY_CARD_FACEDOWN_ROTATION, MY_CARD_ROTATION);
-        RevealPlayedCard(_opponentPlayedCard, view.OpponentCard, OPPONENT_CARD_FACEDOWN_ROTATION, OPPONENT_CARD_ROTATION);
+	/// a face. Also where the Reveal phase starts: the winning blow (if any) is deliberately
+	/// deferred until the flip animation started here actually finishes — see the phase
+	/// machine below.</summary>
+	private void OnRoundRevealed()
+	{
+		MatchView view = GameState.Instance!.View;
+		RevealPlayedCard(_myPlayedCard, view.MyCard, MY_CARD_FACEDOWN_ROTATION, MY_CARD_ROTATION);
+		RevealPlayedCard(_opponentPlayedCard, view.OpponentCard, OPPONENT_CARD_FACEDOWN_ROTATION, OPPONENT_CARD_ROTATION);
 
-        _phase = ERoundPhase.Reveal;
-        _phaseSecondsRemaining = REVEAL_FLIP_SECONDS;
-    }
+		_phase = ERoundPhase.Reveal;
+		_phaseSecondsRemaining = REVEAL_FLIP_SECONDS;
+	}
 
-    /// <summary>Flips one slab from facedown to face up. A slab not on the table yet (its
-    /// owner never submitted in person — the submit timer filled the card in) appears facedown
-    /// first, so the flip always starts from the same place. Setting the face BEFORE the flip
-    /// is safe: the art points at the table until the rotation carries it past edge-on.</summary>
-    private static void RevealPlayedCard(
-        CardView cardView, ECardName? playedCard, Vector3 facedownRotation, Vector3 faceUpRotation)
-    {
-        if (playedCard == null)
-        {
-            cardView.ShowFaceDown();
-            return;
-        }
+	/// <summary>Flips one slab from facedown to face up. A slab not on the table yet (its
+	/// owner never submitted in person — the submit timer filled the card in) appears facedown
+	/// first, so the flip always starts from the same place. Setting the face BEFORE the flip
+	/// is safe: the art points at the table until the rotation carries it past edge-on.</summary>
+	private static void RevealPlayedCard(
+		CardView cardView, ECardName? playedCard, Vector3 facedownRotation, Vector3 faceUpRotation)
+	{
+		if (playedCard == null)
+		{
+			cardView.ShowFaceDown();
+			return;
+		}
 
-        if (!cardView.Visible)
-        {
-            PresentFacedown(cardView, facedownRotation);
-        }
+		if (!cardView.Visible)
+		{
+			PresentFacedown(cardView, facedownRotation);
+		}
 
-        cardView.ShowFaceUp(playedCard.Value);
+		cardView.ShowFaceUp(playedCard.Value);
 
-        // SUBMITTED_CARD_SCALE has to be rebuilt into the target pose: this is a whole
-        // Transform3D handed to an interpolation, not a rotation assignment, so anything left
-        // out of it is animated away — a flip to a plain rotation basis would shrink the card
-        // back to hand size on its way over.
-        Transform3D faceUpPose = cardView.GetParent<Node3D>().GlobalTransform
-            * new Transform3D(
-                Basis.FromEuler(faceUpRotation).Scaled(Vector3.One * SUBMITTED_CARD_SCALE),
-                Vector3.Zero);
-        cardView.BeginPoseAnimation(faceUpPose, REVEAL_FLIP_SECONDS, REVEAL_FLIP_ARC_METERS, null);
-    }
+		// SUBMITTED_CARD_SCALE has to be rebuilt into the target pose: this is a whole
+		// Transform3D handed to an interpolation, not a rotation assignment, so anything left
+		// out of it is animated away — a flip to a plain rotation basis would shrink the card
+		// back to hand size on its way over.
+		Transform3D faceUpPose = cardView.GetParent<Node3D>().GlobalTransform
+			* new Transform3D(
+				Basis.FromEuler(faceUpRotation).Scaled(Vector3.One * SUBMITTED_CARD_SCALE),
+				Vector3.Zero);
+		cardView.BeginPoseAnimation(faceUpPose, REVEAL_FLIP_SECONDS, REVEAL_FLIP_ARC_METERS, null);
+	}
 
-    /// <summary>Only the health/round readout — the winning blow itself no longer plays from
+	/// <summary>Only the health/round readout — the winning blow itself no longer plays from
 	/// here. It waits for the Reveal phase's flip to finish first (see the phase machine),
 	/// which this signal on its own cannot express: RoundRevealed and RoundResolved fire on
 	/// the same call today (no ability card leaves a choice pending), so playing the blow
@@ -310,6 +347,18 @@ public partial class MatchWorldView : Node3D
 
 		CharacterAnimationController winnerAnimation = didIWin ? _myAnimation : _opponentAnimation;
 		winnerAnimation.PlayBlow(animationName, onFinished);
+
+		// The prop only exists for the 가위 clip — 바위 punches bare-handed. Needs no RPC of its
+		// own: both screens reach here off the same already-agreed LastRoundOutcome, and each
+		// resolves "the winner" to its own side of the table, so the two runs stay in step.
+		if (winningCard.Value == ECardName.Scissors)
+		{
+			ScissorsController winnerScissors = didIWin ? _myScissors : _opponentScissors;
+			winnerScissors.PlayStabSequence(
+				didIWin ? _myCharacter : _opponentCharacter,
+				didIWin ? _opponentStuckTarget : _myStuckTarget);
+		}
+
 		return true;
 	}
 
@@ -321,7 +370,9 @@ public partial class MatchWorldView : Node3D
 				return ROCK_WIN_ANIMATION;
 
 			case ECardName.Scissors:
-				return SCISSORS_WIN_ANIMATION;
+				// Named by ScissorsController, which also carries the two moments measured
+				// out of this exact clip — one owner for the clip and its timings.
+				return ScissorsController.STAB_ANIMATION_NAME;
 
 			default:
 				return null;
@@ -378,20 +429,26 @@ public partial class MatchWorldView : Node3D
 			case ERoundPhase.ResultHold:
 				// Only reached for a round with no blow to wait on — a blow-driven hold clears
 				// itself via PlayWinningBlow's onFinished callback instead of this timer.
-                EnterResultSettlePhase();
-                break;
+				EnterResultSettlePhase();
+				break;
 
-            case ERoundPhase.ResultSettle:
-                EnterNextRoundOrIdle();
-                break;
-        }
-    }
+			case ERoundPhase.ResultSettle:
+				EnterNextRoundOrIdle();
+				break;
+		}
+	}
 
-    private void EnterIntroPhase()
-    {
-        _phase = ERoundPhase.Intro;
-        _phaseSecondsRemaining = (float)GameState.ROUND_INTRO_SECONDS;
-        _headCamera.SetRoundIntroLocked(true);
+	private void EnterIntroPhase()
+	{
+		_phase = ERoundPhase.Intro;
+		_phaseSecondsRemaining = (float)GameState.ROUND_INTRO_SECONDS;
+		_headCamera.SetRoundIntroLocked(true);
+
+		// Both pairs are told an intro happened; each decides for itself whether this is the one
+        // it leaves on. A planted pair sits out the whole round after the stab and goes home on
+        // the intro after that, so this is deliberately NOT an unconditional send-home.
+        _myScissors.OnRoundIntro();
+        _opponentScissors.OnRoundIntro();
 
         _roundIntroLabel.Text = string.Format(Tr("MATCH_ROUND"), GameState.Instance!.View.RoundNumber);
         _roundIntroOverlay.Visible = true;
