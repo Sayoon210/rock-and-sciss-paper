@@ -46,6 +46,19 @@ public partial class HeadFollowCamera : Camera3D
 	private const float MOUSE_SENSITIVITY_DEGREES_PER_PIXEL = 0.1f;
 	private const float MAX_LOOK_DEGREES = 60f;
 
+	// Where the head aims itself while the hand view is up: centred, and tipped down at the
+	// cards. The pitch is measured rather than judged by eye -- from the camera's authored rest
+	// position, the hand row's centre sits 34.5 degrees below the rest facing (which is itself
+	// already 35.6 degrees down, so this is 70 degrees below horizontal in total). Yaw goes to
+	// 0 rather than the 4.9 degrees that would aim exactly at the row's centre: the row is a
+	// hair off-centre in X, and "centred" is what this is meant to look like.
+	private const float HAND_VIEW_YAW_DEGREES = 0f;
+	private const float HAND_VIEW_PITCH_DEGREES = -34.5f;
+
+	// Tuned against HAND_VIEW_BLEND_SECONDS so the head finishes turning at about the same
+	// time the camera finishes travelling -- roughly 95% of the way there over that 0.35s.
+	private const float HAND_VIEW_LOOK_SETTLE_PER_SECOND = 9f;
+
 	// How long the trip between the head and the hand takes, each way.
 	private const float HAND_VIEW_BLEND_SECONDS = 0.35f;
 
@@ -179,6 +192,21 @@ public partial class HeadFollowCamera : Camera3D
 
 	public override void _Process(double delta)
 	{
+		// Entering the hand view aims the head at the cards on its own, rather than leaving it
+		// pointed wherever the mouse last left it. Only a drive TOWARDS the pose, never a
+		// restore away from it: leaving the hand view simply stops this running, so mouse-look
+		// picks up from the head-down pose the player is already looking out of, which is what
+		// makes the return feel continuous rather than like a snap back to centre.
+		//
+		// No conflict with mouse input -- that branch of _UnhandledInput only reads motion
+		// while the mouse is Captured, and the hand view frees it.
+		if (_isHandViewHeld)
+		{
+			float settleWeight = 1f - Mathf.Exp(-HAND_VIEW_LOOK_SETTLE_PER_SECOND * (float)delta);
+			_yawDegrees = Mathf.Lerp(_yawDegrees, HAND_VIEW_YAW_DEGREES, settleWeight);
+			_pitchDegrees = Mathf.Lerp(_pitchDegrees, HAND_VIEW_PITCH_DEGREES, settleWeight);
+		}
+
 		// Yaw around world up, then pitch around the resulting (post-yaw) local right axis —
 		// the standard FPS-look composition, so pitch always means "up/down relative to
 		// whichever way you're currently turned" rather than a fixed world axis.
