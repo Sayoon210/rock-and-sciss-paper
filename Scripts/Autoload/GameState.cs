@@ -63,6 +63,12 @@ public partial class GameState : Node
 
     public MatchView View { get; private set; } = new MatchView();
 
+    /// <summary>This match's round-by-round record, filled on both sides from the same public
+    /// data View is filled from. Read-only to everyone else; MatchLogPanel renders it.
+    /// One instance for the session, Reset per match rather than replaced, so a screen holding
+    /// a reference to it across a rematch keeps looking at the live log.</summary>
+    public MatchLog Log { get; } = new MatchLog();
+
     // UI Signals - dont need to distribute side, only my side
     [Signal] public delegate void RoundResolvedEventHandler();
     [Signal] public delegate void RequestRejectedEventHandler(string reason);
@@ -133,6 +139,7 @@ public partial class GameState : Node
     {
         _session = null;
         View = new MatchView();
+        Log.Reset();
         StopChoiceTimer();
         StopSubmitTimer();
     }
@@ -486,6 +493,7 @@ public partial class GameState : Node
     private void MatchStartedRpc(int side, int[] mulliganHand, int myDeckCount, int opponentDeckCount, int opponentHandCount)
     {
         View = new MatchView();
+        Log.Reset();
         _mySide = (ESide)side;
 
         View.MyHand = DecodeHand(mulliganHand);
@@ -945,6 +953,52 @@ public partial class GameState : Node
             {
                 View.MatchResult = EMatchOutcome.OpponentWon;
             }
+        }
+
+        RecordRoundInLog();
+    }
+
+    /// <summary>Appends the round that just finished to Log. Called from the tail of
+    /// ApplyRoundResultToView because that is the one place both sides pass through with the
+    /// round fully applied — the host in-process, a client off RoundResolvedRpc — so neither
+    /// gets a log the other does not.
+    ///
+    /// The round number is View.RoundNumber - 1: MatchSession increments its counter as the
+    /// last step of recording a resolution, so the number that arrives here already names the
+    /// NEXT round rather than the one being logged.</summary>
+    private void RecordRoundInLog()
+    {
+        EMatchLogOutcome outcome;
+        switch (View.LastRoundOutcome)
+        {
+            case ERoundOutcome.MyWin:
+                outcome = EMatchLogOutcome.MyWin;
+                break;
+
+            case ERoundOutcome.OpponentWin:
+                outcome = EMatchLogOutcome.OpponentWin;
+                break;
+
+            case ERoundOutcome.Draw:
+                outcome = EMatchLogOutcome.Draw;
+                break;
+
+            default:
+                outcome = EMatchLogOutcome.NoContest;
+                break;
+        }
+
+        Log.RecordRound(
+            View.RoundNumber - 1,
+            View.MyCard,
+            View.OpponentCard,
+            outcome,
+            View.MyHealth,
+            View.OpponentHealth);
+
+        if (View.MatchResult.HasValue)
+        {
+            Log.RecordMatchEnd(View.MatchResult.Value == EMatchOutcome.IWon);
         }
     }
 

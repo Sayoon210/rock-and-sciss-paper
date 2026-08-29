@@ -66,3 +66,14 @@ MATCH_END_OPPONENT_LEFT,Your opponent left.,상대가 나갔습니다.
 MATCH_END_WAITING_REMATCH,Waiting for the host to start a rematch...,호스트가 재대결을 시작하길 기다리는 중...
 MATCH_END_REMATCH,Rematch,재대결
 MATCH_END_TITLE_SCREEN,Title Screen,타이틀로
+MATCH_LOG_TITLE,Match Log,경기 로그
+MATCH_LOG_HINT,Tab: log,Tab: 로그
+MATCH_LOG_EMPTY,No rounds played yet.,아직 진행된 라운드가 없습니다.
+MATCH_LOG_ROUND_LINE,"R{0}  {1} vs {2}  —  {3}","{0}R  {1} vs {2}  —  {3}"
+MATCH_LOG_MY_WIN,I win (-{0} to opponent),내가 이김 (상대 -{0})
+MATCH_LOG_OPPONENT_WIN,Opponent wins (-{0} to me),상대가 이김 (나 -{0})
+MATCH_LOG_DRAW,Draw,무승부
+MATCH_LOG_NO_CONTEST,No contest,승패 없음
+MATCH_LOG_HEALTH_LINE,"      health  me {0} / opponent {1}","      체력  나 {0} / 상대 {1}"
+MATCH_LOG_MATCH_WON,=== Match won ===,=== 매치 승리 ===
+MATCH_LOG_MATCH_LOST,=== Match lost ===,=== 매치 패배 ===

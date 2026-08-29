@@ -8,6 +8,8 @@
 [ext_resource type="Script" uid="uid://of5lvvyhktkk" path="res://Scripts/Match3D/HeadFollowCamera.cs" id="6_headfollow"]
 [ext_resource type="Script" uid="uid://dtvr33engryxb" path="res://Scripts/Match3D/HandView.cs" id="7_handview"]
 [ext_resource type="Script" uid="uid://vjv5yyipv70h" path="res://Scripts/Match3D/RemoteHeadLook.cs" id="8_remotelook"]
+[ext_resource type="Script" uid="uid://di130osdbh2xn" path="res://Scripts/Match3D/HealthBarsUI.cs" id="9_healthbars"]
+[ext_resource type="Script" uid="uid://dtnsbvtqkjrwm" path="res://Scripts/Match3D/MatchLogPanel.cs" id="10_matchlog"]
 
 [sub_resource type="Environment" id="Environment_match"]
 background_mode = 1
@@ -109,6 +111,95 @@ text = "Me"
 [node name="OpponentScoreLabel" type="Label" parent="MatchInterface/Readout" unique_id=902346682]
 layout_mode = 2
 text = "Opponent"
+
+[node name="HealthBars" type="Control" parent="MatchInterface" unique_id=1120044501]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -320.0
+offset_top = 20.0
+offset_right = -24.0
+offset_bottom = 130.0
+grow_horizontal = 0
+script = ExtResource("9_healthbars")
+
+[node name="OpponentHealth" type="VBoxContainer" parent="MatchInterface/HealthBars" unique_id=1120044502]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 48.0
+grow_horizontal = 2
+
+[node name="Label" type="Label" parent="MatchInterface/HealthBars/OpponentHealth" unique_id=1120044503]
+layout_mode = 2
+text = "Opponent"
+
+[node name="Bar" type="ProgressBar" parent="MatchInterface/HealthBars/OpponentHealth" unique_id=1120044504]
+custom_minimum_size = Vector2(0, 18)
+layout_mode = 2
+max_value = 10.0
+value = 10.0
+show_percentage = false
+
+[node name="MyHealth" type="VBoxContainer" parent="MatchInterface/HealthBars" unique_id=1120044505]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 60.0
+offset_bottom = 108.0
+grow_horizontal = 2
+
+[node name="Label" type="Label" parent="MatchInterface/HealthBars/MyHealth" unique_id=1120044506]
+layout_mode = 2
+text = "Me"
+
+[node name="Bar" type="ProgressBar" parent="MatchInterface/HealthBars/MyHealth" unique_id=1120044507]
+custom_minimum_size = Vector2(0, 18)
+layout_mode = 2
+max_value = 10.0
+value = 10.0
+show_percentage = false
+
+[node name="MatchLog" type="Control" parent="MatchInterface" unique_id=1120044510]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("10_matchlog")
+
+[node name="Panel" type="PanelContainer" parent="MatchInterface/MatchLog" unique_id=1120044511]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -420.0
+offset_top = -420.0
+offset_right = -24.0
+offset_bottom = -24.0
+grow_horizontal = 0
+grow_vertical = 0
+
+[node name="Layout" type="VBoxContainer" parent="MatchInterface/MatchLog/Panel" unique_id=1120044512]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="TitleLabel" type="Label" parent="MatchInterface/MatchLog/Panel/Layout" unique_id=1120044513]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Match Log"
+
+[node name="Scroll" type="ScrollContainer" parent="MatchInterface/MatchLog/Panel/Layout" unique_id=1120044514]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="EntriesLabel" type="Label" parent="MatchInterface/MatchLog/Panel/Layout/Scroll" unique_id=1120044515]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "No rounds played yet."
 
 [node name="DebugInterface" type="CanvasLayer" parent="." unique_id=1419643423]
 
