@@ -287,8 +287,15 @@ public partial class HandView : Node3D
 			GameState.Instance!.RequestCardPlay(playedCard);
 		}
 
+		// Scaled, not just rotated: a played card sits on the table bigger than it stood in the
+		// hand (MatchWorldView.SUBMITTED_CARD_SCALE), and InterpolateWith carries scale as well
+		// as pose — so the card grows over the flight instead of popping at the far end, where
+		// the slab that replaces it is already that size.
 		Transform3D facedownOnSlot = _myCardSlot.GlobalTransform
-			* new Transform3D(Basis.FromEuler(MatchWorldView.MY_CARD_FACEDOWN_ROTATION), Vector3.Zero);
+			* new Transform3D(
+				Basis.FromEuler(MatchWorldView.MY_CARD_FACEDOWN_ROTATION)
+					.Scaled(Vector3.One * MatchWorldView.SUBMITTED_CARD_SCALE),
+				Vector3.Zero);
 		card.BeginPoseAnimation(
 			facedownOnSlot, SUBMIT_FLIGHT_SECONDS, SUBMIT_FLIGHT_ARC_METERS, OnFlightLanded);
 

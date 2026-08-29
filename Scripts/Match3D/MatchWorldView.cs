@@ -44,6 +44,13 @@ public partial class MatchWorldView : Node3D
 	public static readonly Vector3 MY_CARD_FACEDOWN_ROTATION = new Vector3(Mathf.Pi / 2f, 0f, 0f);
 	private static readonly Vector3 OPPONENT_CARD_FACEDOWN_ROTATION = new Vector3(Mathf.Pi / 2f, Mathf.Pi, 0f);
 
+	/// <summary>How much bigger a card is once it is on the table than it was in the hand. A
+	/// real-sized card (RoundedCardMesh's 6.35x8.89cm) read fine held up close in the hand view,
+	/// but the played pair is looked at from the head camera across a 1.4m table, where it was
+	/// too small to tell apart. Public because HandView's submit flight has to land on exactly
+	/// this size — the flying card and the slab that replaces it must match.</summary>
+	public const float SUBMITTED_CARD_SCALE = 2f;
+
 	private const float REVEAL_FLIP_SECONDS = 0.35f;
 	private const float REVEAL_FLIP_ARC_METERS = 0.05f;
 
@@ -174,6 +181,7 @@ public partial class MatchWorldView : Node3D
 	{
 		CardView card = GD.Load<PackedScene>(CARD_VIEW_SCENE_PATH).Instantiate<CardView>();
 		card.Rotation = rotation;
+		card.Scale = Vector3.One * SUBMITTED_CARD_SCALE;
 		GetNode<Node3D>(slotPath).AddChild(card);
 		return card;
 	}
@@ -252,8 +260,15 @@ public partial class MatchWorldView : Node3D
         }
 
         cardView.ShowFaceUp(playedCard.Value);
+
+        // SUBMITTED_CARD_SCALE has to be rebuilt into the target pose: this is a whole
+        // Transform3D handed to an interpolation, not a rotation assignment, so anything left
+        // out of it is animated away — a flip to a plain rotation basis would shrink the card
+        // back to hand size on its way over.
         Transform3D faceUpPose = cardView.GetParent<Node3D>().GlobalTransform
-            * new Transform3D(Basis.FromEuler(faceUpRotation), Vector3.Zero);
+            * new Transform3D(
+                Basis.FromEuler(faceUpRotation).Scaled(Vector3.One * SUBMITTED_CARD_SCALE),
+                Vector3.Zero);
         cardView.BeginPoseAnimation(faceUpPose, REVEAL_FLIP_SECONDS, REVEAL_FLIP_ARC_METERS, null);
     }
 
