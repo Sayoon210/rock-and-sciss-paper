@@ -23,48 +23,75 @@ namespace RockAndScissPaper.Match3D;
 /// override needed).</summary>
 public partial class RemoteHeadLook : Node3D
 {
-    private const string SKELETON_PATH = "../Armature/Skeleton3D";
-    private const string HEAD_BONE_NAME = "mixamorig10_Head";
+	private const string SKELETON_PATH = "../Armature/Skeleton3D";
+	private const string HEAD_BONE_NAME = "mixamorig10_Head";
 
-    private Skeleton3D _skeleton = null!;
-    private int _headBoneIndex;
-    private int _headBoneParentIndex;
-    private Basis _restBoneWorldBasis;
-    private Basis _lastReceivedLocalDelta = Basis.Identity;
+	/// <summary>How fast the shown rotation chases the last received one, as the fraction of
+	/// the remaining gap closed per second — an exponential approach, so it is frame-rate
+	/// independent (see the exponent in _Process) rather than a fixed step per frame.
+	///
+	/// Updates arrive at roughly 13-14Hz (measured; HeadFollowCamera aims for 15 and loses a
+	/// little to frame quantisation), which is a visible step every ~70ms if applied raw — the
+	/// head jerked between poses instead of turning. This has to converge fast enough that the
+	/// head is essentially caught up before the next update lands, or the lag reads as the
+	/// opponent reacting late; at 25 the gap is ~92% closed over one 70ms interval, which
+	/// smooths the step without adding a perceptible delay of its own.</summary>
+	private const float LOOK_SMOOTHING_PER_SECOND = 25f;
 
-    public override void _Ready()
-    {
-        _skeleton = GetNode<Skeleton3D>(SKELETON_PATH);
-        _headBoneIndex = _skeleton.FindBone(HEAD_BONE_NAME);
-        _headBoneParentIndex = _skeleton.GetBoneParent(_headBoneIndex);
+	private Skeleton3D _skeleton = null!;
+	private int _headBoneIndex;
+	private int _headBoneParentIndex;
+	private Basis _restBoneWorldBasis;
+	private Quaternion _targetLocalDelta = Quaternion.Identity;
+	private Quaternion _shownLocalDelta = Quaternion.Identity;
 
-        // CharacterIdlePose (a sibling script on the parent Character node) has already applied
-        // the idle pose by the time this runs — same ordering reasoning as HeadFollowCamera.
-        _restBoneWorldBasis = (_skeleton.GlobalTransform * _skeleton.GetBoneGlobalPose(_headBoneIndex)).Basis.Orthonormalized();
+	public override void _Ready()
+	{
+		_skeleton = GetNode<Skeleton3D>(SKELETON_PATH);
+		_headBoneIndex = _skeleton.FindBone(HEAD_BONE_NAME);
+		_headBoneParentIndex = _skeleton.GetBoneParent(_headBoneIndex);
 
-        GameState.Instance!.OpponentLookChanged += OnOpponentLookChanged;
-    }
+		// CharacterIdlePose (a sibling script on the parent Character node) has already applied
+		// the idle pose by the time this runs — same ordering reasoning as HeadFollowCamera.
+		_restBoneWorldBasis = (_skeleton.GlobalTransform * _skeleton.GetBoneGlobalPose(_headBoneIndex)).Basis.Orthonormalized();
 
-    public override void _ExitTree()
-    {
-        if (GameState.Instance != null)
-        {
-            GameState.Instance.OpponentLookChanged -= OnOpponentLookChanged;
-        }
-    }
+		GameState.Instance!.OpponentLookChanged += OnOpponentLookChanged;
+	}
 
-    private void OnOpponentLookChanged(Quaternion localDeltaInBoneSpace)
-    {
-        _lastReceivedLocalDelta = new Basis(localDeltaInBoneSpace);
-    }
+	public override void _ExitTree()
+	{
+		if (GameState.Instance != null)
+		{
+			GameState.Instance.OpponentLookChanged -= OnOpponentLookChanged;
+		}
+	}
 
-    public override void _Process(double delta)
-    {
-        // Re-applied every frame, not just on receipt — nothing else is driving this bone's
-        // pose (CharacterIdlePose's AnimationPlayer is stopped), so without this the pose would
-        // hold whatever it last was set to rather than the LATEST received delta specifically;
-        // in practice these coincide, but re-applying costs nothing and needs no extra state.
-        Basis desiredBoneWorldBasis = (_restBoneWorldBasis * _lastReceivedLocalDelta).Orthonormalized();
-        BoneLookRotator.Apply(_skeleton, _headBoneIndex, _headBoneParentIndex, desiredBoneWorldBasis);
-    }
+	/// <summary>Stores where the head should end up, not where it is — _Process walks the
+	/// shown rotation towards this. Nothing is applied here, so an update arriving mid-turn
+	/// just moves the destination rather than snapping to it.</summary>
+	private void OnOpponentLookChanged(Quaternion localDeltaInBoneSpace)
+	{
+		_targetLocalDelta = localDeltaInBoneSpace;
+	}
+
+	public override void _Process(double delta)
+	{
+		// Exponential approach rather than a fixed step: 1 - e^(-rate * dt) is the fraction of
+		// the remaining gap to close this frame, which lands on the same curve whatever the
+		// frame rate. A plain "rate * dt" lerp would converge faster at high frame rates and
+		// could overshoot past 1 on a long frame.
+		float weight = 1f - Mathf.Exp(-LOOK_SMOOTHING_PER_SECOND * (float)delta);
+
+		// Slerp, not Lerp — these are rotations, and a linear blend between quaternions does
+		// not turn at a constant rate. Normalized because repeated slerping accumulates enough
+		// float error to leave the quaternion slightly off unit length, which Basis then reads
+		// as a scale.
+		_shownLocalDelta = _shownLocalDelta.Slerp(_targetLocalDelta, weight).Normalized();
+
+		// Re-applied every frame, not just on receipt — nothing else is driving this bone's
+		// pose (CharacterIdlePose's AnimationPlayer is stopped), and the smoothing above means
+		// this genuinely changes every frame between updates rather than only on arrival.
+		Basis desiredBoneWorldBasis = (_restBoneWorldBasis * new Basis(_shownLocalDelta)).Orthonormalized();
+		BoneLookRotator.Apply(_skeleton, _headBoneIndex, _headBoneParentIndex, desiredBoneWorldBasis);
+	}
 }
