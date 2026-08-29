@@ -243,10 +243,24 @@ public partial class GameState : Node
     public void SendMyLookDirection(Quaternion localDeltaInBoneSpace)
     {
         long? targetPeerId = Multiplayer.IsServer() ? ClientPeerId() : 1;
-        if (targetPeerId.HasValue)
+        if (!targetPeerId.HasValue)
         {
-            RpcId(targetPeerId.Value, MethodName.OpponentLookChangedRpc, localDeltaInBoneSpace);
+            return;
         }
+
+        // Godot errors on an RPC to a peer that is not connected, and this one is sent from
+        // _Process on a timer rather than in response to anything — so unlike the match RPCs,
+        // which only fire inside a running match, it will keep firing at whatever is or is not
+        // on the other end. That covers the scene run on its own with no peer at all, a client
+        // whose connection dropped, and the window between MatchWorld loading and the peer
+        // actually being up. Checking the live peer list rather than a status flag also catches
+        // a _sideByPeerId entry left behind by a peer that has since gone.
+        if (Array.IndexOf(Multiplayer.GetPeers(), (int)targetPeerId.Value) < 0)
+        {
+            return;
+        }
+
+        RpcId(targetPeerId.Value, MethodName.OpponentLookChangedRpc, localDeltaInBoneSpace);
     }
 
     private void OnPeerConnected(long peerId)
