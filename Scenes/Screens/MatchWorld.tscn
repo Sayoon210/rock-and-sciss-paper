@@ -23,6 +23,9 @@ ambient_light_energy = 1.2
 [sub_resource type="BoxMesh" id="BoxMesh_table"]
 size = Vector3(1.4, 0.05, 0.8474709)
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_healthfill"]
+bg_color = Color(0.29, 0.78, 0.36, 1)
+
 [node name="MatchWorld" type="Node3D" unique_id=2029126377]
 script = ExtResource("1_matchworldview")
 
@@ -140,6 +143,7 @@ text = "Opponent"
 [node name="Bar" type="ProgressBar" parent="MatchInterface/HealthBars/OpponentHealth" unique_id=1120044504]
 custom_minimum_size = Vector2(0, 18)
 layout_mode = 2
+theme_override_styles/fill = SubResource("StyleBoxFlat_healthfill")
 max_value = 10.0
 value = 10.0
 show_percentage = false
@@ -159,6 +163,7 @@ text = "Me"
 [node name="Bar" type="ProgressBar" parent="MatchInterface/HealthBars/MyHealth" unique_id=1120044507]
 custom_minimum_size = Vector2(0, 18)
 layout_mode = 2
+theme_override_styles/fill = SubResource("StyleBoxFlat_healthfill")
 max_value = 10.0
 value = 10.0
 show_percentage = false
