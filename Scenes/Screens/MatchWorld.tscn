@@ -6,7 +6,7 @@
 [ext_resource type="Script" uid="uid://w1ypfpogo53j" path="res://Scripts/Match3D/CharacterIdlePose.cs" id="4_idlepose"]
 [ext_resource type="Script" uid="uid://wnbq0587kv1x" path="res://Scripts/Match3D/CharacterHeadFade.cs" id="5_headfade"]
 [ext_resource type="Script" uid="uid://of5lvvyhktkk" path="res://Scripts/Match3D/HeadFollowCamera.cs" id="6_headfollow"]
-[ext_resource type="Script" uid="uid://belkibd1xfnox" path="res://Scripts/Match3D/DebugHandPreview.cs" id="7_debughand"]
+[ext_resource type="Script" uid="uid://dtvr33engryxb" path="res://Scripts/Match3D/HandView.cs" id="7_handview"]
 [ext_resource type="Script" uid="uid://vjv5yyipv70h" path="res://Scripts/Match3D/RemoteHeadLook.cs" id="8_remotelook"]
 
 [sub_resource type="Environment" id="Environment_match"]
@@ -85,9 +85,9 @@ transform = Transform3D(2, 0, 0, 0, 1.803665, 0.8641715, 0, -0.8641715, 1.803665
 [node name="MyCardSlot" type="Node3D" parent="Field/CardRest" unique_id=1061693325]
 transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, -0.036, 0, -0.19294131)
 
-[node name="DebugHandPreview" type="Node3D" parent="Field/CardRest" unique_id=906581897]
+[node name="HandView" type="Node3D" parent="Field/CardRest" unique_id=906581897]
 transform = Transform3D(1, 0, 0, 0, 0.90172476, 0.43231076, 0, -0.43231076, 0.90172476, 0, -0.19224954, -0.27267984)
-script = ExtResource("7_debughand")
+script = ExtResource("7_handview")
 
 [node name="MatchInterface" type="CanvasLayer" parent="." unique_id=1442123972]
 

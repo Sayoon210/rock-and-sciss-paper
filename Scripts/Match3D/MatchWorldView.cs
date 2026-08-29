@@ -26,10 +26,20 @@ public partial class MatchWorldView : Node3D
     private static readonly Vector3 MY_CARD_ROTATION = new Vector3(-Mathf.Pi / 2f, 0f, 0f);
     private static readonly Vector3 OPPONENT_CARD_ROTATION = new Vector3(-Mathf.Pi / 2f, Mathf.Pi, 0f);
 
+    // The same two poses turned facedown - a submitted card sits on the table back-up until
+    // the reveal flips it. MY side is public because HandView's submit flight targets this
+    // exact pose, so the landing hand card and the slab that replaces it line up perfectly.
+    public static readonly Vector3 MY_CARD_FACEDOWN_ROTATION = new Vector3(Mathf.Pi / 2f, 0f, 0f);
+    private static readonly Vector3 OPPONENT_CARD_FACEDOWN_ROTATION = new Vector3(Mathf.Pi / 2f, Mathf.Pi, 0f);
+
+    private const float REVEAL_FLIP_SECONDS = 0.35f;
+    private const float REVEAL_FLIP_ARC_METERS = 0.05f;
+
     private CharacterAnimationController _myAnimation = null!;
     private CharacterAnimationController _opponentAnimation = null!;
     private CardView _myPlayedCard = null!;
     private CardView _opponentPlayedCard = null!;
+    private HandView _handView = null!;
     private Label _roundLabel = null!;
     private Label _myScoreLabel = null!;
     private Label _opponentScoreLabel = null!;
@@ -53,6 +63,17 @@ public partial class MatchWorldView : Node3D
         _myPlayedCard = AddCardToSlot("Field/CardRest/MyCardSlot", MY_CARD_ROTATION);
         _opponentPlayedCard = AddCardToSlot("Field/CardRest2/OpponentCardSlot", OPPONENT_CARD_ROTATION);
 
+        // Empty table until someone actually submits - the slabs exist from scene load but
+        // stay invisible, so an open round shows an empty rest rather than a blank card.
+        _myPlayedCard.Visible = false;
+        _opponentPlayedCard.Visible = false;
+
+        // HandView events share this scene's lifetime (both are freed together), unlike the
+        // Autoload signals below, so they need no _ExitTree unhooking.
+        _handView = GetNode<HandView>("Field/CardRest/HandView");
+        _handView.MyCardLanded += OnMyCardLanded;
+        _handView.MySubmissionRejected += OnMySubmissionRejected;
+
         AnimationDebugPanel.BuildInto(
             GetNode<VBoxContainer>("DebugInterface/AnimationButtons"),
             GetNode<AnimationPlayer>("MySeat/Character/AnimationPlayer"));
@@ -60,6 +81,7 @@ public partial class MatchWorldView : Node3D
         GameState.Instance!.MatchStarted += OnMatchStarted;
         GameState.Instance.RoundRevealed += OnRoundRevealed;
         GameState.Instance.RoundResolved += OnRoundResolved;
+        GameState.Instance.OpponentSubmitted += OnOpponentSubmitted;
 
         // The menu music plays through the connection screen and stops here, because this
         // is the first screen that is no longer the menu. TitleScreenUI starts it.
@@ -77,6 +99,7 @@ public partial class MatchWorldView : Node3D
             GameState.Instance.MatchStarted -= OnMatchStarted;
             GameState.Instance.RoundRevealed -= OnRoundRevealed;
             GameState.Instance.RoundResolved -= OnRoundResolved;
+            GameState.Instance.OpponentSubmitted -= OnOpponentSubmitted;
         }
     }
 
@@ -94,7 +117,37 @@ public partial class MatchWorldView : Node3D
         // longer in play, and a rematch reuses this scene.
         _myPlayedCard.ShowFaceDown();
         _opponentPlayedCard.ShowFaceDown();
+        _myPlayedCard.Visible = false;
+        _opponentPlayedCard.Visible = false;
         RefreshReadout();
+    }
+
+    private void OnMyCardLanded()
+    {
+        PresentFacedown(_myPlayedCard, MY_CARD_FACEDOWN_ROTATION);
+    }
+
+    private void OnOpponentSubmitted()
+    {
+        PresentFacedown(_opponentPlayedCard, OPPONENT_CARD_FACEDOWN_ROTATION);
+    }
+
+    private void OnMySubmissionRejected()
+    {
+        // Only while the round is still taking cards - after the reveal a rejection can only
+        // be about a choice, which has nothing to do with the slab.
+        if (GameState.Instance!.View.SubmissionPhaseActive)
+        {
+            _myPlayedCard.Visible = false;
+        }
+    }
+
+    private static void PresentFacedown(CardView cardView, Vector3 facedownRotation)
+    {
+        cardView.CancelPoseAnimation();
+        cardView.ShowFaceDown();
+        cardView.Rotation = facedownRotation;
+        cardView.Visible = true;
     }
 
     /// <summary>Both played cards become known at the same moment, to both sides — the reveal
@@ -103,11 +156,16 @@ public partial class MatchWorldView : Node3D
     private void OnRoundRevealed()
     {
         MatchView view = GameState.Instance!.View;
-        ShowPlayedCard(_myPlayedCard, view.MyCard);
-        ShowPlayedCard(_opponentPlayedCard, view.OpponentCard);
+        RevealPlayedCard(_myPlayedCard, view.MyCard, MY_CARD_FACEDOWN_ROTATION, MY_CARD_ROTATION);
+        RevealPlayedCard(_opponentPlayedCard, view.OpponentCard, OPPONENT_CARD_FACEDOWN_ROTATION, OPPONENT_CARD_ROTATION);
     }
 
-    private static void ShowPlayedCard(CardView cardView, ECardName? playedCard)
+    /// <summary>Flips one slab from facedown to face up. A slab not on the table yet (its
+    /// owner never submitted in person - the submit timer filled the card in) appears facedown
+    /// first, so the flip always starts from the same place. Setting the face BEFORE the flip
+    /// is safe: the art points at the table until the rotation carries it past edge-on.</summary>
+    private static void RevealPlayedCard(
+        CardView cardView, ECardName? playedCard, Vector3 facedownRotation, Vector3 faceUpRotation)
     {
         if (playedCard == null)
         {
@@ -115,7 +173,15 @@ public partial class MatchWorldView : Node3D
             return;
         }
 
+        if (!cardView.Visible)
+        {
+            PresentFacedown(cardView, facedownRotation);
+        }
+
         cardView.ShowFaceUp(playedCard.Value);
+        Transform3D faceUpPose = cardView.GetParent<Node3D>().GlobalTransform
+            * new Transform3D(Basis.FromEuler(faceUpRotation), Vector3.Zero);
+        cardView.BeginPoseAnimation(faceUpPose, REVEAL_FLIP_SECONDS, REVEAL_FLIP_ARC_METERS, null);
     }
 
     private void OnRoundResolved()

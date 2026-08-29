@@ -1,3 +1,4 @@
+using System;
 using Godot;
 using RockAndScissPaper.Autoload;
 using RockAndScissPaper.Cards;
@@ -7,26 +8,25 @@ namespace RockAndScissPaper.Match3D;
 
 /// <summary>One card as a thing on the table: a thin slab with the art on one side and the
 /// shared back image on the other. Which side the player sees is the node's rotation, not a
-/// visibility flag — the same as a real card, and what a flip animation will turn later.
+/// visibility flag — the same as a real card, and what BeginPoseAnimation's reveal flip turns.
 ///
 /// Replaces the Control-based CardView now in Deprecated/. That one drew a nameplate, a type
 /// border and a tooltip; none of those survive as-is in 3D (Godot has no 3D tooltip and no
 /// layout containers), so they are deliberately absent here rather than reimplemented.
 ///
-/// A card handles its own pointer input rather than a picker elsewhere reaching in and doing it
-/// for every card (Scripts/CLAUDE.md: "input handling lives in the node that owns it"). It only
-/// judges what was pointed at and clicked, never whether the card is playable — that stays with
-/// the host, and OnClicked is where GameState.RequestCardPlay will be called from once the real
-/// hand exists. For now it only prints, which is what makes the seam visible.
+/// Pointer input lives here (Scripts/CLAUDE.md: "input handling lives in the node that owns
+/// it"), in two tiers. Every card shows the hover outline. A card someone called EnableGrab
+/// on (a hand card — HandView does this; the played-card slabs on the table never get it) can
+/// also be grabbed: hold to pick it up, slide it up past a threshold to arm submission (the
+/// outline turns the armed color), release to let the grab's owner send it. This class judges
+/// only the gesture, never whether the play is legal — that stays with the host.
 ///
 /// Not [Tool] — [Tool] usage in this scene is being kept to CharacterIdlePose only for now, to
-/// narrow down a runtime freeze. DebugHandPreview (the only thing that needed CardView.tscn to
-/// resolve to an actual CardView in the editor) lost [Tool] for the same reason, so that need
-/// is gone too.</summary>
+/// narrow down a runtime freeze.</summary>
 public partial class CardView : Node3D
 {
     // The card's size, thickness and corner radius all live in RoundedCardMesh, which builds
-    // the geometry these three nodes draw. The .tscn holds only the node structure and the two
+    // the geometry these nodes draw. The .tscn holds only the node structure and the two
     // materials that are the same on every card.
     private const string FRONT_MESH_PATH = "Front";
     private const string BACK_MESH_PATH = "Back";
@@ -40,14 +40,70 @@ public partial class CardView : Node3D
     /// Cards without art are not distinguishable from each other until it exists.</summary>
     private static readonly Color PLACEHOLDER_FACE_COLOR = new Color(0.62f, 0.60f, 0.56f);
 
-    /// <summary>Which card this is currently showing, or null while it is face down. The click
-    /// handler has to be able to say what was clicked, and a card that is face down is one this
-    /// screen is not allowed to name.</summary>
+    // Outline colors, driven from here rather than by editing the .tscn material — which is
+    // duplicated per card in _Ready precisely so one card's armed green cannot turn every
+    // other card's outline green with it (the same shared-resource reasoning as _frontMaterial).
+    private static readonly Color HOVER_OUTLINE_COLOR = new Color(1f, 0.85f, 0.35f);
+    private static readonly Color SUBMIT_ARMED_OUTLINE_COLOR = new Color(0.45f, 1f, 0.5f);
+
+    // Grab feel. A held card travels straight up its own row and nowhere else: sideways drag
+    // is ignored outright, and downward drag does not push it below where it started. The
+    // gesture is "lift this one out", so a card that could also slide sideways only invited
+    // dragging it over its neighbours.
+    private const float GRAB_FOLLOW_METERS_PER_PIXEL = 0.0005f;
+    private const float SNAP_BACK_SECONDS = 0.12f;
+
+    // How far up the card has to be pulled before releasing it submits, as a fraction of
+    // viewport HEIGHT rather than a pixel count. A fixed count means two different gestures on
+    // two window sizes — this project runs at 1600x1000 standalone and 960x600 from the editor,
+    // where the same pixel figure is a quarter of the screen in one and nearly half in the
+    // other. Deliberately a long pull: submitting is the one irreversible thing in a round, and
+    // a short one armed while the player was still only looking at the card.
+    private const float SUBMIT_THRESHOLD_VIEWPORT_FRACTION = 0.25f;
+
+    // A held card is pulled toward the camera along the hand's own facing. Hand cards sit
+    // coplanar in a row, so a card dragged sideways lands exactly on top of its neighbour and
+    // the two z-fight; lifting the held one out of the shared plane is what stops that. Local
+    // to the hand node, whose own parent halves it — this is 5mm of real separation, an order
+    // of magnitude past the card's own 0.5mm thickness.
+    private const float GRAB_LIFT_TOWARD_CAMERA_METERS = 0.01f;
+
+    /// <summary>Which card this is currently showing, or null while it is face down. The
+    /// submit gesture has to be able to say what was grabbed, and a card that is face down is
+    /// one this screen is not allowed to name.</summary>
     public ECardName? ShownCard { get; private set; }
 
+    /// <summary>True while a BeginPoseAnimation move is still travelling.</summary>
+    public bool IsPoseAnimating
+    {
+        get { return _poseSecondsRemaining > 0f; }
+    }
+
+    /// <summary>True while the pointer is holding this card. HandView skips a grabbed card
+    /// when re-laying the row out, so a layout move never fights the pointer for the card.</summary>
+    public bool IsGrabbed
+    {
+        get { return _isGrabbed; }
+    }
+
     private StandardMaterial3D _frontMaterial = null!;
+    private StandardMaterial3D _highlightMaterial = null!;
     private MeshInstance3D _highlight = null!;
     private bool _isPointerInside;
+
+    private Func<bool>? _canGrab;
+    private Action<CardView>? _onSubmitGesture;
+    private bool _isGrabbed;
+    private bool _isSubmitArmed;
+    private Vector2 _grabStartMousePosition;
+    private Transform3D _restLocalTransform;
+
+    private float _poseSecondsRemaining;
+    private float _poseSecondsTotal;
+    private float _poseArcHeightMeters;
+    private Transform3D _poseStartGlobalPose;
+    private Transform3D _poseTargetGlobalPose;
+    private Action? _onPoseAnimationFinished;
 
     public override void _Ready()
     {
@@ -60,6 +116,8 @@ public partial class CardView : Node3D
 
         _highlight = GetNode<MeshInstance3D>(HIGHLIGHT_MESH_PATH);
         _highlight.Mesh = RoundedCardMesh.HIGHLIGHT_MESH;
+        _highlightMaterial = (StandardMaterial3D)_highlight.MaterialOverride.Duplicate();
+        _highlight.MaterialOverride = _highlightMaterial;
 
         // Sized from the same constants the meshes are built from, rather than authored in the
         // .tscn, so the card cannot end up with a hitbox that has drifted from its own edges.
@@ -83,16 +141,108 @@ public partial class CardView : Node3D
         _frontMaterial.Roughness = 0.7f;
         GetNode<MeshInstance3D>(FRONT_MESH_PATH).MaterialOverride = _frontMaterial;
 
+        // Only a grabbed card listens to global input — see _Input.
+        SetProcessInput(false);
+
         ShowFaceDown();
     }
 
-    /// <summary>The outline follows the pointer, but only while the pointer IS a pointer. Read
-    /// every frame rather than only when the pointer crosses the card's edge, because leaving
-    /// the hand view recaptures the mouse without the pointer ever crossing anything — the card
-    /// would otherwise keep an outline it can no longer be asked to drop.</summary>
+    /// <summary>Makes this card grabbable. canGrab is consulted at grab start and every frame
+    /// while held — turning false mid-grab (the camera going home, the phase closing) cancels
+    /// the grab and snaps the card back. onSubmitGesture fires exactly once per armed release,
+    /// with the card left wherever the drag put it — the caller owns what happens next.</summary>
+    public void EnableGrab(Func<bool> canGrab, Action<CardView> onSubmitGesture)
+    {
+        _canGrab = canGrab;
+        _onSubmitGesture = onSubmitGesture;
+    }
+
+    /// <summary>Moves this card's GLOBAL pose to the target over the duration, eased, arcing
+    /// upward (world up) on the way when arcHeightMeters is above zero — a flat interpolation
+    /// swings a table-lying card's halves through the table mid-flip, so the reveal flip and
+    /// the hand-to-table flight both pass above the surface instead. onFinished fires once,
+    /// on arrival.</summary>
+    public void BeginPoseAnimation(
+        Transform3D targetGlobalPose, float durationSeconds, float arcHeightMeters, Action? onFinished)
+    {
+        _poseStartGlobalPose = GlobalTransform;
+        _poseTargetGlobalPose = targetGlobalPose;
+        _poseSecondsTotal = durationSeconds;
+        _poseSecondsRemaining = durationSeconds;
+        _poseArcHeightMeters = arcHeightMeters;
+        _onPoseAnimationFinished = onFinished;
+    }
+
+    /// <summary>Drops a running pose animation where it is, without firing its onFinished —
+    /// for a caller about to place this card somewhere directly.</summary>
+    public void CancelPoseAnimation()
+    {
+        _poseSecondsRemaining = 0f;
+        _onPoseAnimationFinished = null;
+    }
+
     public override void _Process(double delta)
     {
-        _highlight.Visible = _isPointerInside && Input.MouseMode == Input.MouseModeEnum.Visible;
+        StepPoseAnimation((float)delta);
+
+        // A grab is only valid while its gate still holds — Space mid-grab sends the camera
+        // home and recaptures the mouse, and the card must not stay stuck to a pointer that
+        // no longer exists on screen.
+        if (_isGrabbed
+            && (_canGrab == null || !_canGrab() || Input.MouseMode != Input.MouseModeEnum.Visible))
+        {
+            CancelGrab();
+        }
+
+        // The outline follows the pointer, but only while the pointer IS a pointer. Read every
+        // frame rather than only when the pointer crosses the card's edge, because leaving the
+        // hand view recaptures the mouse without the pointer ever crossing anything — the card
+        // would otherwise keep an outline it can no longer be asked to drop.
+        _highlight.Visible =
+            (_isPointerInside || _isGrabbed) && Input.MouseMode == Input.MouseModeEnum.Visible;
+        if (_isSubmitArmed)
+        {
+            _highlightMaterial.AlbedoColor = SUBMIT_ARMED_OUTLINE_COLOR;
+        }
+        else
+        {
+            _highlightMaterial.AlbedoColor = HOVER_OUTLINE_COLOR;
+        }
+    }
+
+    /// <summary>Only enabled while grabbed — the drag and its release can land anywhere on
+    /// screen, not just over this card's own Area3D, so they have to be read globally rather
+    /// than through the pick area.</summary>
+    public override void _Input(InputEvent @event)
+    {
+        if (!_isGrabbed)
+        {
+            return;
+        }
+
+        if (@event is InputEventMouseMotion)
+        {
+            // Upward screen travel only. Horizontal is dropped, and downward clamps to zero so
+            // the card sits at its slot rather than being pushed down through the row.
+            float pixelsPulledUp = Mathf.Max(
+                0f, _grabStartMousePosition.Y - GetViewport().GetMousePosition().Y);
+
+            // Screen up is local +Y and local +Z is the card's own facing, so the lift toward
+            // the camera stays straight at it whatever angle the hand is tilted to.
+            Position = _restLocalTransform.Origin + new Vector3(
+                0f,
+                pixelsPulledUp * GRAB_FOLLOW_METERS_PER_PIXEL,
+                GRAB_LIFT_TOWARD_CAMERA_METERS);
+
+            float thresholdPixels =
+                GetViewport().GetVisibleRect().Size.Y * SUBMIT_THRESHOLD_VIEWPORT_FRACTION;
+            _isSubmitArmed = pixelsPulledUp >= thresholdPixels;
+        }
+        else if (@event is InputEventMouseButton button
+            && !button.Pressed && button.ButtonIndex == MouseButton.Left)
+        {
+            EndGrab();
+        }
     }
 
     private void OnPointerEntered()
@@ -105,7 +255,8 @@ public partial class CardView : Node3D
         _isPointerInside = false;
     }
 
-    private void OnPickAreaInput(Node camera, InputEvent @event, Vector3 eventPosition, Vector3 normal, long shapeIndex)
+    private void OnPickAreaInput(
+        Node camera, InputEvent @event, Vector3 eventPosition, Vector3 normal, long shapeIndex)
     {
         if (@event is not InputEventMouseButton button || !button.Pressed
             || button.ButtonIndex != MouseButton.Left)
@@ -118,10 +269,86 @@ public partial class CardView : Node3D
             return;
         }
 
-        // The seam GameState.RequestCardPlay will be called from. It prints instead of playing
-        // because the hand these cards stand in for is still DebugHandPreview's fixed mockup —
-        // there is no hand for a play to be legal against yet.
+        if (_canGrab != null)
+        {
+            if (_canGrab() && !_isGrabbed && !IsPoseAnimating)
+            {
+                BeginGrab();
+            }
+            return;
+        }
+
+        // Not grabbable (a played-card slab on the table): the debug print stays as the
+        // visible seam for whatever a table card click comes to mean later.
         GD.Print($"CardView clicked: {ShownCard?.ToString() ?? "face down"}");
+    }
+
+    private void BeginGrab()
+    {
+        _isGrabbed = true;
+        _isSubmitArmed = false;
+        _grabStartMousePosition = GetViewport().GetMousePosition();
+        _restLocalTransform = Transform;
+
+        // Applied at the press rather than waiting for the first drag, so a card picked up
+        // and held still is already clear of its neighbours' plane.
+        Position = _restLocalTransform.Origin + Vector3.Back * GRAB_LIFT_TOWARD_CAMERA_METERS;
+        SetProcessInput(true);
+    }
+
+    private void EndGrab()
+    {
+        _isGrabbed = false;
+        SetProcessInput(false);
+
+        bool submit = _isSubmitArmed && _canGrab != null && _canGrab();
+        _isSubmitArmed = false;
+
+        if (submit)
+        {
+            _onSubmitGesture?.Invoke(this);
+            return;
+        }
+
+        SnapBack();
+    }
+
+    private void CancelGrab()
+    {
+        _isGrabbed = false;
+        _isSubmitArmed = false;
+        SetProcessInput(false);
+        SnapBack();
+    }
+
+    private void SnapBack()
+    {
+        Transform3D restGlobalPose = GetParent<Node3D>().GlobalTransform * _restLocalTransform;
+        BeginPoseAnimation(restGlobalPose, SNAP_BACK_SECONDS, 0f, null);
+    }
+
+    private void StepPoseAnimation(float delta)
+    {
+        if (_poseSecondsRemaining <= 0f)
+        {
+            return;
+        }
+
+        _poseSecondsRemaining -= delta;
+        float progress = Mathf.Clamp(1f - _poseSecondsRemaining / _poseSecondsTotal, 0f, 1f);
+        float eased = Mathf.SmoothStep(0f, 1f, progress);
+
+        Transform3D pose = _poseStartGlobalPose.InterpolateWith(_poseTargetGlobalPose, eased);
+        pose.Origin += Vector3.Up * (_poseArcHeightMeters * Mathf.Sin(Mathf.Pi * eased));
+        GlobalTransform = pose;
+
+        if (_poseSecondsRemaining <= 0f)
+        {
+            GlobalTransform = _poseTargetGlobalPose;
+            Action? finished = _onPoseAnimationFinished;
+            _onPoseAnimationFinished = null;
+            finished?.Invoke();
+        }
     }
 
     /// <summary>Puts this card's own art on the face. Falls back to a flat placeholder when

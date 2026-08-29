@@ -70,6 +70,15 @@ public partial class HeadFollowCamera : Camera3D
     private bool _isHandViewHeld;
     private float _handViewBlend;
 
+    /// <summary>Whether the hand view is the current destination — true from the Space press
+    /// that starts the trip toward the hand until whatever starts the trip back (another Space,
+    /// or a submission calling ReturnToHeadView). HandView gates card grabbing on this, which
+    /// also means an in-progress grab cancels itself the moment the camera is sent home.</summary>
+    public bool IsHandViewHeld
+    {
+        get { return _isHandViewHeld; }
+    }
+
     public override void _Ready()
     {
         Input.MouseMode = Input.MouseModeEnum.Captured;
@@ -127,22 +136,34 @@ public partial class HeadFollowCamera : Camera3D
             }
             else if (key.Keycode == Key.Space)
             {
-                _isHandViewHeld = !_isHandViewHeld;
-
-                // The two views want the mouse for different things and cannot share it: the
-                // head view spends it on look (captured, no cursor), the hand view on pointing
-                // at cards (free cursor). Switched at the key rather than at the end of the
-                // blend so the cursor is there for the whole trip, and so the head stops
-                // turning the instant the player stops steering with it.
-                if (_isHandViewHeld)
-                {
-                    Input.MouseMode = Input.MouseModeEnum.Visible;
-                }
-                else
-                {
-                    Input.MouseMode = Input.MouseModeEnum.Captured;
-                }
+                SetHandViewHeld(!_isHandViewHeld);
             }
+        }
+    }
+
+    /// <summary>Sends the camera home to the head immediately — what a successful card
+    /// submission calls (HandView), so the trip back starts the moment the card is let go
+    /// rather than waiting for another Space press.</summary>
+    public void ReturnToHeadView()
+    {
+        SetHandViewHeld(false);
+    }
+
+    // The two views want the mouse for different things and cannot share it: the head view
+    // spends it on look (captured, no cursor), the hand view on pointing at cards (free
+    // cursor). Switched at the moment the destination changes rather than at the end of the
+    // blend so the cursor is there for the whole trip, and so the head stops turning the
+    // instant the player stops steering with it.
+    private void SetHandViewHeld(bool isHeld)
+    {
+        _isHandViewHeld = isHeld;
+        if (_isHandViewHeld)
+        {
+            Input.MouseMode = Input.MouseModeEnum.Visible;
+        }
+        else
+        {
+            Input.MouseMode = Input.MouseModeEnum.Captured;
         }
     }
 
