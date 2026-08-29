@@ -11,6 +11,7 @@
 [ext_resource type="Script" uid="uid://di130osdbh2xn" path="res://Scripts/Match3D/HealthBarsUI.cs" id="9_healthbars"]
 [ext_resource type="Script" uid="uid://dtnsbvtqkjrwm" path="res://Scripts/Match3D/MatchLogPanel.cs" id="10_matchlog"]
 [ext_resource type="Script" uid="uid://6qbwvxpmy42l" path="res://Scripts/Match3D/SubmitTimeoutGaugeUI.cs" id="11_submittimeout"]
+[ext_resource type="Script" uid="uid://dwjnm733g3eq5" path="res://Scripts/Match3D/DisconnectedOverlayUI.cs" id="12_disconnected"]
 
 [sub_resource type="Environment" id="Environment_match"]
 background_mode = 1
@@ -254,6 +255,44 @@ theme_override_font_sizes/font_size = 64
 text = "Round"
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="Disconnected" type="Control" parent="MatchInterface" unique_id=1120044540]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+visible = false
+script = ExtResource("12_disconnected")
+
+[node name="Dim" type="ColorRect" parent="MatchInterface/Disconnected" unique_id=1120044541]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.75)
+
+[node name="Panel" type="CenterContainer" parent="MatchInterface/Disconnected" unique_id=1120044542]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Layout" type="VBoxContainer" parent="MatchInterface/Disconnected/Panel" unique_id=1120044543]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="TitleLabel" type="Label" parent="MatchInterface/Disconnected/Panel/Layout" unique_id=1120044544]
+layout_mode = 2
+theme_override_font_sizes/font_size = 48
+horizontal_alignment = 1
+text = "MATCH_END_DISCONNECTED"
+
+[node name="TitleScreenButton" type="Button" parent="MatchInterface/Disconnected/Panel/Layout" unique_id=1120044545]
+layout_mode = 2
+text = "MATCH_END_TITLE_SCREEN"
 
 [node name="DebugInterface" type="CanvasLayer" parent="." unique_id=1419643423]
 

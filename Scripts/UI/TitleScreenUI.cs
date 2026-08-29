@@ -7,13 +7,6 @@ namespace RockAndScissPaper.UI;
 /// scene, or opens the settings overlay in place.</summary>
 public partial class TitleScreenUI : Control
 {
-    private const string CONNECTION_SCENE_PATH = "res://Scenes/Screens/ConnectionScreen.tscn";
-
-    // The 교체/변화 choice phase has not been verified across two instances yet, and the
-    // debug harness is still the only thing that can drive it. It stopped being the project's
-    // main scene when this screen took over, so it needs a door.
-    private const string DEBUG_HARNESS_SCENE_PATH = "res://Scenes/MatchDebugUI.tscn";
-
     private PanelContainer _settingsOverlay = null!;
     private HSlider _soundEffectVolumeSlider = null!;
     private HSlider _musicVolumeSlider = null!;
@@ -40,7 +33,7 @@ public partial class TitleScreenUI : Control
 
     private void OnMatchPressed()
     {
-        GetTree().ChangeSceneToFile(CONNECTION_SCENE_PATH);
+        ScreenRouter.GoToConnectionScreen(this);
     }
 
     private void OnQuitPressed()
@@ -50,7 +43,7 @@ public partial class TitleScreenUI : Control
 
     private void OnDebugHarnessPressed()
     {
-        GetTree().ChangeSceneToFile(DEBUG_HARNESS_SCENE_PATH);
+        ScreenRouter.GoToDebugHarness(this);
     }
 
     /// <summary>Read from AudioManager rather than a value this screen remembers itself —
