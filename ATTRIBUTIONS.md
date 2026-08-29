@@ -47,6 +47,7 @@
 | 파일 | 제작자 | 출처 | 라이선스 | 수정 |
 |---|---|---|---|---|
 | `Assets/Models/MainCharacter.glb` (+ 딸린 `MainCharacter_Ch28_1001_*.png`) | Adobe (Mixamo) | [Mixamo](https://www.mixamo.com/) 캐릭터 `Ch28` | Mixamo 라이선스 — CC0 아님. **재배포 금지, 게임에 포함하는 것은 무료·무제한** | 앉은 자세로 리깅 조정, 애니메이션 자작 3종 추가, `.glb`로 재익스포트 |
+| `Assets/Models/cc0_scissors.glb` (+ 임포트가 추출한 `cc0_scissors_{0,1,2}.png`) | plaggy | [plaggy.net](https://plaggy.net/) — Fab/Sketchfab 경유로 받은 `.fbx`를 `.glb`로 변환한 것 (파일 안에 `fab-model-conversion` 표시가 남아 있다) | CC0 1.0 Universal — 퍼블릭 도메인, **표기 의무 없음** | 없음 (받은 그대로). 텍스처 3장은 Godot 임포트가 `.glb`에서 꺼내 놓은 것 |
 
 **재배포 금지가 무슨 뜻이냐면** — 완성된 게임에 넣어 파는 것은 허용되지만, 이 파일 자체를
 에셋팩처럼 따로 배포하는 것은 안 된다. 소스 저장소가 공개로 바뀌면 이 `.glb`가 사실상
