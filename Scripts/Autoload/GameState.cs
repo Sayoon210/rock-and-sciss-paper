@@ -95,8 +95,11 @@ public partial class GameState : Node
     /// <summary>The opponent's own head-look direction just changed. Purely cosmetic — not
     /// part of match state, never validated, and does not touch MatchView — so MatchWorldView
     /// (or whatever is showing the opponent's character) listens directly rather than this
-    /// being folded into a round update.</summary>
-    [Signal] public delegate void OpponentLookChangedEventHandler(Quaternion deltaFromRest);
+    /// being folded into a round update. localDeltaInBoneSpace is relative to the SENDER's own
+    /// rest head-bone frame, not a world-space rotation — see BoneLookRotator's doc comment for
+    /// why: MySeat and OpponentSeat face 180 degrees apart, and a world-frame delta built from
+    /// one character's own facing does not mean the same thing applied to the other.</summary>
+    [Signal] public delegate void OpponentLookChangedEventHandler(Quaternion localDeltaInBoneSpace);
 
     public override void _EnterTree()
     {
@@ -233,16 +236,16 @@ public partial class GameState : Node
     /// <summary>Relays my own head-look direction to the opponent, so it shows on their
     /// screen too. Not a match action — no session involvement, no validation, works
     /// identically whether I am host or client, which RequestCardPlay/RequestChoice's
-    /// server-resolves-locally shape does not fit. deltaFromRest is a world-space rotation off
-    /// my own rest facing, already self-contained (Scripts/Match3D/BoneLookRotator.cs) — the
-    /// receiver applies it to the opponent's own head bone without needing to know anything
-    /// about my camera's own axis convention.</summary>
-    public void SendMyLookDirection(Quaternion deltaFromRest)
+    /// server-resolves-locally shape does not fit. localDeltaInBoneSpace is relative to MY OWN
+    /// rest head-bone frame (Scripts/Match3D/BoneLookRotator.cs), not a world-space rotation —
+    /// the receiver composes it onto the OPPONENT's own rest head bone, which faces a different
+    /// absolute direction than mine.</summary>
+    public void SendMyLookDirection(Quaternion localDeltaInBoneSpace)
     {
         long? targetPeerId = Multiplayer.IsServer() ? ClientPeerId() : 1;
         if (targetPeerId.HasValue)
         {
-            RpcId(targetPeerId.Value, MethodName.OpponentLookChangedRpc, deltaFromRest);
+            RpcId(targetPeerId.Value, MethodName.OpponentLookChangedRpc, localDeltaInBoneSpace);
         }
     }
 
@@ -346,9 +349,9 @@ public partial class GameState : Node
     /// due within LOOK_SEND_INTERVAL_SECONDS regardless, so a dropped packet is not worth
     /// paying for guaranteed delivery.</summary>
     [Rpc(MultiplayerApi.RpcMode.AnyPeer, TransferMode = MultiplayerPeer.TransferModeEnum.UnreliableOrdered)]
-    private void OpponentLookChangedRpc(Quaternion deltaFromRest)
+    private void OpponentLookChangedRpc(Quaternion localDeltaInBoneSpace)
     {
-        EmitSignalOpponentLookChanged(deltaFromRest);
+        EmitSignalOpponentLookChanged(localDeltaInBoneSpace);
     }
 
     /// <summary>Host to one peer: that request was rejected, with a reason. Covers a

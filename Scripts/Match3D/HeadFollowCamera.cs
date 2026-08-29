@@ -155,10 +155,14 @@ public partial class HeadFollowCamera : Camera3D
         lookBasis = lookBasis.Rotated(lookBasis.X, Mathf.DegToRad(_pitchDegrees));
 
         // The same world-space rotation, carried from the camera's rest over onto the bone's
-        // own rest — this is what sidesteps needing to know the bone's own axis convention,
-        // here or on the receiving end of the network broadcast below.
+        // own rest — this is what sidesteps needing to know the bone's own axis convention.
+        // Valid here specifically because both the camera and the bone belong to the SAME
+        // character (a character only ever turns its own head relative to its own facing) — see
+        // BoneLookRotator's own doc comment for why the network broadcast below cannot reuse
+        // this same world delta as-is on the opponent's differently-facing character.
         Basis deltaFromRest = lookBasis * _restCameraWorldBasis.Inverse();
-        BoneLookRotator.Apply(_skeleton, _headBoneIndex, _headBoneParentIndex, _restBoneWorldBasis, deltaFromRest);
+        Basis desiredBoneWorldBasis = deltaFromRest * _restBoneWorldBasis;
+        BoneLookRotator.Apply(_skeleton, _headBoneIndex, _headBoneParentIndex, desiredBoneWorldBasis);
 
         // Camera position: the tuned rest position, shifted by however much the bone itself has
         // moved off ITS rest position (e.g. an animation clip's own head bob) — not the bone's
@@ -190,7 +194,15 @@ public partial class HeadFollowCamera : Camera3D
         if (_timeUntilNextLookSend <= 0)
         {
             _timeUntilNextLookSend = LOOK_SEND_INTERVAL_SECONDS;
-            GameState.Instance?.SendMyLookDirection(deltaFromRest.GetRotationQuaternion());
+
+            // Sent relative to MY OWN rest bone frame, not as the raw world delta above — see
+            // BoneLookRotator's doc comment. Measured: applying the raw world delta to the
+            // opponent's own rest bone (who faces 180 degrees opposite across the table) turned
+            // a pitch that raised my own head-top landmark into one that lowered theirs. This
+            // local-frame version does not carry that assumption, so RemoteHeadLook can compose
+            // it onto ITS OWN rest instead.
+            Basis localDeltaInBoneSpace = (_restBoneWorldBasis.Inverse() * desiredBoneWorldBasis).Orthonormalized();
+            GameState.Instance?.SendMyLookDirection(localDeltaInBoneSpace.GetRotationQuaternion());
         }
     }
 }
