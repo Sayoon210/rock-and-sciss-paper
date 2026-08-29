@@ -225,7 +225,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 text = "No rounds played yet."
 
-[node name="RoundIntro" type="Control" parent="MatchInterface" unique_id=1120044530]
+[node name="RoundIntro" type="Control" parent="MatchInterface" unique_id=537488278]
 visible = false
 layout_mode = 3
 anchors_preset = 15
@@ -235,7 +235,7 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="Dim" type="ColorRect" parent="MatchInterface/RoundIntro" unique_id=1120044531]
+[node name="Dim" type="ColorRect" parent="MatchInterface/RoundIntro" unique_id=1750554948]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -244,7 +244,7 @@ grow_vertical = 2
 mouse_filter = 2
 color = Color(0, 0, 0, 0.6)
 
-[node name="Label" type="Label" parent="MatchInterface/RoundIntro" unique_id=1120044532]
+[node name="Label" type="Label" parent="MatchInterface/RoundIntro" unique_id=1850592516]
 layout_mode = 0
 anchor_top = 0.4
 anchor_right = 1.0
@@ -257,16 +257,17 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="Disconnected" type="Control" parent="MatchInterface" unique_id=1120044540]
+visible = false
+layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-visible = false
 script = ExtResource("12_disconnected")
 
 [node name="Dim" type="ColorRect" parent="MatchInterface/Disconnected" unique_id=1120044541]
-anchors_preset = 15
+layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
@@ -274,7 +275,7 @@ grow_vertical = 2
 color = Color(0, 0, 0, 0.75)
 
 [node name="Panel" type="CenterContainer" parent="MatchInterface/Disconnected" unique_id=1120044542]
-anchors_preset = 15
+layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
@@ -287,8 +288,8 @@ theme_override_constants/separation = 20
 [node name="TitleLabel" type="Label" parent="MatchInterface/Disconnected/Panel/Layout" unique_id=1120044544]
 layout_mode = 2
 theme_override_font_sizes/font_size = 48
-horizontal_alignment = 1
 text = "MATCH_END_DISCONNECTED"
+horizontal_alignment = 1
 
 [node name="TitleScreenButton" type="Button" parent="MatchInterface/Disconnected/Panel/Layout" unique_id=1120044545]
 layout_mode = 2
