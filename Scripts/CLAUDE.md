@@ -2,7 +2,7 @@
 
 Everything that needs Godot lives here: nodes, scenes, `Resource` definitions, RPC, input, UI. The rules of the game do not — those are in [`GameLogic`](../GameLogic/CLAUDE.md), which cannot reference Godot at all.
 
-Subfolders: `Autoload/` (global services, see [its own CLAUDE.md](Autoload/CLAUDE.md)), `Cards/` (card nodes and `CardData` resources), `Network/`, `UI/`.
+Subfolders: `Autoload/` (global services, see [its own CLAUDE.md](Autoload/CLAUDE.md)), `Cards/`, `Match3D/`, `Network/`, `UI/`. What is in each and how they reference one another is [ARCHITECTURE.md](../ARCHITECTURE.md); this file is the rules they follow.
 
 ## What this layer is for
 
@@ -28,7 +28,7 @@ catches everything else — a French player gets the English column, not a scree
 `AREA_THING`, SCREAMING_SNAKE_CASE, words spelled out (`_DESCRIPTION`, never `_DESC`). Five
 areas: `CARD_` (a card's own name and rules text), `CARD_TYPE_` (the 카드 종류 badge), `TITLE_`,
 `CONNECT_`, `MATCH_`. The `MATCH_` group subdivides — `MATCH_PROMPT_`, `MATCH_OUTCOME_`,
-`MATCH_ACTION_`, `MATCH_END_`.
+`MATCH_ACTION_`, `MATCH_END_`, `MATCH_LOG_`.
 
 The two halves cost very different amounts to change, which is the point of doing it this way:
 
@@ -62,15 +62,16 @@ capitals, impossible to miss. That is the whole reason this is better than keyin
 text, where a typo produced a screen that looked perfectly fine in English and silently stopped
 translating.
 
-Placeholder text in a scene is the one exception to "no sentences in source". `MyScoreLabel`
-says `Me` and the tooltip's `DescriptionLabel` says `Card description`; code overwrites both
-before a player ever sees them. They are there so the Godot editor shows a laid-out screen
-instead of a column of capitals, and they are deliberately not symbols and not in the CSV.
+Placeholder text in a scene is the one exception to "no sentences in source" — a `Label` that
+reads `Me` or `Round` in the .tscn, which code overwrites before a player ever sees it. It is
+there so the Godot editor shows a laid-out screen instead of a column of capitals, and it is
+deliberately not a symbol and not in the CSV.
 
 ## Input
 
-- Input handling lives in the node that owns it — `CardController` for a card, the relevant `Control` for a button. There is no central `InputManager`; Godot's `InputMap` and node-tree input routing already do that job.
-- A node that receives input does not judge it. `CardController` detects the click and calls `GameState.Instance.RequestCardPlay(cardName)`; it does not check whether the card is playable.
+- Input handling lives in the node that owns it — the card node for a card, the relevant `Control` for a button. There is no central `InputManager`; Godot's `InputMap` and node-tree input routing already do that job.
+- A node that receives input does not judge it. It recognises the gesture and passes an intent to `GameState`; it never checks whether the play is legal.
+- 3D picking is off by default. `Viewport.PhysicsObjectPicking` has to be true or **no** `Area3D` mouse signal fires at all. Set it once on the scene root — it is one switch for the whole viewport, so no individual pickable should be the one deciding it for every other.
 - Greying out an unplayable card is fine as a UI affordance, but it is not validation. The host re-validates everything.
 - Input code must not branch on host vs. client. That branch belongs in `GameState` alone.
 
@@ -84,11 +85,12 @@ The host's process holds both players' real hands in memory, so nothing but this
 
 ```
 View
-├─ MyHand : List<ECardName>       ← always my real hand
-├─ OpponentHandCount : int       ← count only, never contents
-├─ MyDeckCount / OpponentDeckCount
-└─ this round's revealed cards, scores
+├─ MyHand : List<ECardName>   ← always my real hand
+├─ OpponentHandCount : int    ← count only, never contents
+└─ …everything else public: counts, healths, this round's revealed cards
 ```
+
+The asymmetry in those first two lines is the whole point of the type: my own side is spelled out, the opponent's is reduced to what I am allowed to know. A field that gives the opponent's *contents* does not belong in it.
 
 Both sides fill `View` differently — the host copies from its session in-process, a client fills it from RPC — but the shape and the UI code reading it are identical.
 
@@ -96,8 +98,9 @@ Both sides fill `View` differently — the host copies from its session in-proce
 
 - `ECardName` is the only card type that crosses from `GameLogic`. Resolve it to a `CardData` through `CardDatabase` at the point of display.
 - Hand order in `GameLogic` is meaningless; the rules never assign a card a slot. Screen-side slot stability is this layer's business — rebuilding the whole row on every change throws away which node the player was looking at.
-- The panel that appears when the cursor rests on a card is `CardTooltipView` (`Scenes/Match/CardTooltip.tscn`), built by `CardView._MakeCustomTooltip`. Godot owns when it appears, where it sits and when it is freed — do not reimplement any of that with a panel and a timer of your own. Two gotchas the engine's contract carries: return a **new instance every time** (the old one is freed), and returning `null` means "no *custom* tooltip", which makes Godot fall back to the plain default one — the only way to show nothing at all is for `_GetTooltip` to return an empty string.
-- Playing a card is always a single click, 교체 and 변화 included. Their choice is asked for **after** both cards are revealed, through `GameState.RequestChoice`, and only ever on the screen of the player who owes it. A card node therefore does not need to know whether the card it shows needs a choice.
+- `Control`-only affordances do not exist in 3D — `_MakeCustomTooltip`/`_GetTooltip` among them. When one is wanted, it is a design job rather than a port; do not reach for the `Control` contract.
+- A choice a card asks for (교체, 변화) is asked **after** both cards are revealed, through `GameState.RequestChoice`, and only ever on the screen of the player who owes it. A card node therefore never needs to know whether the card it shows needs a choice.
+- Where the gesture thresholds and the current state of that flow are is [ARCHITECTURE.md](../ARCHITECTURE.md).
 
 ## Debug tracing into GameLogic
 

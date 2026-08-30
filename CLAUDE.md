@@ -1,7 +1,21 @@
 # RockAndScissPaper — Technical Guide
 
 Godot 4.7 (Mono/C#) card game. 1:1 host-client multiplayer.
-Design doc will be added separately later — this document covers tech stack / architecture rules only.
+
+**This file is rules only — things that stay true while the game changes under them.**
+Nothing here should need editing because a card left the deck, a class was renamed, or a
+threshold was retuned. If a statement would go stale on a normal day's work, it belongs in
+one of these instead:
+
+| | |
+|---|---|
+| What currently exists and how it connects | [ARCHITECTURE.md](ARCHITECTURE.md) |
+| The game's rules and content | [DESIGN.md](DESIGN.md) |
+| Not-yet-decided extensions | [IDEAS.md](IDEAS.md) |
+| Decisions as they were made | `DevLogDoc/` |
+
+The split matters because this file is loaded as instructions on every task. A stale rule here
+does not sit quietly the way a stale paragraph in a design doc does — it gets followed.
 
 ## Rules
 
@@ -15,7 +29,7 @@ Design doc will be added separately later — this document covers tech stack / 
 - That is about the *product's* language, not the codebase's. Identifiers, comments and [DESIGN.md](DESIGN.md) keep the Korean game vocabulary (교체, 리셋, 패, 소멸) — the rule below is unchanged.
 - Spell every name out in full. No initialisms (`Rps`, `Mgr`, `Cfg`, `Btn`).
 - Name a type after what it holds or does, not a vague category (`WinLossRules`, not `Helper`).
-- Use DESIGN.md's vocabulary verbatim — normal card, blank, joker, ability, vanish, deck bottom.
+- Use [DESIGN.md](DESIGN.md)'s vocabulary verbatim. If the design doc calls it 소멸, the code does not call it discard.
 - Godot script names reveal role via suffix: `...Manager`, `...Controller`, `...Data`, `...View`/`...UI`, `...Effect`, `I...`. File name matches class name.
 - A plain `enum` is prefixed `E...` (`ECardName`, `ESide`, `ERoundOutcome`) — the same reasoning as `I...` for interfaces: the name alone says the type carries no behavior, so a reader isn't left checking whether "CardName" is a value type or a class with logic on it. Applies to the enum only, never to a property or field of that type — `CardData.CardName` stays `CardName` (it's what `Data/Cards/*.tres` key their value on), even though its type is `ECardName`.
 - Name `const` members in `SCREAMING_SNAKE_CASE` (`MULLIGAN_HAND_SIZE`, `MAX_CLIENTS`) — a deliberate departure from the C#/Godot PascalCase convention, so a constant is distinguishable from a property at the call site. Don't "correct" these back.
@@ -41,6 +55,9 @@ RockAndScissPaper.csproj      Godot.NET.Sdk — scenes, nodes, UI, networking
 Tests/                        xUnit — references GameLogic only
 ```
 
+`Deprecated/` is outside every compile glob — nothing in it builds, and it is excluded from
+reviews unless asked for by name. See its own README for what is in there and why.
+
 - Pure game logic goes in `GameLogic/`; anything touching `Node`, `Resource`, RPC, or the scene tree goes under `Scripts/`.
 - `GameLogic` references nothing — `using Godot;` fails to compile there (`error CS0246`).
 - The Godot `.csproj` excludes `GameLogic/**` and `Tests/**` from its compile glob.
@@ -62,7 +79,8 @@ Tests/                        xUnit — references GameLogic only
 
 - `CardDatabase` (Autoload) loads and indexes `.tres` `CardData` resources; it does not define card stats itself.
 - One `.tres` file per card.
-- Don't hardcode the ability-card count or roster into deck-assembly logic — read the ability-card set from `CardDatabase` (deckbuilding/pool expansion planned, see [DESIGN.md](DESIGN.md)).
+- Don't hardcode a card roster into deck-assembly logic — read the set from `CardDatabase`, so growing the pool needs no edit there (deckbuilding is planned, see [DESIGN.md](DESIGN.md)).
+- **One source of truth for what is in the deck.** Anything that needs to know which cards exist in play asks `DeckAssembler`, not `CardDatabase` — the database holds every card that has ever been designed, which is a larger set.
 
 ## AI-Assisted Development
 

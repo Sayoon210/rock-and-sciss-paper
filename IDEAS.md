@@ -14,7 +14,8 @@
 
 ## 1. 덱 장수 커스텀
 
-지금은 17장 고정 (`DeckAssembler`의 상수 3/2/2 + 능력 전부).
+지금은 **9장 고정** (`DeckAssembler`의 상수 `NORMAL_CARD_COPIES = 3` × 가위/바위/보).
+공백·조커·능력카드는 전부 덱에서 빠졌다 — [DESIGN.md](DESIGN.md)의 「덱 구성」 참고.
 밸런싱하려면 코드를 고쳐야 해서 불편함.
 
 **하고 싶은 것**: 에디터에서 숫자만 바꿔서 덱 구성을 실험
@@ -140,6 +141,12 @@
 ---
 
 ## 5. 사운드 시스템
+
+> **구현됨.** `AudioManager`, 버스, `ESoundName`, 설정 슬라이더가 전부 들어갔다.
+> 아래에서 아직 유효한 것은 「히든 정보가 소리로 샐 수 있음」과 「카드에 AudioStreamPlayer를 붙이면 안 됨」
+> 두 경고뿐이다. **무효**: 「어디에 사는가」·「소리를 트리거하는 주체」·「타이밍 상수」 —
+> 세 절 전부 `MatchScreenUI`에 기대고 있는데 그건 `Deprecated/`로 갔다. 3D에서는
+> `MatchWorldView`의 페이즈 머신이 그 자리고, 아직 소리가 물려 있지 않다.
 
 지금 **소리가 하나도 없음.** 규모가 꽤 될 것 같아서 미리 구상만 해둠.
 
@@ -277,6 +284,15 @@ OnRoundResolved ────────────┘
 
 ## 6. 3D로 다시 만들기
 
+> **했다.** `rebuild-3d` 브랜치가 이것이다. 아래는 착수 전에 적은 계획이므로
+> **지시문이 아니라 기록으로 읽을 것.** 특히 「지금 할 일 — 없음. 아직 하지 말 것」은
+> 이미 뒤집혔다. 예측이 어떻게 틀렸는지는
+> [DevLogDoc/2026-08-28-presentation-layer-swap.md](DevLogDoc/2026-08-28-presentation-layer-swap.md)와
+> [DevLogDoc/2026-08-29-3d-presentation-pitfalls.md](DevLogDoc/2026-08-29-3d-presentation-pitfalls.md)에 있다.
+>
+> 아직 안 끝난 것만 옮겨 적으면: 연출 4종(뒤집기·승패·소멸·필드정리) 중 3D에서 다시
+> 만들어진 것은 뒤집기뿐이고, 툴팁은 대체물 없이 그냥 사라졌다.
+
 게임이 단순해서 연출로 먹고 들어가는 편이 낫다는 판단. 카드가 실제로 뒤집히고, 빛나고,
 부서지는 걸 2D에서 흉내내는 것보다 3D에서 그냥 하는 게 낫다는 쪽.
 
@@ -315,8 +331,8 @@ OnRoundResolved ────────────┘
 
 **1. 드래그와 히트테스트가 2D 좌표에 직접 붙어 있음 — 제일 큰 덩어리.**
 그나마 Godot의 `_GetDragData`/`_DropData` 시스템은 안 쓰고 직접 짜여 있어서 낫다. 하지만
-[CardView.cs:281](Scripts/UI/CardView.cs:281)이 `GlobalPosition = GetGlobalMousePosition() - _dragGrabOffset`,
-[CardDropZone.cs:45](Scripts/UI/CardDropZone.cs:45)가 `GetGlobalRect().HasPoint(...)`다.
+[CardView.cs:281](Deprecated/Scripts/UI/CardView.cs:281)이 `GlobalPosition = GetGlobalMousePosition() - _dragGrabOffset`,
+[CardDropZone.cs:45](Deprecated/Scripts/UI/CardDropZone.cs:45)가 `GetGlobalRect().HasPoint(...)`다.
 3D에선 **카메라 레이캐스트 + 평면 교차**로 전부 새로 짠다.
 
 **2. 툴팁은 못 가져간다.** `_MakeCustomTooltip`/`_GetTooltip`은 `Control` 전용이고 3D에
