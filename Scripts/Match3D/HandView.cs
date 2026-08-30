@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Godot;
 using RockAndScissPaper.Autoload;
+using RockAndScissPaper.Cards;
 using RockAndScissPaper.GameLogic;
 
 namespace RockAndScissPaper.Match3D;
@@ -140,22 +141,28 @@ public partial class HandView : Node3D
         RebuildFromCards(GameState.Instance!.View.MyHand);
     }
 
-    /// <summary>No match is running — deal a random hand of the real mulligan size from
-    /// whatever cards are actually loaded (CardDatabase, not a hardcoded roster — root
-    /// CLAUDE.md), duplicates allowed, the way a real deal works.</summary>
+    /// <summary>No match is running — deal a mulligan the way a real one is dealt: shuffle the
+    /// deck DeckAssembler would have built and take the top MULLIGAN_HAND_SIZE off it.
+    ///
+    /// Dealt from the deck rather than from CardDatabase.LoadedCardNames, which is what this
+    /// used to do. The database holds every card that has ever been designed, so the fallback
+    /// was handing out 조커, 공백 and ability cards — none of which a real match can deal, since
+    /// the deck is normal cards only. Judging the grab and submit feel against cards that cannot
+    /// occur is worse than not testing it, and a duplicate is part of what has to feel right
+    /// (three copies of each card means a repeated hand is normal, not a bug).</summary>
     private void SpawnFallbackHand()
     {
         _isFallbackHand = true;
 
-        List<ECardName> roster = new List<ECardName>(CardDatabase.Instance!.LoadedCardNames);
-        RandomNumberGenerator random = new RandomNumberGenerator();
-        List<ECardName> hand = new List<ECardName>();
-        for (int i = 0; i < MatchSession.MULLIGAN_HAND_SIZE; i++)
+        List<ECardName> deck = DeckAssembler.BuildDeck();
+        Random random = new Random();
+        for (int i = deck.Count - 1; i > 0; i--)
         {
-            hand.Add(roster[random.RandiRange(0, roster.Count - 1)]);
+            int swapWith = random.Next(i + 1);
+            (deck[i], deck[swapWith]) = (deck[swapWith], deck[i]);
         }
 
-        RebuildFromCards(hand);
+        RebuildFromCards(deck.GetRange(0, Math.Min(MatchSession.MULLIGAN_HAND_SIZE, deck.Count)));
     }
 
     /// <summary>Slot-stability diff (Scripts/CLAUDE.md): a card name still present keeps its

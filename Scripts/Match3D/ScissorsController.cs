@@ -19,8 +19,9 @@ namespace RockAndScissPaper.Match3D;
 /// 6.8 m/s through the strike, so a callback landing one 60Hz frame late is 11cm of hand travel
 /// — enough to see. So the grab only switches on per-frame following (the pose comes from the
 /// bone, every frame, not from wherever the hand was when the timer fired), and the strike pins
-/// the scissors to a pose computed from the LOSER's hand bone (a fixed target) rather than from
-/// the winner's moving one. Late by a frame then changes when it lands, never where.</summary>
+/// the scissors to the LOSER's own ScissorsStuckTarget marker — a pose that is the same whenever
+/// it is read — rather than to the winner's moving hand. Late by a frame then changes when it
+/// lands, never where.</summary>
 public partial class ScissorsController : Node3D
 {
     private const string SKELETON_PATH = "Armature/Skeleton3D";
@@ -68,6 +69,12 @@ public partial class ScissorsController : Node3D
     private static readonly Vector3 GRIP_ROTATION = new Vector3(Mathf.Pi / 2f, 0f, 0f);
     private static readonly Vector3 GRIP_OFFSET = new Vector3(0f, HALF_LENGTH_METERS, 0f);
 
+    /// <summary>Whole rounds a planted pair stays planted, not counting the one it was stabbed in.
+    /// At 1: stabbed at the end of round 1, it is still there for every bit of round 2 and leaves
+    /// as round 3 opens. That round is the point of it — the pair is out of the table, so nobody
+    /// can pick it up, which is what makes the stab cost the winner their next use of it.</summary>
+    private const int ROUNDS_PLANTED_AFTER_THE_STAB = 1;
+
     private enum EScissorsPlace
     {
         AtRest,
@@ -77,12 +84,6 @@ public partial class ScissorsController : Node3D
     }
 
     private Transform3D _restTransform;
-    /// <summary>Whole rounds a planted pair stays planted, not counting the one it was stabbed in.
-    /// At 1: stabbed at the end of round 1, it is still there for every bit of round 2 and leaves
-    /// as round 3 opens. That round is the point of it — the pair is out of the table, so nobody
-    /// can pick it up, which is what makes the stab cost the winner their next use of it.</summary>
-    private const int ROUNDS_PLANTED_AFTER_THE_STAB = 1;
-
     private EScissorsPlace _place = EScissorsPlace.AtRest;
     private int _introsSeenWhilePlanted;
     private AnimationPlayer? _gripAnimationPlayer;

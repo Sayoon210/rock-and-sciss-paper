@@ -27,9 +27,19 @@ public partial class MatchWorldView : Node3D
     private const string ROCK_WIN_ANIMATION = "Anim_Punch_Baked";
 
     private const string CARD_VIEW_SCENE_PATH = "res://Scenes/Match3D/CardView.tscn";
+    private const string MY_CHARACTER_PATH = "MySeat/Character";
+    private const string OPPONENT_CHARACTER_PATH = "OpponentSeat/Character";
+    private const string ANIMATION_PLAYER_PATH = "AnimationPlayer";
+    private const string MY_SCISSORS_PATH = "Table/MyScissors";
+    private const string OPPONENT_SCISSORS_PATH = "Table/OpponentScissors";
+    private const string MY_CARD_SLOT_PATH = "Table/MyCardSlot";
+    private const string OPPONENT_CARD_SLOT_PATH = "Table/OpponentCardSlot";
+    private const string HAND_VIEW_PATH = "Field/CardRest/HandView";
     private const string HEAD_CAMERA_PATH = "MySeat/Camera3D";
     private const string ROUND_INTRO_PATH = "MatchInterface/RoundIntro";
     private const string ROUND_INTRO_LABEL_PATH = "MatchInterface/RoundIntro/Label";
+    private const string ROUND_LABEL_PATH = "MatchInterface/Readout/RoundLabel";
+    private const string ANIMATION_DEBUG_CONTAINER_PATH = "DebugInterface/AnimationButtons";
 
     /// <summary>Relative to a seat's Character node: the pose a pair of scissors is pinned to
     /// when that seat's occupant is the one who got stabbed.</summary>
@@ -65,11 +75,17 @@ public partial class MatchWorldView : Node3D
     private const float NO_ANIMATION_RESULT_HOLD_SECONDS = 1.0f;
     private const float RESULT_SETTLE_SECONDS = 0.5f;
 
-    /// <summary>Where the round-flow pacing currently is. Intro and the two result phases are
+    /// <summary>Where the round-flow pacing currently is. Named for the presentation rather
+    /// than just "phase" because GameLogic already exports an ERoundPhase — the rules-side one,
+    /// AwaitingSubmissions/AwaitingChoices — and this file imports that namespace. Two enums
+    /// with one name, both in scope, meaning different things is a trap that costs nothing to
+    /// avoid at the point of naming.
+    ///
+    /// Where the pacing currently is. Intro and the two result phases are
     /// timed (see _phaseSecondsRemaining); Open and Reveal end on a GameState signal instead
     /// (both submitted, and the reveal flip's own callback respectively — Reveal is technically
     /// timed too, by REVEAL_FLIP_SECONDS, but is named for what the player sees during it).</summary>
-    private enum ERoundPhase
+    private enum EPresentationPhase
     {
         Intro,
         Open,
@@ -93,14 +109,12 @@ public partial class MatchWorldView : Node3D
     private Control _roundIntroOverlay = null!;
     private Label _roundIntroLabel = null!;
     private Label _roundLabel = null!;
-    private Label _myScoreLabel = null!;
-    private Label _opponentScoreLabel = null!;
 
     // Starts in Open rather than Intro: nothing below ever advances this without a GameState
     // signal, and the scene runs standalone too (HandView's own fallback hand, for judging the
     // grab/submit feel with no match at all) — Open is the phase where the hand view already
     // works exactly as before this state machine existed.
-    private ERoundPhase _phase = ERoundPhase.Open;
+    private EPresentationPhase _phase = EPresentationPhase.Open;
     private float _phaseSecondsRemaining;
 
     public override void _Ready()
@@ -111,14 +125,14 @@ public partial class MatchWorldView : Node3D
         // should be the one deciding it for every other card.
         GetViewport().PhysicsObjectPicking = true;
 
-        _myCharacter = GetNode<Node3D>("MySeat/Character");
-        _opponentCharacter = GetNode<Node3D>("OpponentSeat/Character");
+        _myCharacter = GetNode<Node3D>(MY_CHARACTER_PATH);
+        _opponentCharacter = GetNode<Node3D>(OPPONENT_CHARACTER_PATH);
         _myAnimation = new CharacterAnimationController(
-            _myCharacter.GetNode<AnimationPlayer>("AnimationPlayer"));
+            _myCharacter.GetNode<AnimationPlayer>(ANIMATION_PLAYER_PATH));
         _opponentAnimation = new CharacterAnimationController(
-            _opponentCharacter.GetNode<AnimationPlayer>("AnimationPlayer"));
-        _myScissors = GetNode<ScissorsController>("Table/MyScissors");
-        _opponentScissors = GetNode<ScissorsController>("Table/OpponentScissors");
+            _opponentCharacter.GetNode<AnimationPlayer>(ANIMATION_PLAYER_PATH));
+        _myScissors = GetNode<ScissorsController>(MY_SCISSORS_PATH);
+        _opponentScissors = GetNode<ScissorsController>(OPPONENT_SCISSORS_PATH);
 
         // Only MyScissors is placed by hand; the opponent's pair is that placement reflected
         // across the table. The reflection is read off the two seats themselves rather than
@@ -139,9 +153,7 @@ public partial class MatchWorldView : Node3D
         _headCamera = GetNode<HeadFollowCamera>(HEAD_CAMERA_PATH);
         _roundIntroOverlay = GetNode<Control>(ROUND_INTRO_PATH);
         _roundIntroLabel = GetNode<Label>(ROUND_INTRO_LABEL_PATH);
-        _roundLabel = GetNode<Label>("MatchInterface/Readout/RoundLabel");
-        _myScoreLabel = GetNode<Label>("MatchInterface/Readout/MyScoreLabel");
-        _opponentScoreLabel = GetNode<Label>("MatchInterface/Readout/OpponentScoreLabel");
+        _roundLabel = GetNode<Label>(ROUND_LABEL_PATH);
 
         _myPlayedCard = AddCardToSlot("Table/MyCardSlot", MY_CARD_ROTATION);
         _opponentPlayedCard = AddCardToSlot("Table/OpponentCardSlot", OPPONENT_CARD_ROTATION);
@@ -153,13 +165,13 @@ public partial class MatchWorldView : Node3D
 
         // HandView events share this scene's lifetime (both are freed together), unlike the
         // Autoload signals below, so they need no _ExitTree unhooking.
-        _handView = GetNode<HandView>("Field/CardRest/HandView");
+        _handView = GetNode<HandView>(HAND_VIEW_PATH);
         _handView.MyCardLanded += OnMyCardLanded;
         _handView.MySubmissionRejected += OnMySubmissionRejected;
 
         AnimationDebugPanel.BuildInto(
-            GetNode<VBoxContainer>("DebugInterface/AnimationButtons"),
-            GetNode<AnimationPlayer>("MySeat/Character/AnimationPlayer"));
+            GetNode<VBoxContainer>(ANIMATION_DEBUG_CONTAINER_PATH),
+            _myCharacter.GetNode<AnimationPlayer>(ANIMATION_PLAYER_PATH));
 
         GameState.Instance!.MatchStarted += OnMatchStarted;
         GameState.Instance.RoundRevealed += OnRoundRevealed;
@@ -170,7 +182,7 @@ public partial class MatchWorldView : Node3D
         // is the first screen that is no longer the menu. TitleScreenUI starts it.
         AudioManager.Instance!.StopMusic();
 
-        RefreshReadout();
+        RefreshRoundLabel();
 
         // Round 1's intro cannot come from the MatchStarted signal: ConnectionScreenUI is what
         // listens for it, and what it does with it is change the scene to this one -- so by the
@@ -231,7 +243,7 @@ public partial class MatchWorldView : Node3D
         _myScissors.ReturnToRest();
         _opponentScissors.ReturnToRest();
 
-        RefreshReadout();
+        RefreshRoundLabel();
         EnterIntroPhase();
     }
 
@@ -274,7 +286,7 @@ public partial class MatchWorldView : Node3D
         RevealPlayedCard(_myPlayedCard, view.MyCard, MY_CARD_FACEDOWN_ROTATION, MY_CARD_ROTATION);
         RevealPlayedCard(_opponentPlayedCard, view.OpponentCard, OPPONENT_CARD_FACEDOWN_ROTATION, OPPONENT_CARD_ROTATION);
 
-        _phase = ERoundPhase.Reveal;
+        _phase = EPresentationPhase.Reveal;
         _phaseSecondsRemaining = REVEAL_FLIP_SECONDS;
     }
 
@@ -316,7 +328,7 @@ public partial class MatchWorldView : Node3D
     /// straight from here would start it while the cards are still mid-flip.</summary>
     private void OnRoundResolved()
     {
-        RefreshReadout();
+        RefreshRoundLabel();
     }
 
     /// <summary>Plays the blow on the side that won, chosen by the card it won with — 바위
@@ -379,12 +391,14 @@ public partial class MatchWorldView : Node3D
         }
     }
 
-    private void RefreshReadout()
+    /// <summary>The round number, and nothing else. Health used to be printed here too, in the
+    /// same words HealthBarsUI prints in the opposite corner — the screen carried "나 10 / 10"
+    /// twice, from two scripts, off two subscriptions to the same signal. The bars are the
+    /// better of the two (a bar shows a hit landing; a number two pixels tall does not), so this
+    /// keeps only what they do not show.</summary>
+    private void RefreshRoundLabel()
     {
-        MatchView view = GameState.Instance!.View;
-        _roundLabel.Text = string.Format(Tr("MATCH_ROUND"), view.RoundNumber);
-        _myScoreLabel.Text = string.Format(Tr("MATCH_MY_HEALTH"), view.MyHealth, MatchSession.STARTING_HEALTH);
-        _opponentScoreLabel.Text = string.Format(Tr("MATCH_OPPONENT_HEALTH"), view.OpponentHealth, MatchSession.STARTING_HEALTH);
+        _roundLabel.Text = string.Format(Tr("MATCH_ROUND"), GameState.Instance!.View.RoundNumber);
     }
 
     // ---- Round-flow phase machine ----
@@ -397,7 +411,7 @@ public partial class MatchWorldView : Node3D
 
     public override void _Process(double delta)
     {
-        if (_phase == ERoundPhase.Intro)
+        if (_phase == EPresentationPhase.Intro)
         {
             UpdateIntroFade();
         }
@@ -418,21 +432,21 @@ public partial class MatchWorldView : Node3D
     {
         switch (_phase)
         {
-            case ERoundPhase.Intro:
+            case EPresentationPhase.Intro:
                 EnterOpenPhase();
                 break;
 
-            case ERoundPhase.Reveal:
+            case EPresentationPhase.Reveal:
                 EnterResultHoldPhase();
                 break;
 
-            case ERoundPhase.ResultHold:
+            case EPresentationPhase.ResultHold:
                 // Only reached for a round with no blow to wait on — a blow-driven hold clears
                 // itself via PlayWinningBlow's onFinished callback instead of this timer.
                 EnterResultSettlePhase();
                 break;
 
-            case ERoundPhase.ResultSettle:
+            case EPresentationPhase.ResultSettle:
                 EnterNextRoundOrIdle();
                 break;
         }
@@ -440,7 +454,7 @@ public partial class MatchWorldView : Node3D
 
     private void EnterIntroPhase()
     {
-        _phase = ERoundPhase.Intro;
+        _phase = EPresentationPhase.Intro;
         _phaseSecondsRemaining = (float)GameState.ROUND_INTRO_SECONDS;
         _headCamera.SetRoundIntroLocked(true);
 
@@ -480,7 +494,7 @@ public partial class MatchWorldView : Node3D
 
     private void EnterOpenPhase()
     {
-        _phase = ERoundPhase.Open;
+        _phase = EPresentationPhase.Open;
         _phaseSecondsRemaining = 0f;
         _headCamera.SetRoundIntroLocked(false);
         _roundIntroOverlay.Visible = false;
@@ -488,7 +502,7 @@ public partial class MatchWorldView : Node3D
 
     private void EnterResultHoldPhase()
     {
-        _phase = ERoundPhase.ResultHold;
+        _phase = EPresentationPhase.ResultHold;
 
         bool isBlowPlaying = PlayWinningBlow(EnterResultSettlePhase);
         // A blow already in flight clears this phase through its own onFinished callback
@@ -498,7 +512,7 @@ public partial class MatchWorldView : Node3D
 
     private void EnterResultSettlePhase()
     {
-        _phase = ERoundPhase.ResultSettle;
+        _phase = EPresentationPhase.ResultSettle;
         _phaseSecondsRemaining = RESULT_SETTLE_SECONDS;
     }
 
@@ -509,7 +523,7 @@ public partial class MatchWorldView : Node3D
     {
         if (GameState.Instance!.View.MatchResult.HasValue)
         {
-            _phase = ERoundPhase.Open;
+            _phase = EPresentationPhase.Open;
             _headCamera.SetRoundIntroLocked(false);
             return;
         }

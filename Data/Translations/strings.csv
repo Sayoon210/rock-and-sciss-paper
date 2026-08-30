@@ -40,9 +40,6 @@ CONNECT_STATUS_CONNECTING,Connecting to {0}...,{0} 에 접속하는 중...
 CONNECT_STATUS_CONNECTED,Connected to your opponent.,상대와 연결되었습니다.
 CONNECT_STATUS_FAILED,Could not connect.,접속에 실패했습니다.
 CONNECT_STATUS_DROPPED,The connection dropped.,연결이 끊겼습니다.
-MATCH_WINS_NEEDED,First to {0},{0}선승
-MATCH_MY_SCORE,Me {0} / {1},나 {0} / {1}
-MATCH_OPPONENT_SCORE,Opponent {0} / {1},상대 {0} / {1}
 MATCH_MY_HEALTH,Me {0} / {1},나 {0} / {1}
 MATCH_OPPONENT_HEALTH,Opponent {0} / {1},상대 {0} / {1}
 MATCH_ROUND,Round {0},{0} 라운드

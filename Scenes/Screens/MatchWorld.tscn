@@ -143,13 +143,11 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "Round"
 
-[node name="MyScoreLabel" type="Label" parent="MatchInterface/Readout" unique_id=1994745969]
+[node name="MatchLogHintLabel" type="Label" parent="MatchInterface/Readout" unique_id=1120044550]
+modulate = Color(1, 1, 1, 0.55)
 layout_mode = 2
-text = "Me"
-
-[node name="OpponentScoreLabel" type="Label" parent="MatchInterface/Readout" unique_id=902346682]
-layout_mode = 2
-text = "Opponent"
+theme_override_font_sizes/font_size = 14
+text = "MATCH_LOG_HINT"
 
 [node name="HealthBars" type="Control" parent="MatchInterface" unique_id=1120044501]
 layout_mode = 3
