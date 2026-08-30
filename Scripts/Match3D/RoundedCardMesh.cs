@@ -26,40 +26,40 @@ public static class RoundedCardMesh
     public static readonly Vector2 CARD_SIZE = new Vector2(0.0635f, 0.0889f);
     public const float CARD_THICKNESS = 0.0005f;
 
-    // A real playing card's corners are about 3.2 mm. 2 mm is deliberately under that — the
-    // corners were asked to be rounded only slightly. This is the one number to change to
-    // taste; everything else follows from it.
-    public const float CORNER_RADIUS = 0.002f;
+	// A real playing card's corners are about 3.2 mm. 2 mm is deliberately under that — the
+	// corners were asked to be rounded only slightly. This is the one number to change to
+	// taste; everything else follows from it.
+	public const float CORNER_RADIUS = 0.002f;
 
-    // How far the hover outline stands out past the card's own edge, all the way round.
+	// How far the hover outline stands out past the card's own edge, all the way round.
     private const float HIGHLIGHT_BORDER_WIDTH = 0.0015f;
 
     private const int SEGMENTS_PER_CORNER = 6;
 
-    /// <summary>The rounded rectangle, facing +Z and sitting at the card's front. The Back node
-    /// uses this same mesh turned 180 degrees about Y, which both faces it the other way and
-    /// mirrors it horizontally — the way a real card reads when flipped.</summary>
-    public static readonly ArrayMesh FACE_MESH = BuildFaceMesh(
-        CARD_SIZE, CORNER_RADIUS, CARD_THICKNESS / 2f);
+	/// <summary>The rounded rectangle, facing +Z and sitting at the card's front. The Back node
+	/// uses this same mesh turned 180 degrees about Y, which both faces it the other way and
+	/// mirrors it horizontally — the way a real card reads when flipped.</summary>
+	public static readonly ArrayMesh FACE_MESH = BuildFaceMesh(
+		CARD_SIZE, CORNER_RADIUS, CARD_THICKNESS / 2f);
 
-    /// <summary>The side wall alone — no caps, since FACE_MESH already covers both openings.</summary>
-    public static readonly ArrayMesh EDGE_MESH = BuildEdgeMesh();
+	/// <summary>The side wall alone — no caps, since FACE_MESH already covers both openings.</summary>
+	public static readonly ArrayMesh EDGE_MESH = BuildEdgeMesh();
 
-    /// <summary>The hover outline: the same silhouette grown by a constant border on every
-    /// side — grown in size AND corner radius together, which is what keeps the border an even
-    /// width around the corners instead of pinching there the way a scaled-up copy would.
-    ///
-    /// A solid plate rather than a ring, sitting on the card's own centre plane. The card's
-    /// front face is a quarter-millimetre in front of it and opaque, so only the grown border
-    /// is ever actually seen; a ring would be more geometry for an identical picture.</summary>
-    public static readonly ArrayMesh HIGHLIGHT_MESH = BuildFaceMesh(
-        CARD_SIZE + new Vector2(HIGHLIGHT_BORDER_WIDTH, HIGHLIGHT_BORDER_WIDTH) * 2f,
-        CORNER_RADIUS + HIGHLIGHT_BORDER_WIDTH,
-        0f);
+	/// <summary>The hover outline: the same silhouette grown by a constant border on every
+	/// side — grown in size AND corner radius together, which is what keeps the border an even
+	/// width around the corners instead of pinching there the way a scaled-up copy would.
+	///
+	/// A solid plate rather than a ring, sitting on the card's own centre plane. The card's
+	/// front face is a quarter-millimetre in front of it and opaque, so only the grown border
+	/// is ever actually seen; a ring would be more geometry for an identical picture.</summary>
+	public static readonly ArrayMesh HIGHLIGHT_MESH = BuildFaceMesh(
+		CARD_SIZE + new Vector2(HIGHLIGHT_BORDER_WIDTH, HIGHLIGHT_BORDER_WIDTH) * 2f,
+		CORNER_RADIUS + HIGHLIGHT_BORDER_WIDTH,
+		0f);
 
-    /// <summary>The card's silhouette, counter-clockwise as seen from +Z. Each corner
+	/// <summary>The card's silhouette, counter-clockwise as seen from +Z. Each corner
     /// contributes its own arc endpoints rather than sharing them, so the straight edges fall
-    /// out as the segments between one corner's last point and the next corner's first.</summary>
+	/// out as the segments between one corner's last point and the next corner's first.</summary>
     private static Vector2[] BuildOutline(Vector2 size, float cornerRadius)
     {
         float insetHalfWidth = size.X / 2f - cornerRadius;
@@ -100,19 +100,19 @@ public static class RoundedCardMesh
             Vector2 next = outline[(i + 1) % outline.Length];
 
             // Godot winds front faces CLOCKWISE as seen from the visible side — measured
-            // against QuadMesh's own arrays, not assumed — so the counter-clockwise outline is
-            // walked backwards here. Getting this the other way round renders the card
-            // invisible from the front and visible from behind.
-            AddFaceVertex(surface, Vector2.Zero, size, z);
-            AddFaceVertex(surface, next, size, z);
-            AddFaceVertex(surface, current, size, z);
-        }
+			// against QuadMesh's own arrays, not assumed — so the counter-clockwise outline is
+			// walked backwards here. Getting this the other way round renders the card
+			// invisible from the front and visible from behind.
+			AddFaceVertex(surface, Vector2.Zero, size, z);
+			AddFaceVertex(surface, next, size, z);
+			AddFaceVertex(surface, current, size, z);
+		}
 
-        return surface.Commit();
-    }
+		return surface.Commit();
+	}
 
-    /// <summary>UV laid out the way QuadMesh lays its own out — origin at the top-left — so
-    /// CardView's existing atlas UV1 scale/offset crop still lands correctly.</summary>
+	/// <summary>UV laid out the way QuadMesh lays its own out — origin at the top-left — so
+	/// CardView's existing atlas UV1 scale/offset crop still lands correctly.</summary>
     private static void AddFaceVertex(SurfaceTool surface, Vector2 point, Vector2 size, float z)
     {
         surface.SetUV(new Vector2(
@@ -134,26 +134,26 @@ public static class RoundedCardMesh
             Vector2 current = outline[i];
             Vector2 next = outline[(i + 1) % outline.Length];
 
-            // Walking a counter-clockwise outline keeps the card's interior on the left, so
-            // outward is to the right of travel. Set per segment, which flat-shades the wall —
-            // it is a 0.5 mm strip of flat colour, so there is nothing to gain from smoothing it.
-            Vector2 along = next - current;
-            surface.SetNormal(new Vector3(along.Y, -along.X, 0f).Normalized());
+			// Walking a counter-clockwise outline keeps the card's interior on the left, so
+			// outward is to the right of travel. Set per segment, which flat-shades the wall —
+			// it is a 0.5 mm strip of flat colour, so there is nothing to gain from smoothing it.
+			Vector2 along = next - current;
+			surface.SetNormal(new Vector3(along.Y, -along.X, 0f).Normalized());
 
-            Vector3 currentFront = new Vector3(current.X, current.Y, halfThickness);
-            Vector3 nextFront = new Vector3(next.X, next.Y, halfThickness);
-            Vector3 currentBack = new Vector3(current.X, current.Y, -halfThickness);
-            Vector3 nextBack = new Vector3(next.X, next.Y, -halfThickness);
+			Vector3 currentFront = new Vector3(current.X, current.Y, halfThickness);
+			Vector3 nextFront = new Vector3(next.X, next.Y, halfThickness);
+			Vector3 currentBack = new Vector3(current.X, current.Y, -halfThickness);
+			Vector3 nextBack = new Vector3(next.X, next.Y, -halfThickness);
 
-            surface.AddVertex(currentFront);
-            surface.AddVertex(nextFront);
-            surface.AddVertex(currentBack);
+			surface.AddVertex(currentFront);
+			surface.AddVertex(nextFront);
+			surface.AddVertex(currentBack);
 
-            surface.AddVertex(nextFront);
-            surface.AddVertex(nextBack);
-            surface.AddVertex(currentBack);
-        }
+			surface.AddVertex(nextFront);
+			surface.AddVertex(nextBack);
+			surface.AddVertex(currentBack);
+		}
 
-        return surface.Commit();
-    }
+		return surface.Commit();
+	}
 }
