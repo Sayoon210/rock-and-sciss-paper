@@ -17,11 +17,11 @@ namespace RockAndScissPaper.Match3D;
 [Tool]
 public partial class CharacterIdlePose : Node3D
 {
-	public override void _Ready()
-	{
-		if (GetNodeOrNull<AnimationPlayer>("AnimationPlayer") is AnimationPlayer animationPlayer)
-		{
-			new CharacterAnimationController(animationPlayer).HoldIdle();
-		}
-	}
+    public override void _Ready()
+    {
+        if (GetNodeOrNull<AnimationPlayer>("AnimationPlayer") is AnimationPlayer animationPlayer)
+        {
+            new CharacterAnimationController(animationPlayer).HoldIdle();
+        }
+    }
 }

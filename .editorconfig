@@ -2,3 +2,26 @@ root = true
 
 [*]
 charset = utf-8
+
+# Four spaces, no tabs. The project was overwhelmingly space-indented already, but this file
+# never said so, and every C# file opened in the Godot script editor came back re-indented with
+# tabs — nine files under Scripts/Match3D/ drifted that way, four of them ending up with both
+# styles inside one file. That turns a one-line change into a whole-file diff and buries real
+# edits in reformatting noise, which cost two separate "absorb the reformat" commits already.
+#
+# Godot's own script editor does not read this file — it follows the per-user editor setting at
+# Editor Settings > Text Editor > Behavior > Indent > Type, which has to be set to Spaces
+# separately or files will drift back.
+[*.cs]
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Godot writes these itself; leave its formatting alone.
+[*.{tscn,tres,godot,import}]
+indent_style = tab
+trim_trailing_whitespace = false
+
+[*.md]
+trim_trailing_whitespace = false

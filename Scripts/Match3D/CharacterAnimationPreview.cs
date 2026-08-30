@@ -8,10 +8,10 @@ namespace RockAndScissPaper.Match3D;
 /// animation runs from a GameState signal.</summary>
 public partial class CharacterAnimationPreview : Node3D
 {
-	public override void _Ready()
-	{
-		AnimationDebugPanel.BuildInto(
-			GetNode<VBoxContainer>("DebugInterface/AnimationButtons"),
-			GetNode<AnimationPlayer>("MainCharacter/AnimationPlayer"));
-	}
+    public override void _Ready()
+    {
+        AnimationDebugPanel.BuildInto(
+            GetNode<VBoxContainer>("DebugInterface/AnimationButtons"),
+            GetNode<AnimationPlayer>("MainCharacter/AnimationPlayer"));
+    }
 }
