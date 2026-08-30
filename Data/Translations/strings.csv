@@ -49,6 +49,7 @@ MATCH_OUTCOME_NONE,No result,승패 없음
 MATCH_OUTCOME_WIN,Win,승
 MATCH_OUTCOME_LOSS,Loss,패
 MATCH_OUTCOME_TIE,Tie,무승부
+MATCH_ACTION_SUBMIT,Submit,제출
 MATCH_ACTION_TRANSFORMED,Transformed,변화 적용
 MATCH_ACTION_SWAPPED,Swapped {0},교체 {0}장
 MATCH_PROMPT_REJECTED,You cannot play that card.,낼 수 없는 카드입니다.

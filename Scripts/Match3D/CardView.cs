@@ -32,6 +32,7 @@ public partial class CardView : Node3D
     private const string BACK_MESH_PATH = "Back";
     private const string EDGE_MESH_PATH = "Rim";
     private const string HIGHLIGHT_MESH_PATH = "Highlight";
+    private const string CALLOUT_PATH = "Callout";
     private const string PICK_AREA_PATH = "PickArea";
     private const string PICK_SHAPE_PATH = "PickArea/CollisionShape3D";
 
@@ -41,10 +42,24 @@ public partial class CardView : Node3D
     private static readonly Color PLACEHOLDER_FACE_COLOR = new Color(0.62f, 0.60f, 0.56f);
 
     // Outline colors, driven from here rather than by editing the .tscn material — which is
-    // duplicated per card in _Ready precisely so one card's armed green cannot turn every
-    // other card's outline green with it (the same shared-resource reasoning as _frontMaterial).
-    private static readonly Color HOVER_OUTLINE_COLOR = new Color(1f, 0.85f, 0.35f);
-    private static readonly Color SUBMIT_ARMED_OUTLINE_COLOR = new Color(0.45f, 1f, 0.5f);
+    // duplicated per card in _Ready precisely so one card's armed outline cannot brighten every
+    // other card's with it (the same shared-resource reasoning as _frontMaterial).
+    //
+    // The two states are told apart by BRIGHTNESS, not by hue. They used to be yellow and green,
+    // which MonochromeExceptRed.gdshader flattens to the same grey — the screen keeps no hue but
+    // red, so a signal carried by color is a signal the player cannot receive. Value survives
+    // that pass untouched, and reads at a glance besides.
+    private static readonly Color HOVER_OUTLINE_COLOR = new Color(0.45f, 0.45f, 0.45f);
+    private static readonly Color SUBMIT_ARMED_OUTLINE_COLOR = new Color(1f, 1f, 1f);
+
+    // What the callout above the card says, in the same two tiers as the outline: the card under
+    // the pointer is marked, a card lifted far enough to send says so in a word.
+    //
+    // The arrow is a glyph rather than a MATCH_ symbol on purpose — it is the same mark in every
+    // language, so strings.csv would carry one row with two identical cells. The word is a symbol
+    // like any other player-facing text.
+    private const string HOVER_CALLOUT_ARROW = "▼";
+    private const string SUBMIT_CALLOUT_SYMBOL = "MATCH_ACTION_SUBMIT";
 
     // Grab feel. A held card travels straight up its own row and nowhere else: sideways drag
     // is ignored outright, and downward drag does not push it below where it started. The
@@ -89,6 +104,7 @@ public partial class CardView : Node3D
     private StandardMaterial3D _frontMaterial = null!;
     private StandardMaterial3D _highlightMaterial = null!;
     private MeshInstance3D _highlight = null!;
+    private Label3D _callout = null!;
     private bool _isPointerInside;
 
     private Func<bool>? _canGrab;
@@ -114,6 +130,7 @@ public partial class CardView : Node3D
         GetNode<MeshInstance3D>(BACK_MESH_PATH).Mesh = RoundedCardMesh.FACE_MESH;
         GetNode<MeshInstance3D>(EDGE_MESH_PATH).Mesh = RoundedCardMesh.EDGE_MESH;
 
+        _callout = GetNode<Label3D>(CALLOUT_PATH);
         _highlight = GetNode<MeshInstance3D>(HIGHLIGHT_MESH_PATH);
         _highlight.Mesh = RoundedCardMesh.HIGHLIGHT_MESH;
         _highlightMaterial = (StandardMaterial3D)_highlight.MaterialOverride.Duplicate();
@@ -203,10 +220,36 @@ public partial class CardView : Node3D
         if (_isSubmitArmed)
         {
             _highlightMaterial.AlbedoColor = SUBMIT_ARMED_OUTLINE_COLOR;
+            SetCalloutText(Tr(SUBMIT_CALLOUT_SYMBOL));
         }
         else
         {
             _highlightMaterial.AlbedoColor = HOVER_OUTLINE_COLOR;
+            SetCalloutText(HOVER_CALLOUT_ARROW);
+        }
+
+        // Shown exactly when the outline is, and saying the same thing in a second channel: the
+        // arrow marks which card the pointer has, the word replaces it once letting go would
+        // send that card. A child of the card rather than a Control on the interface layer, so it
+        // rides the card's own lift instead of needing a world position projected onto the screen
+        // every frame.
+        _callout.Visible = _highlight.Visible;
+    }
+
+    /// <summary>Assigned through here rather than straight onto the node, because _Process runs
+    /// this every frame and Label3D rebuilds its glyph mesh whenever its text is set — a rebuild
+    /// per frame for a string that changes at most twice per grab.
+    ///
+    /// Tr() rather than a bare assignment, which is what a Control would take: this project's
+    /// auto-translation rule (Scripts/CLAUDE.md) is written for Control, and whether Label3D
+    /// honours AutoTranslateMode the same way is not something this codebase has established
+    /// anywhere else. Translating here works either way — the result is no longer a key, so a
+    /// second pass over it would find nothing to change.</summary>
+    private void SetCalloutText(string text)
+    {
+        if (_callout.Text != text)
+        {
+            _callout.Text = text;
         }
     }
 
