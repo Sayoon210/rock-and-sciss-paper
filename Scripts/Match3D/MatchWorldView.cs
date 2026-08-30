@@ -88,6 +88,9 @@ public partial class MatchWorldView : Node3D
 	private const float NO_ANIMATION_RESULT_HOLD_SECONDS = 1.0f;
 	private const float RESULT_SETTLE_SECONDS = 0.5f;
 
+	// The pause between the cards landing face up and the winner starting to move. Short on
+	// purpose — long enough to read the two cards, not long enough to feel like a stall.
+	private const float RESULT_BEAT_SECONDS = 0.3f;
 
 	/// <summary>Where the round-flow pacing currently is. Named for the presentation rather
 	/// than just "phase" because GameLogic already exports an ERoundPhase — the rules-side one,
@@ -104,6 +107,7 @@ public partial class MatchWorldView : Node3D
 		Intro,
 		Open,
 		Reveal,
+		ResultBeat,
 		ResultHold,
 		ResultSettle,
 	}
@@ -469,10 +473,11 @@ public partial class MatchWorldView : Node3D
 	// ---- Round-flow phase machine ----
 	//
 	// Intro (2s, splash + hand-view locked) -> Open (unchanged existing play) ->
-	// [RoundRevealed] -> Reveal (0.35s flip) -> ResultHold (blow, or a fixed hold if there is
-	// none) -> ResultSettle (0.5s beat) -> Intro for the next round, or idle if the match just
-	// ended. Only Intro/Reveal/ResultHold(no-blow)/ResultSettle carry a countdown
-	// (_phaseSecondsRemaining); Open and a blow-driven ResultHold end on a callback instead.
+	// [RoundRevealed] -> Reveal (0.35s flip) -> ResultBeat (0.3s, cards readable before anyone
+	// swings) -> ResultHold (blow, or a fixed hold if there is none) -> ResultSettle (0.5s beat)
+	// -> Intro for the next round, or idle if the match just ended. Every phase but Open and a
+	// blow-driven ResultHold carries a countdown (_phaseSecondsRemaining); those two end on a
+	// callback instead.
 
 	public override void _Process(double delta)
 	{
@@ -504,6 +509,10 @@ public partial class MatchWorldView : Node3D
 				break;
 
 			case EPresentationPhase.Reveal:
+				EnterResultBeatPhase();
+				break;
+
+			case EPresentationPhase.ResultBeat:
 				EnterResultHoldPhase();
 				break;
 
@@ -565,6 +574,18 @@ public partial class MatchWorldView : Node3D
         _phaseSecondsRemaining = 0f;
         _headCamera.SetRoundIntroLocked(false);
         _roundIntroOverlay.Visible = false;
+    }
+
+    /// <summary>A held beat between the cards finishing their turn and the winner moving. Without
+    /// it the blow starts on the very frame the flip ends, which leaves the player no moment to
+    /// read what was actually played before the character is already swinging.
+    ///
+    /// A phase of its own rather than a delay buried in the blow, so the wait is visible in the
+    /// machine above and cannot be mistaken for part of the clip when the clip is replaced.</summary>
+    private void EnterResultBeatPhase()
+    {
+        _phase = EPresentationPhase.ResultBeat;
+        _phaseSecondsRemaining = RESULT_BEAT_SECONDS;
     }
 
     private void EnterResultHoldPhase()
