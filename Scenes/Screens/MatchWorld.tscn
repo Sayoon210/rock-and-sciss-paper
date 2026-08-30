@@ -14,6 +14,7 @@
 [ext_resource type="Script" uid="uid://dwjnm733g3eq5" path="res://Scripts/Match3D/DisconnectedOverlayUI.cs" id="12_disconnected"]
 [ext_resource type="PackedScene" uid="uid://br7mxhtotcqmu" path="res://Assets/Models/cc0_scissors.glb" id="13_scissors"]
 [ext_resource type="Script" path="res://Scripts/Match3D/ScissorsController.cs" id="14_scissorscontroller"]
+[ext_resource type="Material" path="res://Assets/Materials/TableWood.tres" id="15_tablewood"]
 
 [sub_resource type="Environment" id="Environment_match"]
 background_mode = 1
@@ -54,6 +55,7 @@ light_energy = 1.2
 
 [node name="Table" type="MeshInstance3D" parent="." unique_id=1492602356]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.695, 0)
+material_override = ExtResource("15_tablewood")
 mesh = SubResource("BoxMesh_table")
 
 [node name="MyCardSlot" type="Node3D" parent="Table" unique_id=1120044530]

@@ -1,0 +1,17 @@
+[gd_resource type="StandardMaterial3D" load_steps=5 format=3]
+
+[ext_resource type="Texture2D" uid="uid://cng6w156a3g5d" path="res://Assets/Textures/dark_wood_2k/textures/dark_wood_diff_2k.png" id="1_diffuse"]
+[ext_resource type="Texture2D" uid="uid://c12u5flcxbxei" path="res://Assets/Textures/dark_wood_2k/textures/dark_wood_nor_gl_2k.png" id="2_normal"]
+[ext_resource type="Texture2D" uid="uid://bg17g1v1a5xw8" path="res://Assets/Textures/dark_wood_2k/textures/dark_wood_rough_2k.png" id="3_roughness"]
+[ext_resource type="Texture2D" uid="uid://q55y1eplnqji" path="res://Assets/Textures/dark_wood_2k/textures/dark_wood_ao_2k.png" id="4_ambientocclusion"]
+
+[resource]
+resource_name = "TableWood"
+albedo_texture = ExtResource("1_diffuse")
+roughness_texture = ExtResource("3_roughness")
+normal_enabled = true
+normal_texture = ExtResource("2_normal")
+ao_enabled = true
+ao_texture = ExtResource("4_ambientocclusion")
+uv1_scale = Vector3(2, 1.2, 1)
+texture_filter = 5
