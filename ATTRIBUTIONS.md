@@ -48,10 +48,18 @@
 |---|---|---|---|---|
 | `Assets/Models/MainCharacter.glb` (+ 딸린 `MainCharacter_Ch28_1001_*.png`) | Adobe (Mixamo) | [Mixamo](https://www.mixamo.com/) 캐릭터 `Ch28` | Mixamo 라이선스 — CC0 아님. **재배포 금지, 게임에 포함하는 것은 무료·무제한** | 앉은 자세로 리깅 조정, 애니메이션 자작 3종 추가, `.glb`로 재익스포트 |
 | `Assets/Models/cc0_scissors.glb` (+ 임포트가 추출한 `cc0_scissors_{0,1,2}.png`) | plaggy | [plaggy.net](https://plaggy.net/) — Fab/Sketchfab 경유로 받은 `.fbx`를 `.glb`로 변환한 것 (파일 안에 `fab-model-conversion` 표시가 남아 있다) | CC0 1.0 Universal — 퍼블릭 도메인, **표기 의무 없음** | 없음 (받은 그대로). 텍스처 3장은 Godot 임포트가 `.glb`에서 꺼내 놓은 것 |
+| `Assets/Models/ybot_main.glb` | Adobe (Mixamo) | [Mixamo](https://www.mixamo.com/) 캐릭터 `Y Bot` | Mixamo 라이선스 — 위 `Ch28`과 동일 조건 | 본 접두사를 `mixamorig10:`으로 일괄 변경, 아마추어 오브젝트를 `Armature`로 개명, `.glb`로 재익스포트. **현재 씬에서 쓰이지 않는다** |
+| `Assets/Textures/dark_wood_2k/` (전체) | Poly Haven | ["Dark Wood"](https://polyhaven.com/a/dark_wood) | CC0 1.0 — **표기 의무 없음** | **`dark_wood_diff_2k.png`를 무채색으로 변환** (아래 참고). 나머지 맵은 원본 그대로 |
 
 **재배포 금지가 무슨 뜻이냐면** — 완성된 게임에 넣어 파는 것은 허용되지만, 이 파일 자체를
 에셋팩처럼 따로 배포하는 것은 안 된다. 소스 저장소가 공개로 바뀌면 이 `.glb`가 사실상
 재배포에 해당할 수 있으니 그때 다시 확인할 것.
+
+**탁상 텍스처를 무채색으로 구운 이유** — 화면은 [MonochromeExceptRed.gdshader](Shaders/MonochromeExceptRed.gdshader)로
+빨강만 남기고 채도를 걷어내는데, 다크우드는 색상환에서 빨강 바로 옆(주황)이라 그 필터를
+통과해 혼자 갈색으로 남았다. 임계값을 조여서 막으려 하면 어두운 피까지 같이 걸린다.
+탁상의 갈색은 정보가 아니므로 알베도를 아예 무채색으로 구워두는 편이 낫다 — 셰이더는
+피에만 쓰고, 정적 에셋의 색은 처음부터 없앤다. 원본은 CC0라 위 URL에서 다시 받을 수 있다.
 
 애니메이션(`Anim_Punch_Baked`, `Anim_StabScissor_Baked`, `Anim_NoNoNoFinger`)은 Mixamo
 프리셋이 아니라 **Blender에서 직접 만든 자작**이다. 작업 파일은 `Assets/_Source/`에 있고
