@@ -49,15 +49,34 @@ script = ExtResource("1_matchworldview")
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=2105080709]
 environment = SubResource("Environment_match")
 
-[node name="KeyLight" type="SpotLight3D" parent="." unique_id=1753912055]
-transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 1.7, 0)
-light_energy = 2.0
+[node name="KeyLight2" type="SpotLight3D" parent="." unique_id=627882735]
+transform = Transform3D(1, 0, 0, 0, -1, -8.742278e-08, 0, 8.742278e-08, -1, 0, 1.2329332, 0)
+light_specular = 0.1
 shadow_enabled = true
+shadow_blur = 10.0
+spot_range = 0.7
+spot_angle = 40.0
+
+[node name="KeyLight2" type="SpotLight3D" parent="KeyLight2" unique_id=330013792]
+transform = Transform3D(1, 0, 0, 0, -1, -8.742278e-08, 0, 8.742278e-08, -1, 0, 0, 0)
+light_specular = 0.1
+shadow_enabled = true
+shadow_blur = 10.0
+spot_range = 0.7
+spot_angle = 40.0
+
+[node name="KeyLight" type="SpotLight3D" parent="." unique_id=1753912055]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 1.4344363, 0)
+light_energy = 2.0
+light_specular = 0.1
+shadow_enabled = true
+shadow_blur = 10.0
 spot_range = 6.0
-spot_angle = 33.0
+spot_angle = 40.0
 
 [node name="DebugFillLight" type="DirectionalLight3D" parent="." unique_id=949984593]
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 4.163983, 0)
+visible = false
 light_energy = 0.22
 shadow_enabled = true
 
@@ -120,7 +139,7 @@ transform = Transform3D(-0.5, 0, -4.371139e-08, 0, 0.5, 0, 4.371139e-08, 0, -0.5
 transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0.018, 0, 0.34647065)
 
 [node name="HandViewCamera" type="Camera3D" parent="Field/CardRest" unique_id=98608705]
-transform = Transform3D(2, 0, 0, 0, 1.803665, 0.8641715, 0, -0.8641715, 1.803665, 0, 0.25054348, 0.30415833)
+transform = Transform3D(2, 0, 0, 0, 1.9673088, 0.36013374, 0, -0.36013374, 1.9673088, 0, 0.27995336, 0.34169114)
 
 [node name="HandView" type="Node3D" parent="Field/CardRest" unique_id=906581897]
 transform = Transform3D(1, 0, 0, 0, 0.90172476, 0.43231076, 0, -0.43231076, 0.90172476, 0, -0.19224954, -0.27267984)
