@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://Scripts/Match3D/CharacterAnimationPreview.cs" id="1_preview"]
 [ext_resource type="PackedScene" uid="uid://gpgmiwxrq3gj" path="res://Assets/Models/MainCharacter.glb" id="2_character"]
 [ext_resource type="Script" uid="uid://w1ypfpogo53j" path="res://Scripts/Match3D/CharacterIdlePose.cs" id="3_idlepose"]
+[ext_resource type="PackedScene" uid="uid://c7fwvd1an15nq" path="res://Assets/Models/YBOT.glb" id="4_ybot"]
 
 [sub_resource type="Environment" id="Environment_preview"]
 background_mode = 1
@@ -22,10 +23,13 @@ transform = Transform3D(1, 0, 0, 0, 0.643, -0.766, 0, 0.766, 0.643, 0, 3, 2)
 shadow_enabled = true
 
 [node name="Camera3D" type="Camera3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.99, -0.139, 0, 0.139, 0.99, 0, 1.3, 2.2)
+transform = Transform3D(1, 0, 0, 0, 0.99, -0.139, 0, 0.139, 0.99, 0.5, 1.3, 2.2)
 
 [node name="MainCharacter" parent="." instance=ExtResource("2_character")]
 script = ExtResource("3_idlepose")
+
+[node name="YBot" parent="." instance=ExtResource("4_ybot")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0)
 
 [node name="DebugInterface" type="CanvasLayer" parent="."]
 
