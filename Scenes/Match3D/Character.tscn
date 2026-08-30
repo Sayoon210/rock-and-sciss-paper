@@ -1,6 +1,6 @@
 [gd_scene load_steps=5 format=3]
 
-[ext_resource type="PackedScene" uid="uid://ce8ygrj722ik0" path="res://Assets/Models/YBOT.glb" id="1_model"]
+[ext_resource type="PackedScene" uid="uid://gpgmiwxrq3gj" path="res://Assets/Models/MainCharacter.glb" id="1_model"]
 [ext_resource type="AnimationLibrary" uid="uid://d1p4is3tck5wl" path="res://Assets/Models/main_amature_nomesh.glb" id="2_animations"]
 [ext_resource type="Script" uid="uid://w1ypfpogo53j" path="res://Scripts/Match3D/CharacterIdlePose.cs" id="3_idlepose"]
 [ext_resource type="Script" uid="uid://wnbq0587kv1x" path="res://Scripts/Match3D/CharacterHeadFade.cs" id="4_headfade"]
@@ -18,4 +18,4 @@ transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 0.247, 0.797, 0.25)
 
 [node name="HeadFade" type="Node3D" parent="."]
 script = ExtResource("4_headfade")
-HeadAreaMeshNames = PackedStringArray("Alpha_Surface", "Alpha_Joints")
+HeadAreaMeshNames = PackedStringArray("Ch28_Body", "Ch28_Eyelashes", "Ch28_Hair")

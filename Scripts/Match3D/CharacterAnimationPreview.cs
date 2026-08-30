@@ -12,6 +12,6 @@ public partial class CharacterAnimationPreview : Node3D
 	{
 		AnimationDebugPanel.BuildInto(
 			GetNode<VBoxContainer>("DebugInterface/AnimationButtons"),
-			GetNode<AnimationPlayer>("MainCharacter/AnimationPlayer"));
+			GetNode<AnimationPlayer>("Character/AnimationPlayer"));
 	}
 }
