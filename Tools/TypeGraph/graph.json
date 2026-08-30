@@ -1,0 +1,780 @@
+{
+ "AnimationDebugPanel": {
+  "file": "Scripts/Match3D/AnimationDebugPanel.cs",
+  "folder": "Scripts/Match3D",
+  "kind": "class",
+  "base": "",
+  "lines": 62,
+  "fanIn": 2,
+  "refs": []
+ },
+ "AudioManager": {
+  "file": "Scripts/Autoload/AudioManager.cs",
+  "folder": "Scripts/Autoload",
+  "kind": "class",
+  "base": "Node",
+  "lines": 217,
+  "fanIn": 2,
+  "refs": [
+   "ESoundName"
+  ]
+ },
+ "BoneLookRotator": {
+  "file": "Scripts/Match3D/BoneLookRotator.cs",
+  "folder": "Scripts/Match3D",
+  "kind": "class",
+  "base": "",
+  "lines": 33,
+  "fanIn": 2,
+  "refs": []
+ },
+ "CardChoice": {
+  "file": "GameLogic/CardChoice.cs",
+  "folder": "GameLogic",
+  "kind": "class",
+  "base": "",
+  "lines": 41,
+  "fanIn": 11,
+  "refs": [
+   "ECardName"
+  ]
+ },
+ "CardChoiceCodec": {
+  "file": "Scripts/Network/CardChoiceCodec.cs",
+  "folder": "Scripts/Network",
+  "kind": "class",
+  "base": "",
+  "lines": 84,
+  "fanIn": 1,
+  "refs": [
+   "CardChoice",
+   "ECardName",
+   "EncodedCardChoice"
+  ]
+ },
+ "CardData": {
+  "file": "Scripts/Cards/CardData.cs",
+  "folder": "Scripts/Cards",
+  "kind": "class",
+  "base": "Resource",
+  "lines": 24,
+  "fanIn": 4,
+  "refs": [
+   "ECardName"
+  ]
+ },
+ "CardDatabase": {
+  "file": "Scripts/Autoload/CardDatabase.cs",
+  "folder": "Scripts/Autoload",
+  "kind": "class",
+  "base": "Node",
+  "lines": 74,
+  "fanIn": 3,
+  "refs": [
+   "CardData",
+   "ECardName"
+  ]
+ },
+ "CardNameExtensions": {
+  "file": "GameLogic/ECardName.cs",
+  "folder": "GameLogic",
+  "kind": "class",
+  "base": "",
+  "lines": 93,
+  "fanIn": 0,
+  "refs": [
+   "ECardName",
+   "ECardType",
+   "ENormalCard"
+  ]
+ },
+ "CardView": {
+  "file": "Scripts/Match3D/CardView.cs",
+  "folder": "Scripts/Match3D",
+  "kind": "class",
+  "base": "Node3D",
+  "lines": 398,
+  "fanIn": 2,
+  "refs": [
+   "CardData",
+   "CardDatabase",
+   "ECardName",
+   "RoundedCardMesh"
+  ]
+ },
+ "CharacterAnimationController": {
+  "file": "Scripts/Match3D/CharacterAnimationController.cs",
+  "folder": "Scripts/Match3D",
+  "kind": "class",
+  "base": "",
+  "lines": 64,
+  "fanIn": 2,
+  "refs": []
+ },
+ "CharacterAnimationPreview": {
+  "file": "Scripts/Match3D/CharacterAnimationPreview.cs",
+  "folder": "Scripts/Match3D",
+  "kind": "class",
+  "base": "Node3D",
+  "lines": 18,
+  "fanIn": 0,
+  "refs": [
+   "AnimationDebugPanel"
+  ]
+ },
+ "CharacterHeadFade": {
+  "file": "Scripts/Match3D/CharacterHeadFade.cs",
+  "folder": "Scripts/Match3D",
+  "kind": "class",
+  "base": "Node3D",
+  "lines": 101,
+  "fanIn": 1,
+  "refs": []
+ },
+ "CharacterIdlePose": {
+  "file": "Scripts/Match3D/CharacterIdlePose.cs",
+  "folder": "Scripts/Match3D",
+  "kind": "class",
+  "base": "Node3D",
+  "lines": 28,
+  "fanIn": 0,
+  "refs": [
+   "CharacterAnimationController"
+  ]
+ },
+ "ConnectionScreenUI": {
+  "file": "Scripts/UI/ConnectionScreenUI.cs",
+  "folder": "Scripts/UI",
+  "kind": "class",
+  "base": "Control",
+  "lines": 139,
+  "fanIn": 0,
+  "refs": [
+   "EventBus",
+   "GameState",
+   "NetworkManager",
+   "ScreenRouter"
+  ]
+ },
+ "Deck": {
+  "file": "GameLogic/Deck.cs",
+  "folder": "GameLogic",
+  "kind": "class",
+  "base": "",
+  "lines": 43,
+  "fanIn": 5,
+  "refs": [
+   "ECardName"
+  ]
+ },
+ "DeckAndHand": {
+  "file": "GameLogic/DeckAndHand.cs",
+  "folder": "GameLogic",
+  "kind": "class",
+  "base": "",
+  "lines": 44,
+  "fanIn": 7,
+  "refs": [
+   "Deck",
+   "ECardName",
+   "Hand"
+  ]
+ },
+ "DeckAssembler": {
+  "file": "Scripts/Cards/DeckAssembler.cs",
+  "folder": "Scripts/Cards",
+  "kind": "class",
+  "base": "",
+  "lines": 44,
+  "fanIn": 2,
+  "refs": [
+   "ECardName"
+  ]
+ },
+ "DisconnectedOverlayUI": {
+  "file": "Scripts/Match3D/DisconnectedOverlayUI.cs",
+  "folder": "Scripts/Match3D",
+  "kind": "class",
+  "base": "Control",
+  "lines": 54,
+  "fanIn": 0,
+  "refs": [
+   "GameState",
+   "ScreenRouter"
+  ]
+ },
+ "DrawEffect": {
+  "file": "GameLogic/Effects/DrawEffect.cs",
+  "folder": "GameLogic/Effects",
+  "kind": "class",
+  "base": "ICardEffect",
+  "lines": 26,
+  "fanIn": 1,
+  "refs": [
+   "CardChoice",
+   "DeckAndHand"
+  ]
+ },
+ "ECardFate": {
+  "file": "GameLogic/RoundResult.cs",
+  "folder": "GameLogic",
+  "kind": "enum",
+  "base": "",
+  "lines": 94,
+  "fanIn": 5,
+  "refs": []
+ },
+ "ECardName": {
+  "file": "GameLogic/ECardName.cs",
+  "folder": "GameLogic",
+  "kind": "enum",
+  "base": "",
+  "lines": 93,
+  "fanIn": 26,
+  "refs": []
+ },
+ "ECardType": {
+  "file": "GameLogic/ECardName.cs",
+  "folder": "GameLogic",
+  "kind": "enum",
+  "base": "",
+  "lines": 93,
+  "fanIn": 3,
+  "refs": []
+ },
+ "EChoiceStatus": {
+  "file": "GameLogic/RoundInProgress.cs",
+  "folder": "GameLogic",
+  "kind": "enum",
+  "base": "",
+  "lines": 152,
+  "fanIn": 2,
+  "refs": []
+ },
+ "EMatchLogOutcome": {
+  "file": "GameLogic/MatchLog.cs",
+  "folder": "GameLogic",
+  "kind": "enum",
+  "base": "",
+  "lines": 144,
+  "fanIn": 4,
+  "refs": []
+ },
+ "EMatchOutcome": {
+  "file": "Scripts/Autoload/MatchView.cs",
+  "folder": "Scripts/Autoload",
+  "kind": "enum",
+  "base": "",
+  "lines": 80,
+  "fanIn": 2,
+  "refs": []
+ },
+ "ENormalCard": {
+  "file": "GameLogic/WinLossRules.cs",
+  "folder": "GameLogic",
+  "kind": "enum",
+  "base": "",
+  "lines": 86,
+  "fanIn": 3,
+  "refs": []
+ },
+ "EPresentationPhase": {
+  "file": "Scripts/Match3D/MatchWorldView.cs",
+  "folder": "Scripts/Match3D",
+  "kind": "enum",
+  "base": "",
+  "lines": 534,
+  "fanIn": 1,
+  "refs": []
+ },
+ "ERoundOutcome": {
+  "file": "Scripts/Autoload/MatchView.cs",
+  "folder": "Scripts/Autoload",
+  "kind": "enum",
+  "base": "",
+  "lines": 80,
+  "fanIn": 3,
+  "refs": []
+ },
+ "ERoundPhase": {
+  "file": "GameLogic/MatchSession.cs",
+  "folder": "GameLogic",
+  "kind": "enum",
+  "base": "",
+  "lines": 435,
+  "fanIn": 1,
+  "refs": []
+ },
+ "EScissorsPlace": {
+  "file": "Scripts/Match3D/ScissorsController.cs",
+  "folder": "Scripts/Match3D",
+  "kind": "enum",
+  "base": "",
+  "lines": 239,
+  "fanIn": 1,
+  "refs": []
+ },
+ "ESide": {
+  "file": "GameLogic/MatchSession.cs",
+  "folder": "GameLogic",
+  "kind": "enum",
+  "base": "",
+  "lines": 435,
+  "fanIn": 4,
+  "refs": []
+ },
+ "ESoundName": {
+  "file": "Scripts/Autoload/ESoundName.cs",
+  "folder": "Scripts/Autoload",
+  "kind": "enum",
+  "base": "",
+  "lines": 17,
+  "fanIn": 1,
+  "refs": []
+ },
+ "EWinLossResult": {
+  "file": "GameLogic/WinLossRules.cs",
+  "folder": "GameLogic",
+  "kind": "enum",
+  "base": "",
+  "lines": 86,
+  "fanIn": 6,
+  "refs": []
+ },
+ "EncodedCardChoice": {
+  "file": "Scripts/Network/CardChoiceCodec.cs",
+  "folder": "Scripts/Network",
+  "kind": "struct",
+  "base": "",
+  "lines": 84,
+  "fanIn": 2,
+  "refs": []
+ },
+ "EventBus": {
+  "file": "Scripts/Autoload/EventBus.cs",
+  "folder": "Scripts/Autoload",
+  "kind": "class",
+  "base": "Node",
+  "lines": 27,
+  "fanIn": 4,
+  "refs": []
+ },
+ "GameState": {
+  "file": "Scripts/Autoload/GameState.cs",
+  "folder": "Scripts/Autoload",
+  "kind": "class",
+  "base": "Node",
+  "lines": 1074,
+  "fanIn": 11,
+  "refs": [
+   "CardChoice",
+   "CardChoiceCodec",
+   "DeckAssembler",
+   "ECardFate",
+   "ECardName",
+   "EMatchLogOutcome",
+   "EMatchOutcome",
+   "ERoundOutcome",
+   "ESide",
+   "EWinLossResult",
+   "EncodedCardChoice",
+   "EventBus",
+   "MatchLog",
+   "MatchSession",
+   "MatchView",
+   "RoundResult",
+   "RoundReveal"
+  ]
+ },
+ "Hand": {
+  "file": "GameLogic/Hand.cs",
+  "folder": "GameLogic",
+  "kind": "class",
+  "base": "",
+  "lines": 33,
+  "fanIn": 6,
+  "refs": [
+   "ECardName"
+  ]
+ },
+ "HandView": {
+  "file": "Scripts/Match3D/HandView.cs",
+  "folder": "Scripts/Match3D",
+  "kind": "class",
+  "base": "Node3D",
+  "lines": 335,
+  "fanIn": 1,
+  "refs": [
+   "CardView",
+   "DeckAssembler",
+   "ECardName",
+   "GameState",
+   "HeadFollowCamera",
+   "MatchSession",
+   "MatchWorldView"
+  ]
+ },
+ "HeadFollowCamera": {
+  "file": "Scripts/Match3D/HeadFollowCamera.cs",
+  "folder": "Scripts/Match3D",
+  "kind": "class",
+  "base": "Camera3D",
+  "lines": 268,
+  "fanIn": 2,
+  "refs": [
+   "BoneLookRotator",
+   "CharacterHeadFade",
+   "GameState"
+  ]
+ },
+ "HealthBarsUI": {
+  "file": "Scripts/Match3D/HealthBarsUI.cs",
+  "folder": "Scripts/Match3D",
+  "kind": "class",
+  "base": "Control",
+  "lines": 68,
+  "fanIn": 0,
+  "refs": [
+   "GameState",
+   "MatchSession",
+   "MatchView"
+  ]
+ },
+ "ICardEffect": {
+  "file": "GameLogic/Effects/ICardEffect.cs",
+  "folder": "GameLogic/Effects",
+  "kind": "interface",
+  "base": "",
+  "lines": 32,
+  "fanIn": 1,
+  "refs": [
+   "CardChoice",
+   "DeckAndHand"
+  ]
+ },
+ "MatchDebugUI": {
+  "file": "Scripts/UI/MatchDebugUI.cs",
+  "folder": "Scripts/UI",
+  "kind": "class",
+  "base": "Control",
+  "lines": 495,
+  "fanIn": 0,
+  "refs": [
+   "CardChoice",
+   "CardData",
+   "CardDatabase",
+   "ECardName",
+   "EventBus",
+   "GameState",
+   "MatchView",
+   "NetworkManager"
+  ]
+ },
+ "MatchLog": {
+  "file": "GameLogic/MatchLog.cs",
+  "folder": "GameLogic",
+  "kind": "class",
+  "base": "",
+  "lines": 144,
+  "fanIn": 2,
+  "refs": [
+   "ECardName",
+   "EMatchLogOutcome",
+   "MatchLogEntry",
+   "MatchSession"
+  ]
+ },
+ "MatchLogEntry": {
+  "file": "GameLogic/MatchLog.cs",
+  "folder": "GameLogic",
+  "kind": "class",
+  "base": "",
+  "lines": 144,
+  "fanIn": 2,
+  "refs": [
+   "ECardName",
+   "EMatchLogOutcome"
+  ]
+ },
+ "MatchLogPanel": {
+  "file": "Scripts/Match3D/MatchLogPanel.cs",
+  "folder": "Scripts/Match3D",
+  "kind": "class",
+  "base": "Control",
+  "lines": 137,
+  "fanIn": 0,
+  "refs": [
+   "CardData",
+   "CardDatabase",
+   "ECardName",
+   "EMatchLogOutcome",
+   "GameState",
+   "MatchLog",
+   "MatchLogEntry"
+  ]
+ },
+ "MatchSession": {
+  "file": "GameLogic/MatchSession.cs",
+  "folder": "GameLogic",
+  "kind": "class",
+  "base": "",
+  "lines": 435,
+  "fanIn": 5,
+  "refs": [
+   "CardChoice",
+   "Deck",
+   "DeckAndHand",
+   "ECardName",
+   "EChoiceStatus",
+   "ERoundPhase",
+   "ESide",
+   "EWinLossResult",
+   "Hand",
+   "RoundInProgress",
+   "RoundResolver",
+   "RoundResult",
+   "RoundReveal"
+  ]
+ },
+ "MatchView": {
+  "file": "Scripts/Autoload/MatchView.cs",
+  "folder": "Scripts/Autoload",
+  "kind": "class",
+  "base": "",
+  "lines": 80,
+  "fanIn": 4,
+  "refs": [
+   "ECardFate",
+   "ECardName",
+   "EMatchOutcome",
+   "ERoundOutcome",
+   "MatchSession"
+  ]
+ },
+ "MatchWorldView": {
+  "file": "Scripts/Match3D/MatchWorldView.cs",
+  "folder": "Scripts/Match3D",
+  "kind": "class",
+  "base": "Node3D",
+  "lines": 534,
+  "fanIn": 1,
+  "refs": [
+   "AnimationDebugPanel",
+   "AudioManager",
+   "CardView",
+   "CharacterAnimationController",
+   "ECardName",
+   "EPresentationPhase",
+   "ERoundOutcome",
+   "GameState",
+   "HandView",
+   "HeadFollowCamera",
+   "MatchView",
+   "ScissorsController"
+  ]
+ },
+ "NetworkManager": {
+  "file": "Scripts/Autoload/NetworkManager.cs",
+  "folder": "Scripts/Autoload",
+  "kind": "class",
+  "base": "Node",
+  "lines": 95,
+  "fanIn": 3,
+  "refs": [
+   "EventBus"
+  ]
+ },
+ "RemoteHeadLook": {
+  "file": "Scripts/Match3D/RemoteHeadLook.cs",
+  "folder": "Scripts/Match3D",
+  "kind": "class",
+  "base": "Node3D",
+  "lines": 98,
+  "fanIn": 0,
+  "refs": [
+   "BoneLookRotator",
+   "GameState"
+  ]
+ },
+ "ResetEffect": {
+  "file": "GameLogic/Effects/ResetEffect.cs",
+  "folder": "GameLogic/Effects",
+  "kind": "class",
+  "base": "ICardEffect",
+  "lines": 46,
+  "fanIn": 1,
+  "refs": [
+   "CardChoice",
+   "Deck",
+   "DeckAndHand",
+   "ECardName",
+   "Hand"
+  ]
+ },
+ "RoundInProgress": {
+  "file": "GameLogic/RoundInProgress.cs",
+  "folder": "GameLogic",
+  "kind": "class",
+  "base": "",
+  "lines": 152,
+  "fanIn": 2,
+  "refs": [
+   "CardChoice",
+   "ECardFate",
+   "ECardName",
+   "EChoiceStatus",
+   "ESide",
+   "EWinLossResult"
+  ]
+ },
+ "RoundResolver": {
+  "file": "GameLogic/RoundResolver.cs",
+  "folder": "GameLogic",
+  "kind": "class",
+  "base": "",
+  "lines": 325,
+  "fanIn": 1,
+  "refs": [
+   "CardChoice",
+   "Deck",
+   "DeckAndHand",
+   "DrawEffect",
+   "ECardFate",
+   "ECardName",
+   "ECardType",
+   "ENormalCard",
+   "ESide",
+   "EWinLossResult",
+   "Hand",
+   "ICardEffect",
+   "ResetEffect",
+   "RoundInProgress",
+   "RoundResult",
+   "SwapEffect",
+   "TransformEffect",
+   "WinLossRules"
+  ]
+ },
+ "RoundResult": {
+  "file": "GameLogic/RoundResult.cs",
+  "folder": "GameLogic",
+  "kind": "class",
+  "base": "",
+  "lines": 94,
+  "fanIn": 4,
+  "refs": [
+   "ECardFate",
+   "ECardName",
+   "EWinLossResult"
+  ]
+ },
+ "RoundReveal": {
+  "file": "GameLogic/RoundReveal.cs",
+  "folder": "GameLogic",
+  "kind": "class",
+  "base": "",
+  "lines": 32,
+  "fanIn": 2,
+  "refs": [
+   "ECardName",
+   "RoundResult"
+  ]
+ },
+ "RoundedCardMesh": {
+  "file": "Scripts/Match3D/RoundedCardMesh.cs",
+  "folder": "Scripts/Match3D",
+  "kind": "class",
+  "base": "",
+  "lines": 160,
+  "fanIn": 1,
+  "refs": []
+ },
+ "ScissorsController": {
+  "file": "Scripts/Match3D/ScissorsController.cs",
+  "folder": "Scripts/Match3D",
+  "kind": "class",
+  "base": "Node3D",
+  "lines": 239,
+  "fanIn": 1,
+  "refs": [
+   "EScissorsPlace"
+  ]
+ },
+ "ScreenRouter": {
+  "file": "Scripts/UI/ScreenRouter.cs",
+  "folder": "Scripts/UI",
+  "kind": "class",
+  "base": "",
+  "lines": 63,
+  "fanIn": 3,
+  "refs": [
+   "GameState",
+   "NetworkManager"
+  ]
+ },
+ "SubmitTimeoutGaugeUI": {
+  "file": "Scripts/Match3D/SubmitTimeoutGaugeUI.cs",
+  "folder": "Scripts/Match3D",
+  "kind": "class",
+  "base": "VBoxContainer",
+  "lines": 110,
+  "fanIn": 0,
+  "refs": [
+   "GameState"
+  ]
+ },
+ "SwapEffect": {
+  "file": "GameLogic/Effects/SwapEffect.cs",
+  "folder": "GameLogic/Effects",
+  "kind": "class",
+  "base": "ICardEffect",
+  "lines": 72,
+  "fanIn": 1,
+  "refs": [
+   "CardChoice",
+   "Deck",
+   "DeckAndHand",
+   "ECardName",
+   "Hand"
+  ]
+ },
+ "TitleScreenUI": {
+  "file": "Scripts/UI/TitleScreenUI.cs",
+  "folder": "Scripts/UI",
+  "kind": "class",
+  "base": "Control",
+  "lines": 75,
+  "fanIn": 0,
+  "refs": [
+   "AudioManager",
+   "ScreenRouter"
+  ]
+ },
+ "TransformEffect": {
+  "file": "GameLogic/Effects/TransformEffect.cs",
+  "folder": "GameLogic/Effects",
+  "kind": "class",
+  "base": "ICardEffect",
+  "lines": 68,
+  "fanIn": 1,
+  "refs": [
+   "CardChoice",
+   "DeckAndHand",
+   "ECardName",
+   "ECardType",
+   "Hand"
+  ]
+ },
+ "WinLossRules": {
+  "file": "GameLogic/WinLossRules.cs",
+  "folder": "GameLogic",
+  "kind": "class",
+  "base": "",
+  "lines": 86,
+  "fanIn": 1,
+  "refs": [
+   "ENormalCard",
+   "EWinLossResult"
+  ]
+ }
+}
