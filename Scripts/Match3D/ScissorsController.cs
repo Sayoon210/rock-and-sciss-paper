@@ -69,12 +69,6 @@ public partial class ScissorsController : Node3D
     private static readonly Vector3 GRIP_ROTATION = new Vector3(Mathf.Pi / 2f, 0f, 0f);
     private static readonly Vector3 GRIP_OFFSET = new Vector3(0f, HALF_LENGTH_METERS, 0f);
 
-    /// <summary>Whole rounds a planted pair stays planted, not counting the one it was stabbed in.
-    /// At 1: stabbed at the end of round 1, it is still there for every bit of round 2 and leaves
-    /// as round 3 opens. That round is the point of it — the pair is out of the table, so nobody
-    /// can pick it up, which is what makes the stab cost the winner their next use of it.</summary>
-    private const int ROUNDS_PLANTED_AFTER_THE_STAB = 1;
-
     private enum EScissorsPlace
     {
         AtRest,
@@ -85,7 +79,6 @@ public partial class ScissorsController : Node3D
 
     private Transform3D _restTransform;
     private EScissorsPlace _place = EScissorsPlace.AtRest;
-    private int _introsSeenWhilePlanted;
     private AnimationPlayer? _gripAnimationPlayer;
     private Skeleton3D? _gripSkeleton;
     private int _gripBoneIndex;
@@ -144,40 +137,43 @@ public partial class ScissorsController : Node3D
         _place = EScissorsPlace.Winding;
     }
 
-    /// <summary>Every round's intro, on both pairs, whichever one moved. A planted pair sits out
-    /// the round that follows the stab entirely and only leaves on the intro AFTER that one —
-    /// stab in round 1, still planted for all of round 2, back in the table as round 3 opens,
-    /// whatever round 2's result was. Counting intros rather than reading a round number keeps
-    /// this off GameState (a prop reads no match state) and sidesteps that RoundNumber has
-    /// already advanced by the time a result plays out.
+    /// <summary>Every round's intro, on both pairs. A planted pair is deliberately left alone
+    /// here — it has to still be in the loser's hand as the next round opens, which is the whole
+    /// point of it.
     ///
     /// Anything not planted and not at rest is a sequence that got cut off mid-swing — the clip
     /// was interrupted, say — and would otherwise hang in the air, so it just goes home.</summary>
     public void OnRoundIntro()
     {
-        if (_place != EScissorsPlace.StuckInHand)
-        {
-            if (_place != EScissorsPlace.AtRest)
-            {
-                ReturnToRest();
-            }
-
-            return;
-        }
-
-        _introsSeenWhilePlanted++;
-        if (_introsSeenWhilePlanted > ROUNDS_PLANTED_AFTER_THE_STAB)
+        if (_place != EScissorsPlace.StuckInHand && _place != EScissorsPlace.AtRest)
         {
             ReturnToRest();
         }
     }
 
-    /// <summary>Straight back into the table, no counting. For a hard reset — a rematch reuses
-    /// this scene, and a pair left planted from the last match is not part of the new one.</summary>
+    /// <summary>The reveal that closes a round's submission, on both pairs. A pair planted last
+    /// round comes out exactly here and not earlier: the hand it pins is the one that reaches for
+    /// items, items may be used right up until that player submits, so the pin is still doing its
+    /// job for the whole submission window. Once submission is closed there is nothing left for
+    /// it to block, and holding it any longer would only be decoration.
+    ///
+    /// Nothing has to count rounds to keep this from firing in the round the stab happened in.
+    /// The stab runs out of PlayWinningBlow, which is downstream of that round's own reveal, so
+    /// the next reveal to arrive here is always the following round's.</summary>
+    public void OnRoundRevealed()
+    {
+        if (_place == EScissorsPlace.StuckInHand)
+        {
+            ReturnToRest();
+        }
+    }
+
+    /// <summary>Straight back into the table, whatever it was doing. For a hard reset — a rematch
+    /// reuses this scene, and a pair left planted from the last match is not part of the new
+    /// one.</summary>
     public void ReturnToRest()
     {
         _place = EScissorsPlace.AtRest;
-        _introsSeenWhilePlanted = 0;
         Transform = _restTransform;
     }
 

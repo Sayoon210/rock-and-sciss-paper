@@ -22,52 +22,52 @@ namespace RockAndScissPaper.Match3D;
 /// pausing for it.</summary>
 public partial class MatchWorldView : Node3D
 {
-    // The clip names the .glb was exported with. 보 has no animation yet — the design calls
-    // for a desk slam that has not been authored, so a 보 win currently plays nothing.
-    private const string ROCK_WIN_ANIMATION = "Anim_Punch_Baked";
+	// The clip names the .glb was exported with. 보 has no animation yet — the design calls
+	// for a desk slam that has not been authored, so a 보 win currently plays nothing.
+	private const string ROCK_WIN_ANIMATION = "Anim_Punch_Baked";
 
-    private const string CARD_VIEW_SCENE_PATH = "res://Scenes/Match3D/CardView.tscn";
-    private const string MY_CHARACTER_PATH = "MySeat/Character";
-    private const string OPPONENT_CHARACTER_PATH = "OpponentSeat/Character";
-    private const string ANIMATION_PLAYER_PATH = "AnimationPlayer";
-    private const string MY_SCISSORS_PATH = "Table/MyScissors";
-    private const string OPPONENT_SCISSORS_PATH = "Table/OpponentScissors";
-    private const string MY_CARD_SLOT_PATH = "Table/MyCardSlot";
-    private const string OPPONENT_CARD_SLOT_PATH = "Table/OpponentCardSlot";
-    private const string HAND_VIEW_PATH = "Field/CardRest/HandView";
-    private const string HEAD_CAMERA_PATH = "MySeat/Camera3D";
-    private const string ROUND_INTRO_PATH = "MatchInterface/RoundIntro";
-    private const string ROUND_INTRO_LABEL_PATH = "MatchInterface/RoundIntro/Label";
-    private const string ROUND_LABEL_PATH = "MatchInterface/Readout/RoundLabel";
-    private const string ANIMATION_DEBUG_CONTAINER_PATH = "DebugInterface/AnimationButtons";
+	private const string CARD_VIEW_SCENE_PATH = "res://Scenes/Match3D/CardView.tscn";
+	private const string MY_CHARACTER_PATH = "MySeat/Character";
+	private const string OPPONENT_CHARACTER_PATH = "OpponentSeat/Character";
+	private const string ANIMATION_PLAYER_PATH = "AnimationPlayer";
+	private const string MY_SCISSORS_PATH = "Table/MyScissors";
+	private const string OPPONENT_SCISSORS_PATH = "Table/OpponentScissors";
+	private const string MY_CARD_SLOT_PATH = "Table/MyCardSlot";
+	private const string OPPONENT_CARD_SLOT_PATH = "Table/OpponentCardSlot";
+	private const string HAND_VIEW_PATH = "Field/CardRest/HandView";
+	private const string HEAD_CAMERA_PATH = "MySeat/Camera3D";
+	private const string ROUND_INTRO_PATH = "MatchInterface/RoundIntro";
+	private const string ROUND_INTRO_LABEL_PATH = "MatchInterface/RoundIntro/Label";
+	private const string ROUND_LABEL_PATH = "MatchInterface/Readout/RoundLabel";
+	private const string ANIMATION_DEBUG_CONTAINER_PATH = "DebugInterface/AnimationButtons";
 
-    /// <summary>Relative to a seat's Character node: the pose a pair of scissors is pinned to
-    /// when that seat's occupant is the one who got stabbed.</summary>
-    private const string STUCK_TARGET_PATH = "ScissorsStuckTarget";
+	/// <summary>Relative to a seat's Character node: the pose a pair of scissors is pinned to
+	/// when that seat's occupant is the one who got stabbed.</summary>
+	private const string STUCK_TARGET_PATH = "ScissorsStuckTarget";
 
-    // Cards lie flat on the table, so the slab is turned face-up out of its default upright
-    // pose. My card is turned to read from my side; the opponent's is turned the other way,
+	// Cards lie flat on the table, so the slab is turned face-up out of its default upright
+	// pose. My card is turned to read from my side; the opponent's is turned the other way,
     // the way a card pushed across a table faces whoever pushed it.
     private static readonly Vector3 MY_CARD_ROTATION = new Vector3(-Mathf.Pi / 2f, 0f, 0f);
     private static readonly Vector3 OPPONENT_CARD_ROTATION = new Vector3(-Mathf.Pi / 2f, Mathf.Pi, 0f);
 
     // The same two poses turned facedown — a submitted card sits on the table back-up until
-    // the reveal flips it. MY side is public because HandView's submit flight targets this
-    // exact pose, so the landing hand card and the slab that replaces it line up perfectly.
-    public static readonly Vector3 MY_CARD_FACEDOWN_ROTATION = new Vector3(Mathf.Pi / 2f, 0f, 0f);
-    private static readonly Vector3 OPPONENT_CARD_FACEDOWN_ROTATION = new Vector3(Mathf.Pi / 2f, Mathf.Pi, 0f);
+	// the reveal flips it. MY side is public because HandView's submit flight targets this
+	// exact pose, so the landing hand card and the slab that replaces it line up perfectly.
+	public static readonly Vector3 MY_CARD_FACEDOWN_ROTATION = new Vector3(Mathf.Pi / 2f, 0f, 0f);
+	private static readonly Vector3 OPPONENT_CARD_FACEDOWN_ROTATION = new Vector3(Mathf.Pi / 2f, Mathf.Pi, 0f);
 
-    /// <summary>How much bigger a card is once it is on the table than it was in the hand. A
-    /// real-sized card (RoundedCardMesh's 6.35x8.89cm) read fine held up close in the hand view,
+	/// <summary>How much bigger a card is once it is on the table than it was in the hand. A
+	/// real-sized card (RoundedCardMesh's 6.35x8.89cm) read fine held up close in the hand view,
     /// but the played pair is looked at from the head camera across a 1.4m table, where it was
-    /// too small to tell apart. Public because HandView's submit flight has to land on exactly
-    /// this size — the flying card and the slab that replaces it must match.</summary>
-    public const float SUBMITTED_CARD_SCALE = 2f;
+	/// too small to tell apart. Public because HandView's submit flight has to land on exactly
+	/// this size — the flying card and the slab that replaces it must match.</summary>
+	public const float SUBMITTED_CARD_SCALE = 2f;
 
-    private const float REVEAL_FLIP_SECONDS = 0.35f;
-    private const float REVEAL_FLIP_ARC_METERS = 0.05f;
+	private const float REVEAL_FLIP_SECONDS = 0.35f;
+	private const float REVEAL_FLIP_ARC_METERS = 0.05f;
 
-    // Round-flow pacing. See the phase machine below for how these compose. The intro's own
+	// Round-flow pacing. See the phase machine below for how these compose. The intro's own
     // length is GameState.ROUND_INTRO_SECONDS rather than a constant here, because the host
     // adds that same figure to its submit timer -- the splash is unplayable time, and the two
     // have to be the same number or the round clock quietly disagrees with the screen.
@@ -83,35 +83,35 @@ public partial class MatchWorldView : Node3D
     ///
     /// Where the pacing currently is. Intro and the two result phases are
     /// timed (see _phaseSecondsRemaining); Open and Reveal end on a GameState signal instead
-    /// (both submitted, and the reveal flip's own callback respectively — Reveal is technically
-    /// timed too, by REVEAL_FLIP_SECONDS, but is named for what the player sees during it).</summary>
-    private enum EPresentationPhase
-    {
-        Intro,
-        Open,
-        Reveal,
-        ResultHold,
-        ResultSettle,
-    }
+	/// (both submitted, and the reveal flip's own callback respectively — Reveal is technically
+	/// timed too, by REVEAL_FLIP_SECONDS, but is named for what the player sees during it).</summary>
+	private enum EPresentationPhase
+	{
+		Intro,
+		Open,
+		Reveal,
+		ResultHold,
+		ResultSettle,
+	}
 
-    private CharacterAnimationController _myAnimation = null!;
-    private CharacterAnimationController _opponentAnimation = null!;
-    private Node3D _myCharacter = null!;
-    private Node3D _opponentCharacter = null!;
-    private ScissorsController _myScissors = null!;
-    private ScissorsController _opponentScissors = null!;
-    private Node3D _myStuckTarget = null!;
-    private Node3D _opponentStuckTarget = null!;
-    private CardView _myPlayedCard = null!;
-    private CardView _opponentPlayedCard = null!;
-    private HandView _handView = null!;
-    private HeadFollowCamera _headCamera = null!;
-    private Control _roundIntroOverlay = null!;
-    private Label _roundIntroLabel = null!;
-    private Label _roundLabel = null!;
+	private CharacterAnimationController _myAnimation = null!;
+	private CharacterAnimationController _opponentAnimation = null!;
+	private Node3D _myCharacter = null!;
+	private Node3D _opponentCharacter = null!;
+	private ScissorsController _myScissors = null!;
+	private ScissorsController _opponentScissors = null!;
+	private Node3D _myStuckTarget = null!;
+	private Node3D _opponentStuckTarget = null!;
+	private CardView _myPlayedCard = null!;
+	private CardView _opponentPlayedCard = null!;
+	private HandView _handView = null!;
+	private HeadFollowCamera _headCamera = null!;
+	private Control _roundIntroOverlay = null!;
+	private Label _roundIntroLabel = null!;
+	private Label _roundLabel = null!;
 
-    // Starts in Open rather than Intro: nothing below ever advances this without a GameState
-    // signal, and the scene runs standalone too (HandView's own fallback hand, for judging the
+	// Starts in Open rather than Intro: nothing below ever advances this without a GameState
+	// signal, and the scene runs standalone too (HandView's own fallback hand, for judging the
     // grab/submit feel with no match at all) — Open is the phase where the hand view already
     // works exactly as before this state machine existed.
     private EPresentationPhase _phase = EPresentationPhase.Open;
@@ -120,21 +120,21 @@ public partial class MatchWorldView : Node3D
     public override void _Ready()
     {
         // Off by default in Godot, and nothing in 3D reports a hover or a click without it —
-        // this is what makes CardView's own Area3D signals fire at all. Set on the scene root
-        // rather than by a card, since it is one switch for the whole viewport and no card
-        // should be the one deciding it for every other card.
-        GetViewport().PhysicsObjectPicking = true;
+		// this is what makes CardView's own Area3D signals fire at all. Set on the scene root
+		// rather than by a card, since it is one switch for the whole viewport and no card
+		// should be the one deciding it for every other card.
+		GetViewport().PhysicsObjectPicking = true;
 
-        _myCharacter = GetNode<Node3D>(MY_CHARACTER_PATH);
-        _opponentCharacter = GetNode<Node3D>(OPPONENT_CHARACTER_PATH);
-        _myAnimation = new CharacterAnimationController(
-            _myCharacter.GetNode<AnimationPlayer>(ANIMATION_PLAYER_PATH));
-        _opponentAnimation = new CharacterAnimationController(
-            _opponentCharacter.GetNode<AnimationPlayer>(ANIMATION_PLAYER_PATH));
-        _myScissors = GetNode<ScissorsController>(MY_SCISSORS_PATH);
-        _opponentScissors = GetNode<ScissorsController>(OPPONENT_SCISSORS_PATH);
+		_myCharacter = GetNode<Node3D>(MY_CHARACTER_PATH);
+		_opponentCharacter = GetNode<Node3D>(OPPONENT_CHARACTER_PATH);
+		_myAnimation = new CharacterAnimationController(
+			_myCharacter.GetNode<AnimationPlayer>(ANIMATION_PLAYER_PATH));
+		_opponentAnimation = new CharacterAnimationController(
+			_opponentCharacter.GetNode<AnimationPlayer>(ANIMATION_PLAYER_PATH));
+		_myScissors = GetNode<ScissorsController>(MY_SCISSORS_PATH);
+		_opponentScissors = GetNode<ScissorsController>(OPPONENT_SCISSORS_PATH);
 
-        // Only MyScissors is placed by hand; the opponent's pair is that placement reflected
+		// Only MyScissors is placed by hand; the opponent's pair is that placement reflected
         // across the table. The reflection is read off the two seats themselves rather than
         // written down as numbers, so moving a seat carries the scissors with it. Children are
         // _Ready before their parent, so both have already banked their authored rest pose by
@@ -142,8 +142,8 @@ public partial class MatchWorldView : Node3D
         _opponentScissors.MirrorRestFrom(
             _myScissors, _opponentCharacter.GlobalTransform * _myCharacter.GlobalTransform.Inverse());
 
-        // Where a pair ends up planted when this seat's occupant loses. One marker per seat, but
-        // only MySeat's is authored: the two characters sit in identical local frames, so the
+		// Where a pair ends up planted when this seat's occupant loses. One marker per seat, but
+		// only MySeat's is authored: the two characters sit in identical local frames, so the
         // same LOCAL transform is the same spot on either of them, and copying it across means
         // dragging one gizmo in the editor moves both. (The scissors above need a reflection for
         // the same job because they hang off the Table, in world terms, rather than off a seat.)
@@ -163,28 +163,28 @@ public partial class MatchWorldView : Node3D
         _myPlayedCard.Visible = false;
         _opponentPlayedCard.Visible = false;
 
-        // HandView events share this scene's lifetime (both are freed together), unlike the
-        // Autoload signals below, so they need no _ExitTree unhooking.
-        _handView = GetNode<HandView>(HAND_VIEW_PATH);
-        _handView.MyCardLanded += OnMyCardLanded;
-        _handView.MySubmissionRejected += OnMySubmissionRejected;
+		// HandView events share this scene's lifetime (both are freed together), unlike the
+		// Autoload signals below, so they need no _ExitTree unhooking.
+		_handView = GetNode<HandView>(HAND_VIEW_PATH);
+		_handView.MyCardLanded += OnMyCardLanded;
+		_handView.MySubmissionRejected += OnMySubmissionRejected;
 
-        AnimationDebugPanel.BuildInto(
-            GetNode<VBoxContainer>(ANIMATION_DEBUG_CONTAINER_PATH),
-            _myCharacter.GetNode<AnimationPlayer>(ANIMATION_PLAYER_PATH));
+		AnimationDebugPanel.BuildInto(
+			GetNode<VBoxContainer>(ANIMATION_DEBUG_CONTAINER_PATH),
+			_myCharacter.GetNode<AnimationPlayer>(ANIMATION_PLAYER_PATH));
 
-        GameState.Instance!.MatchStarted += OnMatchStarted;
-        GameState.Instance.RoundRevealed += OnRoundRevealed;
-        GameState.Instance.RoundResolved += OnRoundResolved;
-        GameState.Instance.OpponentSubmitted += OnOpponentSubmitted;
+		GameState.Instance!.MatchStarted += OnMatchStarted;
+		GameState.Instance.RoundRevealed += OnRoundRevealed;
+		GameState.Instance.RoundResolved += OnRoundResolved;
+		GameState.Instance.OpponentSubmitted += OnOpponentSubmitted;
 
-        // The menu music plays through the connection screen and stops here, because this
-        // is the first screen that is no longer the menu. TitleScreenUI starts it.
-        AudioManager.Instance!.StopMusic();
+		// The menu music plays through the connection screen and stops here, because this
+		// is the first screen that is no longer the menu. TitleScreenUI starts it.
+		AudioManager.Instance!.StopMusic();
 
-        RefreshRoundLabel();
+		RefreshRoundLabel();
 
-        // Round 1's intro cannot come from the MatchStarted signal: ConnectionScreenUI is what
+		// Round 1's intro cannot come from the MatchStarted signal: ConnectionScreenUI is what
         // listens for it, and what it does with it is change the scene to this one -- so by the
         // time this node exists to subscribe, that signal has already been and gone. Round 2
         // onward come from the phase machine itself (EnterNextRoundOrIdle) and were always
@@ -213,11 +213,11 @@ public partial class MatchWorldView : Node3D
     }
 
     /// <summary>The two slots hang off the Table rather than off the card rests they used to sit
-    /// under. The rests are props with a 0.5 scale and, on the opponent's side, a 180 degree
-    /// turn, so a slot parented to one needed a counter-scale and counter-rotation baked into
-    /// its own transform just to come out upright and life-sized — and nudging a rest for looks
-    /// silently dragged the played card with it. On the table the same two spots are plain
-    /// (0, 0.025, +/-0.15): dead centre, half the table's own thickness up, which is its top
+	/// under. The rests are props with a 0.5 scale and, on the opponent's side, a 180 degree
+	/// turn, so a slot parented to one needed a counter-scale and counter-rotation baked into
+	/// its own transform just to come out upright and life-sized — and nudging a rest for looks
+	/// silently dragged the played card with it. On the table the same two spots are plain
+	/// (0, 0.025, +/-0.15): dead centre, half the table's own thickness up, which is its top
     /// face.</summary>
     private CardView AddCardToSlot(string slotPath, Vector3 rotation)
     {
@@ -239,49 +239,56 @@ public partial class MatchWorldView : Node3D
 
         // Same reasoning for a pair left planted from the last match, except that this one has
         // to be the unconditional send-home rather than the counted one — round 1 of a rematch
-        // must not inherit half of the previous match's planted round.
-        _myScissors.ReturnToRest();
-        _opponentScissors.ReturnToRest();
+		// must not inherit half of the previous match's planted round.
+		_myScissors.ReturnToRest();
+		_opponentScissors.ReturnToRest();
 
-        RefreshRoundLabel();
-        EnterIntroPhase();
-    }
+		RefreshRoundLabel();
+		EnterIntroPhase();
+	}
 
-    private void OnMyCardLanded()
-    {
-        PresentFacedown(_myPlayedCard, MY_CARD_FACEDOWN_ROTATION);
-    }
+	private void OnMyCardLanded()
+	{
+		PresentFacedown(_myPlayedCard, MY_CARD_FACEDOWN_ROTATION);
+	}
 
-    private void OnOpponentSubmitted()
-    {
-        PresentFacedown(_opponentPlayedCard, OPPONENT_CARD_FACEDOWN_ROTATION);
-    }
+	private void OnOpponentSubmitted()
+	{
+		PresentFacedown(_opponentPlayedCard, OPPONENT_CARD_FACEDOWN_ROTATION);
+	}
 
-    private void OnMySubmissionRejected()
-    {
-        // Only while the round is still taking cards — after the reveal a rejection can only
-        // be about a choice, which has nothing to do with the slab.
-        if (GameState.Instance!.View.SubmissionPhaseActive)
-        {
-            _myPlayedCard.Visible = false;
-        }
-    }
+	private void OnMySubmissionRejected()
+	{
+		// Only while the round is still taking cards — after the reveal a rejection can only
+		// be about a choice, which has nothing to do with the slab.
+		if (GameState.Instance!.View.SubmissionPhaseActive)
+		{
+			_myPlayedCard.Visible = false;
+		}
+	}
 
-    private static void PresentFacedown(CardView cardView, Vector3 facedownRotation)
-    {
-        cardView.CancelPoseAnimation();
-        cardView.ShowFaceDown();
-        cardView.Rotation = facedownRotation;
-        cardView.Visible = true;
-    }
+	private static void PresentFacedown(CardView cardView, Vector3 facedownRotation)
+	{
+		cardView.CancelPoseAnimation();
+		cardView.ShowFaceDown();
+		cardView.Rotation = facedownRotation;
+		cardView.Visible = true;
+	}
 
-    /// <summary>Both played cards become known at the same moment, to both sides — the reveal
-    /// is what ends the round's hidden phase, so this is the first point either card may show
+	/// <summary>Both played cards become known at the same moment, to both sides — the reveal
+	/// is what ends the round's hidden phase, so this is the first point either card may show
     /// a face. Also where the Reveal phase starts: the winning blow (if any) is deliberately
     /// deferred until the flip animation started here actually finishes — see the phase
     /// machine below.</summary>
     private void OnRoundRevealed()
     {
+        // Before the flip rather than after it, so the round reads 제출 끝 -> 가위 회수 ->
+        // 뒤집기. A pair planted last round pins the hand that reaches for items, and the
+        // submission this reveal closes was the last chance to use one — see OnRoundRevealed
+        // on the controller for why this is the moment it stops mattering.
+        _myScissors.OnRoundRevealed();
+        _opponentScissors.OnRoundRevealed();
+
         MatchView view = GameState.Instance!.View;
         RevealPlayedCard(_myPlayedCard, view.MyCard, MY_CARD_FACEDOWN_ROTATION, MY_CARD_ROTATION);
         RevealPlayedCard(_opponentPlayedCard, view.OpponentCard, OPPONENT_CARD_FACEDOWN_ROTATION, OPPONENT_CARD_ROTATION);
@@ -322,127 +329,127 @@ public partial class MatchWorldView : Node3D
     }
 
     /// <summary>Only the health/round readout — the winning blow itself no longer plays from
-    /// here. It waits for the Reveal phase's flip to finish first (see the phase machine),
-    /// which this signal on its own cannot express: RoundRevealed and RoundResolved fire on
-    /// the same call today (no ability card leaves a choice pending), so playing the blow
-    /// straight from here would start it while the cards are still mid-flip.</summary>
-    private void OnRoundResolved()
-    {
-        RefreshRoundLabel();
-    }
+	/// here. It waits for the Reveal phase's flip to finish first (see the phase machine),
+	/// which this signal on its own cannot express: RoundRevealed and RoundResolved fire on
+	/// the same call today (no ability card leaves a choice pending), so playing the blow
+	/// straight from here would start it while the cards are still mid-flip.</summary>
+	private void OnRoundResolved()
+	{
+		RefreshRoundLabel();
+	}
 
-    /// <summary>Plays the blow on the side that won, chosen by the card it won with — 바위
-    /// punches, 가위 stabs. A draw plays nothing, and so does a win with a card whose
-    /// animation is not authored yet. Returns whether one actually started, so the caller
-    /// (EnterResultHoldPhase) knows whether to wait on onFinished or fall back to a timed
-    /// hold that will never otherwise be cleared.</summary>
-    private bool PlayWinningBlow(Action onFinished)
-    {
-        MatchView view = GameState.Instance!.View;
-        if (view.LastRoundOutcome == null || view.LastRoundOutcome == ERoundOutcome.Draw)
-        {
-            return false;
-        }
+	/// <summary>Plays the blow on the side that won, chosen by the card it won with — 바위
+	/// punches, 가위 stabs. A draw plays nothing, and so does a win with a card whose
+	/// animation is not authored yet. Returns whether one actually started, so the caller
+	/// (EnterResultHoldPhase) knows whether to wait on onFinished or fall back to a timed
+	/// hold that will never otherwise be cleared.</summary>
+	private bool PlayWinningBlow(Action onFinished)
+	{
+		MatchView view = GameState.Instance!.View;
+		if (view.LastRoundOutcome == null || view.LastRoundOutcome == ERoundOutcome.Draw)
+		{
+			return false;
+		}
 
-        bool didIWin = view.LastRoundOutcome == ERoundOutcome.MyWin;
-        ECardName? winningCard = didIWin ? view.MyCard : view.OpponentCard;
-        if (winningCard == null)
-        {
-            return false;
-        }
+		bool didIWin = view.LastRoundOutcome == ERoundOutcome.MyWin;
+		ECardName? winningCard = didIWin ? view.MyCard : view.OpponentCard;
+		if (winningCard == null)
+		{
+			return false;
+		}
 
-        string? animationName = FindAnimationForWinningCard(winningCard.Value);
-        if (animationName == null)
-        {
-            return false;
-        }
+		string? animationName = FindAnimationForWinningCard(winningCard.Value);
+		if (animationName == null)
+		{
+			return false;
+		}
 
-        CharacterAnimationController winnerAnimation = didIWin ? _myAnimation : _opponentAnimation;
-        winnerAnimation.PlayBlow(animationName, onFinished);
+		CharacterAnimationController winnerAnimation = didIWin ? _myAnimation : _opponentAnimation;
+		winnerAnimation.PlayBlow(animationName, onFinished);
 
-        // The prop only exists for the 가위 clip — 바위 punches bare-handed. Needs no RPC of its
-        // own: both screens reach here off the same already-agreed LastRoundOutcome, and each
-        // resolves "the winner" to its own side of the table, so the two runs stay in step.
-        if (winningCard.Value == ECardName.Scissors)
-        {
-            ScissorsController winnerScissors = didIWin ? _myScissors : _opponentScissors;
-            winnerScissors.PlayStabSequence(
-                didIWin ? _myCharacter : _opponentCharacter,
-                didIWin ? _opponentStuckTarget : _myStuckTarget);
-        }
+		// The prop only exists for the 가위 clip — 바위 punches bare-handed. Needs no RPC of its
+		// own: both screens reach here off the same already-agreed LastRoundOutcome, and each
+		// resolves "the winner" to its own side of the table, so the two runs stay in step.
+		if (winningCard.Value == ECardName.Scissors)
+		{
+			ScissorsController winnerScissors = didIWin ? _myScissors : _opponentScissors;
+			winnerScissors.PlayStabSequence(
+				didIWin ? _myCharacter : _opponentCharacter,
+				didIWin ? _opponentStuckTarget : _myStuckTarget);
+		}
 
-        return true;
-    }
+		return true;
+	}
 
-    private static string? FindAnimationForWinningCard(ECardName winningCard)
-    {
-        switch (winningCard)
-        {
-            case ECardName.Rock:
-                return ROCK_WIN_ANIMATION;
+	private static string? FindAnimationForWinningCard(ECardName winningCard)
+	{
+		switch (winningCard)
+		{
+			case ECardName.Rock:
+				return ROCK_WIN_ANIMATION;
 
-            case ECardName.Scissors:
-                // Named by ScissorsController, which also carries the two moments measured
-                // out of this exact clip — one owner for the clip and its timings.
-                return ScissorsController.STAB_ANIMATION_NAME;
+			case ECardName.Scissors:
+				// Named by ScissorsController, which also carries the two moments measured
+				// out of this exact clip — one owner for the clip and its timings.
+				return ScissorsController.STAB_ANIMATION_NAME;
 
-            default:
-                return null;
-        }
-    }
+			default:
+				return null;
+		}
+	}
 
-    /// <summary>The round number, and nothing else. Health used to be printed here too, in the
-    /// same words HealthBarsUI prints in the opposite corner — the screen carried "나 10 / 10"
-    /// twice, from two scripts, off two subscriptions to the same signal. The bars are the
-    /// better of the two (a bar shows a hit landing; a number two pixels tall does not), so this
-    /// keeps only what they do not show.</summary>
-    private void RefreshRoundLabel()
-    {
-        _roundLabel.Text = string.Format(Tr("MATCH_ROUND"), GameState.Instance!.View.RoundNumber);
-    }
+	/// <summary>The round number, and nothing else. Health used to be printed here too, in the
+	/// same words HealthBarsUI prints in the opposite corner — the screen carried "나 10 / 10"
+	/// twice, from two scripts, off two subscriptions to the same signal. The bars are the
+	/// better of the two (a bar shows a hit landing; a number two pixels tall does not), so this
+	/// keeps only what they do not show.</summary>
+	private void RefreshRoundLabel()
+	{
+		_roundLabel.Text = string.Format(Tr("MATCH_ROUND"), GameState.Instance!.View.RoundNumber);
+	}
 
-    // ---- Round-flow phase machine ----
-    //
-    // Intro (2s, splash + hand-view locked) -> Open (unchanged existing play) ->
-    // [RoundRevealed] -> Reveal (0.35s flip) -> ResultHold (blow, or a fixed hold if there is
-    // none) -> ResultSettle (0.5s beat) -> Intro for the next round, or idle if the match just
-    // ended. Only Intro/Reveal/ResultHold(no-blow)/ResultSettle carry a countdown
-    // (_phaseSecondsRemaining); Open and a blow-driven ResultHold end on a callback instead.
+	// ---- Round-flow phase machine ----
+	//
+	// Intro (2s, splash + hand-view locked) -> Open (unchanged existing play) ->
+	// [RoundRevealed] -> Reveal (0.35s flip) -> ResultHold (blow, or a fixed hold if there is
+	// none) -> ResultSettle (0.5s beat) -> Intro for the next round, or idle if the match just
+	// ended. Only Intro/Reveal/ResultHold(no-blow)/ResultSettle carry a countdown
+	// (_phaseSecondsRemaining); Open and a blow-driven ResultHold end on a callback instead.
 
-    public override void _Process(double delta)
-    {
-        if (_phase == EPresentationPhase.Intro)
-        {
-            UpdateIntroFade();
-        }
+	public override void _Process(double delta)
+	{
+		if (_phase == EPresentationPhase.Intro)
+		{
+			UpdateIntroFade();
+		}
 
-        if (_phaseSecondsRemaining <= 0f)
-        {
-            return;
-        }
+		if (_phaseSecondsRemaining <= 0f)
+		{
+			return;
+		}
 
-        _phaseSecondsRemaining -= (float)delta;
-        if (_phaseSecondsRemaining <= 0f)
-        {
-            AdvancePhase();
-        }
-    }
+		_phaseSecondsRemaining -= (float)delta;
+		if (_phaseSecondsRemaining <= 0f)
+		{
+			AdvancePhase();
+		}
+	}
 
-    private void AdvancePhase()
-    {
-        switch (_phase)
-        {
-            case EPresentationPhase.Intro:
-                EnterOpenPhase();
-                break;
+	private void AdvancePhase()
+	{
+		switch (_phase)
+		{
+			case EPresentationPhase.Intro:
+				EnterOpenPhase();
+				break;
 
-            case EPresentationPhase.Reveal:
-                EnterResultHoldPhase();
-                break;
+			case EPresentationPhase.Reveal:
+				EnterResultHoldPhase();
+				break;
 
-            case EPresentationPhase.ResultHold:
-                // Only reached for a round with no blow to wait on — a blow-driven hold clears
-                // itself via PlayWinningBlow's onFinished callback instead of this timer.
+			case EPresentationPhase.ResultHold:
+				// Only reached for a round with no blow to wait on — a blow-driven hold clears
+				// itself via PlayWinningBlow's onFinished callback instead of this timer.
                 EnterResultSettlePhase();
                 break;
 
@@ -506,17 +513,17 @@ public partial class MatchWorldView : Node3D
 
         bool isBlowPlaying = PlayWinningBlow(EnterResultSettlePhase);
         // A blow already in flight clears this phase through its own onFinished callback
-        // instead — see AdvancePhase's ResultHold case.
-        _phaseSecondsRemaining = isBlowPlaying ? 0f : NO_ANIMATION_RESULT_HOLD_SECONDS;
-    }
+		// instead — see AdvancePhase's ResultHold case.
+		_phaseSecondsRemaining = isBlowPlaying ? 0f : NO_ANIMATION_RESULT_HOLD_SECONDS;
+	}
 
-    private void EnterResultSettlePhase()
-    {
-        _phase = EPresentationPhase.ResultSettle;
-        _phaseSecondsRemaining = RESULT_SETTLE_SECONDS;
-    }
+	private void EnterResultSettlePhase()
+	{
+		_phase = EPresentationPhase.ResultSettle;
+		_phaseSecondsRemaining = RESULT_SETTLE_SECONDS;
+	}
 
-    /// <summary>No dedicated match-end screen yet — MatchLogPanel's own "=== Match won/lost
+	/// <summary>No dedicated match-end screen yet — MatchLogPanel's own "=== Match won/lost
     /// ===" line (Tab to see it) is the whole of it for now. So a finished match just settles
     /// here: camera unlocked, splash stays down, nothing left to submit.</summary>
     private void EnterNextRoundOrIdle()
