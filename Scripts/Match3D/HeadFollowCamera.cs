@@ -67,6 +67,18 @@ public partial class HeadFollowCamera : Camera3D
     // superseded update costs nothing but does not need repeating 60 times a second.
     private const double LOOK_SEND_INTERVAL_SECONDS = 1.0 / 15.0;
 
+    // How far a shake at full strength throws the view, and how fast it dies. Eyeball both
+    // against the running game; 1.6 degrees was the first guess here and read as nothing at all
+	// on screen, which is most of a punch's worth of feedback thrown away for caution.
+	private const float SHAKE_MAX_DEGREES = 6.5f;
+	private const float SHAKE_DECAY_PER_SECOND = 11f;
+	private const float SHAKE_YAW_CYCLES_PER_SECOND = 42f;
+	private const float SHAKE_PITCH_CYCLES_PER_SECOND = 31f;
+
+	// Below this the shake is under a hundredth of a degree, which is nothing anyone sees and
+	// still costs two sines and a pair of rotations every frame forever. Snapped to zero instead.
+	private const float SHAKE_NEGLIGIBLE_STRENGTH = 0.005f;
+
 	private Skeleton3D _skeleton = null!;
 	private AnimationPlayer _animationPlayer = null!;
 	private Camera3D _handViewCamera = null!;
@@ -83,6 +95,8 @@ public partial class HeadFollowCamera : Camera3D
 	private double _timeUntilNextLookSend;
 	private bool _isHandViewHeld;
 	private float _handViewBlend;
+	private float _shakeStrength;
+	private float _shakeSeconds;
 
 	/// <summary>Whether the hand view is the current destination — true from the Space press
 	/// that starts the trip toward the hand until whatever starts the trip back (another Space,
@@ -101,6 +115,57 @@ public partial class HeadFollowCamera : Camera3D
 	public void SetRoundIntroLocked(bool isLocked)
 	{
 		_isRoundIntroLocked = isLocked;
+	}
+
+	/// <summary>Kicks the camera. Called on the frame a blow actually lands, by whoever is
+	/// watching that clip's own clock (MatchWorldView) — and on BOTH players' screens, because a
+	/// punch only the thrower feels reads as the victim not having been hit.
+	///
+	/// Takes the larger of the two rather than adding, so two impacts landing close together
+	/// cannot stack into a shake well past what either one was meant to be.</summary>
+	public void Shake(float strength)
+	{
+		_shakeStrength = Mathf.Max(_shakeStrength, strength);
+
+		// Restarted, so every impact swings the same way from its own first frame. Left running,
+		// the oscillation would be at whatever phase the last shake happened to leave it at —
+		// one punch throwing the view wide and the next barely moving it, for no reason the
+		// player could see.
+		_shakeSeconds = 0f;
+	}
+
+	/// <summary>The camera pose with the current shake laid over it. Rotation only, never
+	/// position: this camera sits at the head, and shoving it through space walks it into the
+	/// character's own geometry — a rotational knock reads as being hit without ever moving the
+	/// eye out of its socket.
+	///
+	/// Two waves whose frequencies do not divide into one another, so the pair does not
+	/// repeat on a short cycle and read as a wobble. The decay is exponential rather than linear
+	/// because a knock should drop hard and then trail off, and because that shape is frame-rate
+	/// independent for the same reason RemoteHeadLook's smoothing is.</summary>
+	private Transform3D ShakenBy(Transform3D pose, double delta)
+	{
+		if (_shakeStrength <= SHAKE_NEGLIGIBLE_STRENGTH)
+		{
+			_shakeStrength = 0f;
+			return pose;
+		}
+
+		_shakeSeconds += (float)delta;
+		_shakeStrength *= Mathf.Exp(-SHAKE_DECAY_PER_SECOND * (float)delta);
+
+		// Cos, not sin, and off a clock Shake() reset to zero: sin starts a cycle at zero
+		// deflection, so the hardest part of the envelope was being multiplied by nothing and the
+		// view only reached its widest a quarter-cycle later, by which point the decay had already
+		// eaten most of it. Cos puts the whole first swing on the frame of impact, which is where
+		// a knock belongs.
+		float swingDegrees = SHAKE_MAX_DEGREES * _shakeStrength;
+		float yawDegrees = Mathf.Cos(_shakeSeconds * SHAKE_YAW_CYCLES_PER_SECOND) * swingDegrees;
+		float pitchDegrees = Mathf.Cos(_shakeSeconds * SHAKE_PITCH_CYCLES_PER_SECOND) * swingDegrees;
+
+		Basis shaken = pose.Basis.Rotated(pose.Basis.Y, Mathf.DegToRad(yawDegrees));
+		shaken = shaken.Rotated(shaken.X, Mathf.DegToRad(pitchDegrees));
+		return new Transform3D(shaken, pose.Origin);
 	}
 
 	public override void _Ready()
@@ -271,7 +336,7 @@ public partial class HeadFollowCamera : Camera3D
         // a camera whose basis carries scale renders a distorted projection rather than failing.
         Transform3D handViewPose = _handViewCamera.GlobalTransform.Orthonormalized();
 
-        GlobalTransform = headPose.InterpolateWith(handViewPose, easedBlend);
+        GlobalTransform = ShakenBy(headPose.InterpolateWith(handViewPose, easedBlend), delta);
         Fov = Mathf.Lerp(_restFieldOfView, _handViewCamera.Fov, easedBlend);
 
 		// The head fade exists to keep the player's own head out of their own first-person

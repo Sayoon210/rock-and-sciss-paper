@@ -54,7 +54,11 @@ public partial class ScissorsController : Node3D
     // Any hitch, and Engine.TimeScale, would pull them apart the same way. Reading the player's
     // clock is what makes these two numbers mean the same thing a Call Method Track would.
     private const float GRAB_SECONDS = 0.70f;
-    private const float STRIKE_SECONDS = 1.733f;
+
+    /// <summary>Public for the same reason STAB_ANIMATION_NAME is: the moment the blade lands is
+    /// a fact about this clip, and the camera shake fired at that instant (MatchWorldView) has to
+    /// mean the same instant this node plants the scissors at.</summary>
+    public const float STRIKE_SECONDS = 1.733f;
 
     /// <summary>Half the model's own length, measured: the mesh is 13.1cm tip to handle, centred
     /// on its origin, with the tip at local -Z and the handle at +Z.</summary>
