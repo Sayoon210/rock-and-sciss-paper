@@ -1,0 +1,14 @@
+[gd_resource type="StandardMaterial3D" load_steps=3 format=3]
+
+[ext_resource type="Texture2D" uid="uid://cjna4r4bjaht4" path="res://Assets/Models/MainCharacter_Ch28_1001_Diffuse.png" id="1_diffuse"]
+[ext_resource type="Texture2D" uid="uid://cff08hphvfr7i" path="res://Assets/Models/MainCharacter_Ch28_1001_Normal.png" id="2_normal"]
+
+[resource]
+resource_name = "CharacterBody"
+cull_mode = 2
+albedo_texture = ExtResource("1_diffuse")
+metallic_specular = 0.15
+roughness = 0.75
+normal_enabled = true
+normal_texture = ExtResource("2_normal")
+texture_filter = 5
