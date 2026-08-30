@@ -24,6 +24,7 @@ namespace RockAndScissPaper.Match3D;
 public partial class RemoteHeadLook : Node3D
 {
 	private const string CHARACTER_PATH = "..";
+	private const string ANIMATION_PLAYER_PATH = "../AnimationPlayer";
 
 	/// <summary>How fast the shown rotation chases the last received one, as the fraction of
 	/// the remaining gap closed per second — an exponential approach, so it is frame-rate
@@ -38,6 +39,7 @@ public partial class RemoteHeadLook : Node3D
 	private const float LOOK_SMOOTHING_PER_SECOND = 25f;
 
 	private Skeleton3D _skeleton = null!;
+	private AnimationPlayer _animationPlayer = null!;
 	private int _headBoneIndex;
 	private int _headBoneParentIndex;
 	private Basis _restBoneWorldBasis;
@@ -52,6 +54,7 @@ public partial class RemoteHeadLook : Node3D
 			return;
 		}
 
+		_animationPlayer = GetNode<AnimationPlayer>(ANIMATION_PLAYER_PATH);
 		_skeleton = skeleton;
 		_headBoneIndex = MixamoRig.FindBone(_skeleton, MixamoRig.HEAD);
 		if (_headBoneIndex < 0)
@@ -101,9 +104,16 @@ public partial class RemoteHeadLook : Node3D
 		// as a scale.
 		_shownLocalDelta = _shownLocalDelta.Slerp(_targetLocalDelta, weight).Normalized();
 
-		// Re-applied every frame, not just on receipt — nothing else is driving this bone's
-		// pose (CharacterIdlePose's AnimationPlayer is stopped), and the smoothing above means
-		// this genuinely changes every frame between updates rather than only on arrival.
+		// A running clip owns the head, exactly as it does on the local side (HeadFollowCamera) —
+		// the opponent throwing a punch should be seen throwing it, not holding their head at
+		// whatever their mouse last said. Outside a blow nothing else is driving this bone, since
+		// HoldIdle leaves the player stopped rather than playing, so the applied pose stands and
+		// the smoothing above genuinely changes it every frame between updates.
+		if (_animationPlayer.IsPlaying())
+		{
+			return;
+		}
+
 		Basis desiredBoneWorldBasis = (_restBoneWorldBasis * new Basis(_shownLocalDelta)).Orthonormalized();
 		BoneLookRotator.Apply(_skeleton, _headBoneIndex, _headBoneParentIndex, desiredBoneWorldBasis);
 	}
