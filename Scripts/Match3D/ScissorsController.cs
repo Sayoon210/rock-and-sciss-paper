@@ -24,7 +24,6 @@ namespace RockAndScissPaper.Match3D;
 /// lands, never where.</summary>
 public partial class ScissorsController : Node3D
 {
-    private const string SKELETON_PATH = "Armature/Skeleton3D";
     private const string ANIMATION_PLAYER_PATH = "AnimationPlayer";
 
     /// <summary>The clip these timings were measured against. Lives here rather than in
@@ -34,7 +33,7 @@ public partial class ScissorsController : Node3D
 
     /// <summary>The fist that swings. Mixamo's rig is right-handed for this clip — the left hand
     /// never leaves the table through the whole 2.5s (measured off the bone tracks).</summary>
-    private const string GRIP_BONE_NAME = "mixamorig10_RightHand";
+    private const string GRIP_BONE_NAME = MixamoRig.RIGHT_HAND;
 
     // Both measured off Anim_StabScissor_Baked's own bone tracks by walking the right hand
     // through all 75 frames, not read off a timeline by eye:
@@ -129,9 +128,22 @@ public partial class ScissorsController : Node3D
             return;
         }
 
+        if (MixamoRig.FindSkeleton(gripCharacter) is not Skeleton3D skeleton)
+        {
+            return;
+        }
+
         _gripAnimationPlayer = gripCharacter.GetNode<AnimationPlayer>(ANIMATION_PLAYER_PATH);
-        _gripSkeleton = gripCharacter.GetNode<Skeleton3D>(SKELETON_PATH);
-        _gripBoneIndex = _gripSkeleton.FindBone(GRIP_BONE_NAME);
+        _gripSkeleton = skeleton;
+        _gripBoneIndex = MixamoRig.FindBone(_gripSkeleton, GRIP_BONE_NAME);
+        if (_gripBoneIndex < 0)
+        {
+            // Find has already said what is wrong. The winner still swings — the blow is the
+            // animation's business, not this node's — they just swing empty-handed, exactly as
+            // when the pair is already planted in someone else's hand.
+            return;
+        }
+
         _stuckTarget = stuckTarget;
 
         _place = EScissorsPlace.Winding;

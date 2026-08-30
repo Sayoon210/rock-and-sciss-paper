@@ -38,19 +38,18 @@ namespace RockAndScissPaper.Match3D;
 /// animation panel included) while look is active.</summary>
 public partial class HeadFollowCamera : Camera3D
 {
-    private const string SKELETON_PATH = "../Character/Armature/Skeleton3D";
-    private const string HEAD_BONE_NAME = "mixamorig10_Head";
-    private const string HAND_VIEW_CAMERA_PATH = "../../Field/CardRest/HandViewCamera";
-    private const string HEAD_FADE_PATH = "../Character/HeadFade";
+	private const string CHARACTER_PATH = "../Character";
+	private const string HAND_VIEW_CAMERA_PATH = "../../Field/CardRest/HandViewCamera";
+	private const string HEAD_FADE_PATH = "../Character/HeadFade";
 
-    private const float MOUSE_SENSITIVITY_DEGREES_PER_PIXEL = 0.1f;
-    private const float MAX_LOOK_DEGREES = 60f;
+	private const float MOUSE_SENSITIVITY_DEGREES_PER_PIXEL = 0.1f;
+	private const float MAX_LOOK_DEGREES = 60f;
 
-    // Where the head aims itself while the hand view is up: centred, and tipped down at the
-    // cards. The pitch is measured rather than judged by eye -- from the camera's authored rest
-    // position, the hand row's centre sits 34.5 degrees below the rest facing (which is itself
-    // already 35.6 degrees down, so this is 70 degrees below horizontal in total). Yaw goes to
-    // 0 rather than the 4.9 degrees that would aim exactly at the row's centre: the row is a
+	// Where the head aims itself while the hand view is up: centred, and tipped down at the
+	// cards. The pitch is measured rather than judged by eye -- from the camera's authored rest
+	// position, the hand row's centre sits 34.5 degrees below the rest facing (which is itself
+	// already 35.6 degrees down, so this is 70 degrees below horizontal in total). Yaw goes to
+	// 0 rather than the 4.9 degrees that would aim exactly at the row's centre: the row is a
     // hair off-centre in X, and "centred" is what this is meant to look like.
     private const float HAND_VIEW_YAW_DEGREES = 0f;
     private const float HAND_VIEW_PITCH_DEGREES = -34.5f;
@@ -92,32 +91,32 @@ public partial class HeadFollowCamera : Camera3D
         get { return _isHandViewHeld; }
     }
 
-    // Set by MatchWorldView's round-flow state machine while the "Round N" splash is up --
-    // blocks entering the hand view (Space), not mouse-look, so the player can still look
-    // around during the splash and only the card-submitting part of control is held back.
-    private bool _isRoundIntroLocked;
+	// Set by MatchWorldView's round-flow state machine while the "Round N" splash is up --
+	// blocks entering the hand view (Space), not mouse-look, so the player can still look
+	// around during the splash and only the card-submitting part of control is held back.
+	private bool _isRoundIntroLocked;
 
-    public void SetRoundIntroLocked(bool isLocked)
-    {
-        _isRoundIntroLocked = isLocked;
-    }
+	public void SetRoundIntroLocked(bool isLocked)
+	{
+		_isRoundIntroLocked = isLocked;
+	}
 
-    public override void _Ready()
-    {
-        Input.MouseMode = Input.MouseModeEnum.Captured;
+	public override void _Ready()
+	{
+		Input.MouseMode = Input.MouseModeEnum.Captured;
 
-        // The camera's own authored transform (Scenes/Screens/MatchWorld.tscn) — already tuned
-        // to face the opponent correctly, and NOT the same spot as the head bone's own joint
-        // (that sits inside the head — a camera placed exactly there ends up embedded in the
-        // character's own geometry). Read before anything below touches GlobalTransform.
+		// The camera's own authored transform (Scenes/Screens/MatchWorld.tscn) — already tuned
+		// to face the opponent correctly, and NOT the same spot as the head bone's own joint
+		// (that sits inside the head — a camera placed exactly there ends up embedded in the
+		// character's own geometry). Read before anything below touches GlobalTransform.
         _restCameraWorldBasis = GlobalTransform.Basis;
         _restCameraWorldPosition = GlobalTransform.Origin;
         _restFieldOfView = Fov;
 
         // A pose marker, not a second renderer. Godot has no built-in Camera3D blend, so the
-        // hand view is reached by moving THIS camera onto that one's transform rather than by
-        // switching between the two — which is also what makes a partial blend a thing at all.
-        // It stays a Camera3D because that is what lets the pose be framed through the editor's
+		// hand view is reached by moving THIS camera onto that one's transform rather than by
+		// switching between the two — which is also what makes a partial blend a thing at all.
+		// It stays a Camera3D because that is what lets the pose be framed through the editor's
         // own preview; ticking that preview writes current = true into the scene, hence the
         // explicit correction here.
         _handViewCamera = GetNode<Camera3D>(HAND_VIEW_CAMERA_PATH);
@@ -126,14 +125,29 @@ public partial class HeadFollowCamera : Camera3D
 
         _headFade = GetNode<CharacterHeadFade>(HEAD_FADE_PATH);
 
-        _skeleton = GetNode<Skeleton3D>(SKELETON_PATH);
-        _headBoneIndex = _skeleton.FindBone(HEAD_BONE_NAME);
+        if (MixamoRig.FindSkeleton(GetNode<Node3D>(CHARACTER_PATH)) is not Skeleton3D skeleton)
+        {
+            SetProcess(false);
+            return;
+        }
+
+        _skeleton = skeleton;
+        _headBoneIndex = MixamoRig.FindBone(_skeleton, MixamoRig.HEAD);
+        if (_headBoneIndex < 0)
+        {
+            // Find has already said what is wrong. With no head bone there is nothing to
+            // follow, so the camera holds the pose the scene gave it instead of driving itself
+            // off a bad index every frame.
+            SetProcess(false);
+            return;
+        }
+
         _headBoneParentIndex = _skeleton.GetBoneParent(_headBoneIndex);
 
-        // The head's animated rest pose (CharacterIdlePose holds this by the time this runs —
-        // Character is earlier in MySeat's child order than this Camera3D, so its _Ready() has
-        // already applied the idle pose). Skeleton3D's own "global" pose is global among its
-        // bones, not the scene world — multiplying by the skeleton's own GlobalTransform is
+		// The head's animated rest pose (CharacterIdlePose holds this by the time this runs —
+		// Character is earlier in MySeat's child order than this Camera3D, so its _Ready() has
+		// already applied the idle pose). Skeleton3D's own "global" pose is global among its
+		// bones, not the scene world — multiplying by the skeleton's own GlobalTransform is
         // what makes it a world transform.
         Transform3D restBoneWorld = _skeleton.GlobalTransform * _skeleton.GetBoneGlobalPose(_headBoneIndex);
         _restBoneWorldBasis = restBoneWorld.Basis.Orthonormalized();
@@ -209,7 +223,7 @@ public partial class HeadFollowCamera : Camera3D
 
         // Yaw around world up, then pitch around the resulting (post-yaw) local right axis —
         // the standard FPS-look composition, so pitch always means "up/down relative to
-        // whichever way you're currently turned" rather than a fixed world axis.
+		// whichever way you're currently turned" rather than a fixed world axis.
         Basis lookBasis = _restCameraWorldBasis.Rotated(Vector3.Up, Mathf.DegToRad(_yawDegrees));
         lookBasis = lookBasis.Rotated(lookBasis.X, Mathf.DegToRad(_pitchDegrees));
 
@@ -232,7 +246,7 @@ public partial class HeadFollowCamera : Camera3D
         Transform3D headPose = new Transform3D(lookBasis, cameraPosition);
 
         // Smoothstepped so the trip eases out of one pose and into the other rather than
-        // starting and stopping at full speed — this is the "왔다갔다" of it.
+		// starting and stopping at full speed — this is the "왔다갔다" of it.
         _handViewBlend = Mathf.MoveToward(
             _handViewBlend, _isHandViewHeld ? 1f : 0f, (float)delta / HAND_VIEW_BLEND_SECONDS);
         float easedBlend = Mathf.SmoothStep(0f, 1f, _handViewBlend);

@@ -12,19 +12,18 @@ namespace RockAndScissPaper.Match3D;
 /// to the camera, so the head disappears while the hands, resting further away on the table,
 /// do not.
 ///
-/// Body is not the only mesh near the head — Ch28_Eyelashes and Ch28_Hair sit right on it too
-/// (Ch28_Hoody/Pants/Sneakers do not, so they are left alone), and a fade on Body alone left
-/// eyebrows floating on their own once the rest of the head disappeared.
+/// Which meshes those are is per model and so comes from the scene (HeadAreaMeshNames) rather
+/// than from here. On Ch28 it took three: a fade on Body alone left the eyelashes and hair
+/// floating on their own once the rest of the head had gone.
 ///
 /// Symmetric by construction: both seats carry this on their own child of Character, and each
 /// client's own camera only ever sits close to its own seat's character (DESIGN.md's head-
 /// center framing), so this only ever hides "my own" head on each screen without needing to
 /// know which seat is "mine".
 ///
-/// A sibling node of the mesh it fades, not attached to Character itself or to MainCharacter.glb
-/// — MatchWorld.tscn adds one as a plain new child under each Character instance, which needs
-/// no "editable children" override since it is a new node, not an edit to one already inside
-/// the imported scene.
+/// A sibling node of the mesh it fades, not attached to Character itself or to the model's own
+/// .glb — Character.tscn adds one as a plain new child, which needs no "editable children"
+/// override since it is a new node, not an edit to one already inside the imported scene.
 ///
 /// Not [Tool] — it only takes effect once the game is actually run with the scene's own
 /// Camera3D active, not while just orbiting the editor's own camera. [Tool] usage on scripts
@@ -32,12 +31,14 @@ namespace RockAndScissPaper.Match3D;
 /// freeze.</summary>
 public partial class CharacterHeadFade : Node3D
 {
-    private static readonly string[] HEAD_AREA_MESH_NAMES =
-    {
-        "Ch28_Body",
-        "Ch28_Eyelashes",
-        "Ch28_Hair",
-    };
+    /// <summary>Which of the character's meshes reach up into the head, named as they appear
+    /// under the character's own Skeleton3D. Set per character scene rather than here, because the
+    /// answer is a property of the model: Ch28 splits into Body/Eyelashes/Hair, and a Mixamo
+    /// Y Bot is two meshes covering the whole figure. A name that is not on this model is
+    /// reported and skipped, so swapping the model in fails as one readable line rather than
+    /// as a crash on a missing node.</summary>
+    [Export]
+    public string[] HeadAreaMeshNames { get; set; } = System.Array.Empty<string>();
 
     // Fully hidden inside MIN, fully visible past MAX, dithered in between. MIN and MAX must
     // stay meaningfully apart — the shader computes the dither ratio as
@@ -59,9 +60,24 @@ public partial class CharacterHeadFade : Node3D
 
     public override void _Ready()
     {
-        foreach (string meshName in HEAD_AREA_MESH_NAMES)
+        if (MixamoRig.FindSkeleton(GetParent()) is not Skeleton3D skeleton)
         {
-            ApplyFade(GetNode<MeshInstance3D>($"../Armature/Skeleton3D/{meshName}"));
+            return;
+        }
+
+        foreach (string meshName in HeadAreaMeshNames)
+        {
+            MeshInstance3D? meshInstance = skeleton.GetNodeOrNull<MeshInstance3D>(meshName);
+            if (meshInstance == null)
+            {
+                GD.PushError(
+                    $"CharacterHeadFade: {GetPath()} lists '{meshName}', which this character "
+                    + "has no mesh for. A model swapped for one whose meshes are named "
+                    + "differently is the usual cause.");
+                continue;
+            }
+
+            ApplyFade(meshInstance);
         }
     }
 
