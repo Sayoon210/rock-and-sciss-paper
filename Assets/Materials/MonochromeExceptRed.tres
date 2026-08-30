@@ -1,0 +1,9 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3]
+
+[ext_resource type="Shader" path="res://Shaders/MonochromeExceptRed.gdshader" id="1_monochrome"]
+
+[resource]
+resource_name = "MonochromeExceptRed"
+shader = ExtResource("1_monochrome")
+shader_parameter/red_hue_tolerance = 0.03
+shader_parameter/minimum_saturation = 0.45
