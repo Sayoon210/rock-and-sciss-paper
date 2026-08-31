@@ -179,8 +179,11 @@ public static class RoundResolver
         ApplyChoiceIfMade(round, ESide.Player1, player1, player2, rng);
         ApplyChoiceIfMade(round, ESide.Player2, player2, player1, rng);
 
-        player1.Draw();
-        player2.Draw();
+        // Only when a hand is actually empty — not one card back per round, which is what this
+        // used to do. Spending five and then getting five is the rhythm the round is built on
+        // now, and a per-round top-up would erase it.
+        player1.RefillHandIfSpent(rng, MatchSession.HAND_SIZE);
+        player2.RefillHandIfSpent(rng, MatchSession.HAND_SIZE);
 
         return new RoundResult(
             round.Player1Card,

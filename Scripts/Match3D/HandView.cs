@@ -142,7 +142,7 @@ public partial class HandView : Node3D
 	}
 
 	/// <summary>No match is running — deal a mulligan the way a real one is dealt: shuffle the
-	/// deck DeckAssembler would have built and take the top MULLIGAN_HAND_SIZE off it.
+	/// deck DeckAssembler would have built and take the top HAND_SIZE off it.
 	///
 	/// Dealt from the deck rather than from CardDatabase.LoadedCardNames, which is what this
 	/// used to do. The database holds every card that has ever been designed, so the fallback
@@ -162,7 +162,7 @@ public partial class HandView : Node3D
 			(deck[i], deck[swapWith]) = (deck[swapWith], deck[i]);
 		}
 
-		RebuildFromCards(deck.GetRange(0, Math.Min(MatchSession.MULLIGAN_HAND_SIZE, deck.Count)));
+		RebuildFromCards(deck.GetRange(0, Math.Min(MatchSession.HAND_SIZE, deck.Count)));
 	}
 
 	/// <summary>Slot-stability diff (Scripts/CLAUDE.md): a card name still present keeps its

@@ -40,6 +40,10 @@ public class RoundResolverTests
         Assert.Equal(expectedWinLoss, result.WinLoss);
     }
 
+    /// <summary>Asserted on the count rather than on the card being absent: these zones hold one
+    /// card, so playing it empties the hand and the refill deals a fresh five out of a deck that
+    /// may well contain the same face again. What has to be true is that the played card left —
+    /// the hand that comes back is a new one, not the old one with a card still in it.</summary>
     [Fact]
     public void Resolving_removes_the_played_card_from_each_hand()
     {
@@ -48,10 +52,13 @@ public class RoundResolverTests
 
         ResolveWithoutChoices(ECardName.Rock, ECardName.Scissors, player1, player2);
 
-        Assert.False(player1.Hand.Contains(ECardName.Rock));
-        Assert.False(player2.Hand.Contains(ECardName.Scissors));
+        Assert.Equal(MatchSession.HAND_SIZE, player1.Hand.Cards.Count);
+        Assert.Equal(MatchSession.HAND_SIZE, player2.Hand.Cards.Count);
     }
 
+    /// <summary>The hand these zones start with is one card, so playing it empties the hand and
+    /// the refill runs in the same resolution — which is why this asserts on what the deck HOLDS
+    /// rather than on how many are left in it.</summary>
     [Fact]
     public void Resolving_returns_a_normal_card_to_the_deck_bottom()
     {
@@ -60,31 +67,33 @@ public class RoundResolverTests
 
         ResolveWithoutChoices(ECardName.Rock, ECardName.Scissors, player1, player2);
 
-        // Deck started as [Paper]. Rock is returned to the bottom -> [Paper, Rock].
-        // Then Paper is drawn off the top, leaving just [Rock].
-        Assert.Equal(1, player1.Deck.Count);
-        Assert.Equal(ECardName.Rock, player1.Deck.TakeFromTop());
+        // Deck started as [Paper]. Rock is returned to the bottom -> [Paper, Rock], and the
+        // refill then deals five out of that pair, restocking as it goes. Rock reaching the
+        // hand at all is only possible by way of the deck.
+        Assert.Contains(ECardName.Rock, player1.Hand.Cards);
     }
 
+    /// <summary>A spent hand is refilled whole, on both sides, whatever the round did — these
+    /// two cards vanish and produce no winner at all, and the deal still happens.</summary>
     [Fact]
-    public void Resolving_draws_a_new_card_for_both_players_regardless_of_outcome()
+    public void Resolving_refills_a_spent_hand_for_both_players_regardless_of_outcome()
     {
         DeckAndHand player1 = MakeZone(ECardName.Joker);
         DeckAndHand player2 = MakeZone(ECardName.Blank);
 
         RoundResult result = ResolveWithoutChoices(ECardName.Joker, ECardName.Blank, player1, player2);
 
-        Assert.Equal(new[] { ECardName.Paper }, result.Player1Hand);
-        Assert.Equal(new[] { ECardName.Paper }, result.Player2Hand);
-        Assert.Contains(ECardName.Paper, player1.Hand.Cards);
-        Assert.Contains(ECardName.Paper, player2.Hand.Cards);
+        Assert.Equal(MatchSession.HAND_SIZE, result.Player1Hand.Count);
+        Assert.Equal(MatchSession.HAND_SIZE, result.Player2Hand.Count);
+        Assert.Equal(MatchSession.HAND_SIZE, player1.Hand.Cards.Count);
+        Assert.Equal(MatchSession.HAND_SIZE, player2.Hand.Cards.Count);
     }
 
     [Fact]
     public void Resolving_reports_the_full_post_round_hand_after_a_Draw_card()
     {
-        // Draw's own card vanishes, its effect draws 2, then the round draw adds 1 more —
-        // three new cards in hand, which a single "what you drew" field could not describe.
+        // Draw's own card vanishes and its effect draws 2, which a single "what you drew" field
+        // could not describe. The hand is not empty after that, so no refill runs on top of it.
         DeckAndHand player1 = new DeckAndHand(
             new Deck(new[] { ECardName.Rock, ECardName.Paper, ECardName.Scissors }),
             new Hand(new[] { ECardName.Draw }));
@@ -92,8 +101,8 @@ public class RoundResolverTests
 
         RoundResult result = ResolveWithoutChoices(ECardName.Draw, ECardName.Blank, player1, player2);
 
-        Assert.Equal(new[] { ECardName.Rock, ECardName.Paper, ECardName.Scissors }, result.Player1Hand);
-        Assert.Equal(0, result.Player1DeckCount);
+        Assert.Equal(new[] { ECardName.Rock, ECardName.Paper }, result.Player1Hand);
+        Assert.Equal(1, result.Player1DeckCount);
     }
 
     [Fact]
@@ -108,10 +117,10 @@ public class RoundResolverTests
 
         ResolveWithoutChoices(ECardName.Draw, ECardName.Rock, player1, player2);
 
-        // 드로우's own card vanishes, leaving an empty hand, then its effect draws two and the
-        // round's own draw adds a third. Without the effect the hand would hold one card.
-        Assert.Equal(3, player1.Hand.Cards.Count);
-        Assert.Equal(1, player1.Deck.Count);
+        // 드로우's own card vanishes, leaving an empty hand, and its effect then draws two.
+        // Without the effect the refill would have dealt a full hand instead.
+        Assert.Equal(2, player1.Hand.Cards.Count);
+        Assert.Equal(2, player1.Deck.Count);
     }
 
     [Fact]
@@ -269,7 +278,7 @@ public class RoundResolverTests
         var contents = new List<ECardName>();
         while (zone.Deck.Count > 0)
         {
-            contents.Add(zone.Deck.TakeFromTop());
+            contents.Add(zone.Deck.TakeFromTop(new Random(0)));
         }
 
         return contents;

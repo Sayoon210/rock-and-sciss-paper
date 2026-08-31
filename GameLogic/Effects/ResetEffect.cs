@@ -39,7 +39,7 @@ public sealed class ResetEffect : ICardEffect
 
         for (int i = 0; i < handSize; i++)
         {
-            player.Draw();
+            player.Draw(rng);
         }
     }
 }

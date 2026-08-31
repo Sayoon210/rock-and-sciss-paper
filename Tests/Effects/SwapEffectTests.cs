@@ -46,7 +46,7 @@ public class SwapEffectTests
         var self = new DeckAndHand(
             new Deck(new[] { ECardName.Blank, ECardName.Blank, ECardName.Blank }),
             new Hand(new[] { ECardName.Rock, ECardName.Paper, ECardName.Scissors }));
-        var opponent = new DeckAndHand(new Deck(Array.Empty<ECardName>()), new Hand(Array.Empty<ECardName>()));
+        var opponent = new DeckAndHand(new Deck(new[] { ECardName.Scissors }), new Hand(Array.Empty<ECardName>()));
 
         new SwapEffect().Apply(
             CardChoice.Swapping(new[] { ECardName.Rock, ECardName.Paper }), self, opponent, new Random(1));
@@ -62,7 +62,7 @@ public class SwapEffectTests
         var self = new DeckAndHand(
             new Deck(new[] { ECardName.Blank }),
             new Hand(new[] { ECardName.Rock }));
-        var opponent = new DeckAndHand(new Deck(Array.Empty<ECardName>()), new Hand(Array.Empty<ECardName>()));
+        var opponent = new DeckAndHand(new Deck(new[] { ECardName.Scissors }), new Hand(Array.Empty<ECardName>()));
 
         new SwapEffect().Apply(CardChoice.Swapping(Array.Empty<ECardName>()), self, opponent, new Random(1));
 

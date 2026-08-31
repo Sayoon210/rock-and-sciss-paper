@@ -30,7 +30,9 @@ public enum ERoundPhase
 public sealed class MatchSession
 {
     public const int STARTING_HEALTH = 10;
-    public const int MULLIGAN_HAND_SIZE = 4;
+    /// <summary>How many cards a player holds. Dealt as a block and spent one per round; the
+    /// next five arrive only once all five are gone (DeckAndHand.RefillHandIfSpent).</summary>
+    public const int HAND_SIZE = 5;
 
     private readonly DeckAndHand _player1;
     private readonly DeckAndHand _player2;
@@ -43,8 +45,6 @@ public sealed class MatchSession
 
     // Sticky once set — a side that ran out of cards has lost regardless of health, and
     // health alone can never turn back on. Checked in Winner ahead of the health-based result.
-    private bool _player1Exhausted;
-    private bool _player2Exhausted;
 
     /// <summary>Takes each player's assembled deck. Deck composition is the caller's job —
     /// CardDatabase lives on the Godot side, so this project never decides what goes in.
@@ -85,28 +85,16 @@ public sealed class MatchSession
         }
     }
 
-    /// <summary>The side that won — the other side's health reaching zero, or the other
-    /// side running out of cards (DESIGN.md, "덱 고갈"), whichever happened. Null while the
-    /// match is still running.
+    /// <summary>The side that won — the other side's health reaching zero. Null while the match
+    /// is still running.
     ///
-    /// Exhaustion is checked first. If both sides exhaust in the same round, Player 1's
-    /// exhaustion is the one that resolves it — the same "Player 1 first" tie-break this
-    /// codebase already uses for simultaneous Reset and same-priority submissions — so
-    /// Player 2 is declared the winner rather than the match hanging with no result.</summary>
+    /// Running out of cards used to end a match too (DESIGN.md, "덱 고갈"), and can no longer
+    /// happen: a hand refills from a deck that restocks itself, so there is no round in which a
+    /// player has nothing left to play. Health is the only way a match ends now.</summary>
     public ESide? Winner
     {
         get
         {
-            if (_player1Exhausted)
-            {
-                return ESide.Player2;
-            }
-
-            if (_player2Exhausted)
-            {
-                return ESide.Player1;
-            }
-
             if (Player2Health <= 0)
             {
                 return ESide.Player1;
@@ -355,21 +343,6 @@ public sealed class MatchSession
             Player1Health = Math.Max(0, Player1Health - result.DamageDealt);
         }
 
-        // Checked off the result's counts, not by re-reading the live decks — same reason
-        // RecordResolvedRound already reads everything else off `result` rather than `_player1`
-        // /`_player2` directly. A deck emptied by any draw this round (the guaranteed
-        // per-round draw, or a 교체/리셋/드로우 that ran out partway through) is caught here,
-        // in one place, regardless of which draw was the one that hit zero.
-        if (result.Player1DeckCount == 0)
-        {
-            _player1Exhausted = true;
-        }
-
-        if (result.Player2DeckCount == 0)
-        {
-            _player2Exhausted = true;
-        }
-
         if (_log != null)
         {
             string verdict;
@@ -399,9 +372,9 @@ public sealed class MatchSession
         DeckAndHand player = DeckAndHandOf(side);
         player.Deck.Shuffle(_rng);
 
-        for (int i = 0; i < MULLIGAN_HAND_SIZE; i++)
+        for (int i = 0; i < HAND_SIZE; i++)
         {
-            player.Draw();
+            player.Draw(_rng);
         }
 
         _log?.Invoke($"[deal] {side} mulligan: {Describe(player.Hand.Cards)} (deck {player.Deck.Count})");

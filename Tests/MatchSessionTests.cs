@@ -30,10 +30,11 @@ public class MatchSessionTests
 
         RoundReveal? reveal = session.SubmitRandomCardForIdleSides();
 
-        // Neither side acted, so both were played for and the round revealed in one go.
+        // Neither side acted, so both were played for and the round revealed in one go. One
+        // card lighter each: a hand is only refilled once it is empty, not once a round.
         Assert.NotNull(reveal);
-        Assert.Equal(MatchSession.MULLIGAN_HAND_SIZE - 1 + 1, session.HandOf(ESide.Player1).Count);
-        Assert.Equal(MatchSession.MULLIGAN_HAND_SIZE - 1 + 1, session.HandOf(ESide.Player2).Count);
+        Assert.Equal(MatchSession.HAND_SIZE - 1, session.HandOf(ESide.Player1).Count);
+        Assert.Equal(MatchSession.HAND_SIZE - 1, session.HandOf(ESide.Player2).Count);
     }
 
     [Fact]
@@ -69,10 +70,10 @@ public class MatchSessionTests
     {
         MatchSession session = NewSession();
 
-        Assert.Equal(MatchSession.MULLIGAN_HAND_SIZE, session.HandOf(ESide.Player1).Count);
-        Assert.Equal(MatchSession.MULLIGAN_HAND_SIZE, session.HandOf(ESide.Player2).Count);
-        Assert.Equal(SMALL_DECK_SIZE - MatchSession.MULLIGAN_HAND_SIZE, session.DeckCountOf(ESide.Player1));
-        Assert.Equal(SMALL_DECK_SIZE - MatchSession.MULLIGAN_HAND_SIZE, session.DeckCountOf(ESide.Player2));
+        Assert.Equal(MatchSession.HAND_SIZE, session.HandOf(ESide.Player1).Count);
+        Assert.Equal(MatchSession.HAND_SIZE, session.HandOf(ESide.Player2).Count);
+        Assert.Equal(SMALL_DECK_SIZE - MatchSession.HAND_SIZE, session.DeckCountOf(ESide.Player1));
+        Assert.Equal(SMALL_DECK_SIZE - MatchSession.HAND_SIZE, session.DeckCountOf(ESide.Player2));
     }
 
     [Fact]
@@ -205,7 +206,7 @@ public class MatchSessionTests
     /// shuffle does — no seed hunting.
     ///
     /// One short of the mulligan for each kind is the largest deck that can promise that: with
-    /// only MULLIGAN_HAND_SIZE - 1 of a kind, a hand of MULLIGAN_HAND_SIZE cannot be made of
+    /// only HAND_SIZE - 1 of a kind, a hand of HAND_SIZE cannot be made of
     /// that kind alone. Counted off the constant rather than written out, because the promise
     /// is arithmetic about the hand size and quietly stops holding when it changes — which is
     /// what a fixed "five of each" did when the mulligan went from six cards to three.
@@ -215,7 +216,7 @@ public class MatchSessionTests
     private static List<ECardName> MulliganHoldsBoth(ECardName first, ECardName second)
     {
         var cards = new List<ECardName>();
-        for (int i = 0; i < MatchSession.MULLIGAN_HAND_SIZE - 1; i++)
+        for (int i = 0; i < MatchSession.HAND_SIZE - 1; i++)
         {
             cards.Add(first);
             cards.Add(second);
@@ -259,7 +260,7 @@ public class MatchSessionTests
         // dealt — otherwise a second Swap could come up and the assertion would say
         // nothing. The round stops at the choice phase, so the empty deck is never drawn.
         var deck = new List<ECardName> { ECardName.Swap };
-        for (int i = 0; i < MatchSession.MULLIGAN_HAND_SIZE - 1; i++)
+        for (int i = 0; i < MatchSession.HAND_SIZE - 1; i++)
         {
             deck.Add(ECardName.Blank);
         }
@@ -466,60 +467,6 @@ public class MatchSessionTests
         }
 
         return result!;
-    }
-
-    [Fact]
-    public void Running_out_of_cards_ends_the_match_even_with_a_perfect_score()
-    {
-        // One Blank more than the mulligan, so exactly one is left in the deck. A Blank
-        // vanishes instead of returning, so that last card is drawn at the end of round 1 and
-        // the deck is empty the moment that round is recorded — before either side has a
-        // chance to also win on score.
-        var session = new MatchSession(
-            Repeated(ECardName.Blank, MatchSession.MULLIGAN_HAND_SIZE + 1),
-            Repeated(ECardName.Rock, 20),
-            new Random(1));
-
-        session.SubmitCard(ESide.Player1, ECardName.Blank);
-        session.SubmitCard(ESide.Player2, ECardName.Rock);
-
-        Assert.Equal(0, session.DeckCountOf(ESide.Player1));
-        Assert.Equal(ESide.Player2, session.Winner);
-    }
-
-    [Fact]
-    public void SubmitCard_throws_once_a_side_has_exhausted_its_deck()
-    {
-        var session = new MatchSession(
-            Repeated(ECardName.Blank, MatchSession.MULLIGAN_HAND_SIZE + 1),
-            Repeated(ECardName.Rock, 20),
-            new Random(1));
-
-        session.SubmitCard(ESide.Player1, ECardName.Blank);
-        session.SubmitCard(ESide.Player2, ECardName.Rock);
-
-        Assert.Throws<InvalidOperationException>(
-            () => session.SubmitCard(ESide.Player2, session.HandOf(ESide.Player2)[0]));
-    }
-
-    [Fact]
-    public void Simultaneous_exhaustion_resolves_by_the_same_Player_1_first_tie_break_used_elsewhere()
-    {
-        // Both sides run out on the same round. DESIGN.md left this case open; the
-        // implementation picks the same "Player 1 first" convention already used for
-        // simultaneous Reset and same-priority submissions, rather than leaving the match
-        // with no winner at all.
-        var session = new MatchSession(
-            Repeated(ECardName.Blank, MatchSession.MULLIGAN_HAND_SIZE + 1),
-            Repeated(ECardName.Blank, MatchSession.MULLIGAN_HAND_SIZE + 1),
-            new Random(1));
-
-        session.SubmitCard(ESide.Player1, ECardName.Blank);
-        session.SubmitCard(ESide.Player2, ECardName.Blank);
-
-        Assert.Equal(0, session.DeckCountOf(ESide.Player1));
-        Assert.Equal(0, session.DeckCountOf(ESide.Player2));
-        Assert.Equal(ESide.Player2, session.Winner);
     }
 
     [Fact]

@@ -65,7 +65,7 @@ public sealed class SwapEffect : ICardEffect
 
         for (int i = 0; i < choice.CardsToReturn.Count; i++)
         {
-            self.Draw();
+            self.Draw(rng);
         }
     }
 }

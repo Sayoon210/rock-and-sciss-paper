@@ -19,7 +19,7 @@ public sealed class DrawEffect : ICardEffect
 
     public void Apply(CardChoice? choice, DeckAndHand self, DeckAndHand opponent, Random rng)
     {
-        self.Draw();
-        self.Draw();
+        self.Draw(rng);
+        self.Draw(rng);
     }
 }

@@ -4,6 +4,8 @@ namespace RockAndScissPaper.Tests;
 
 public class DeckTests
 {
+    private static readonly Random UnusedRng = new Random(0);
+
     [Fact]
     public void Count_reflects_the_initial_cards()
     {
@@ -17,11 +19,11 @@ public class DeckTests
     {
         var deck = new Deck(new[] { ECardName.Rock, ECardName.Paper, ECardName.Scissors });
 
-        ECardName card = deck.TakeFromTop();
+        ECardName card = deck.TakeFromTop(UnusedRng);
 
         Assert.Equal(ECardName.Rock, card);
         Assert.Equal(2, deck.Count);
-        Assert.Equal(ECardName.Paper, deck.TakeFromTop());
+        Assert.Equal(ECardName.Paper, deck.TakeFromTop(UnusedRng));
     }
 
     [Fact]
@@ -30,10 +32,46 @@ public class DeckTests
         var deck = new Deck(new[] { ECardName.Rock, ECardName.Paper });
 
         deck.AddToBottom(ECardName.Scissors);
-        deck.TakeFromTop();
-        deck.TakeFromTop();
+        deck.TakeFromTop(UnusedRng);
+        deck.TakeFromTop(UnusedRng);
 
-        Assert.Equal(ECardName.Scissors, deck.TakeFromTop());
+        Assert.Equal(ECardName.Scissors, deck.TakeFromTop(UnusedRng));
+    }
+
+    /// <summary>The deck does not run out — drawn empty it restocks from the set it was built
+    /// with, which is what removes 덱 고갈 as a thing that can happen mid-match.</summary>
+    [Fact]
+    public void TakeFromTop_restocks_instead_of_running_out()
+    {
+        var deck = new Deck(new[] { ECardName.Rock, ECardName.Paper });
+
+        deck.TakeFromTop(UnusedRng);
+        deck.TakeFromTop(UnusedRng);
+        Assert.Equal(0, deck.Count);
+
+        ECardName afterRestock = deck.TakeFromTop(new Random(1));
+
+        Assert.Contains(afterRestock, new[] { ECardName.Rock, ECardName.Paper });
+        Assert.Equal(1, deck.Count);
+    }
+
+    [Fact]
+    public void TakeFromTop_keeps_restocking_for_as_long_as_it_is_asked_to()
+    {
+        var deck = new Deck(new[] { ECardName.Rock, ECardName.Paper, ECardName.Scissors });
+        var rng = new Random(7);
+
+        // Well past the three it was built from: any exhaustion would surface here.
+        for (int i = 0; i < 60; i++)
+        {
+            deck.TakeFromTop(rng);
+        }
+    }
+
+    [Fact]
+    public void A_deck_with_nothing_to_restock_from_is_refused()
+    {
+        Assert.Throws<ArgumentException>(() => new Deck(Array.Empty<ECardName>()));
     }
 
     [Fact]
@@ -52,7 +90,7 @@ public class DeckTests
         var remaining = new List<ECardName>();
         while (deck.Count > 0)
         {
-            remaining.Add(deck.TakeFromTop());
+            remaining.Add(deck.TakeFromTop(UnusedRng));
         }
 
         Assert.Equal(original.OrderBy(c => c), remaining.OrderBy(c => c));
@@ -74,7 +112,7 @@ public class DeckTests
 
         while (deckA.Count > 0)
         {
-            Assert.Equal(deckA.TakeFromTop(), deckB.TakeFromTop());
+            Assert.Equal(deckA.TakeFromTop(UnusedRng), deckB.TakeFromTop(UnusedRng));
         }
     }
 }
