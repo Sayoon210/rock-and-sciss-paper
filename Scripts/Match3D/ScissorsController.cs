@@ -25,6 +25,7 @@ namespace RockAndScissPaper.Match3D;
 public partial class ScissorsController : Node3D
 {
     private const string ANIMATION_PLAYER_PATH = "AnimationPlayer";
+    private const string BLOOD_SPRAY_SCENE_PATH = "res://Scenes/Match3D/BloodSpray.tscn";
 
     /// <summary>The clip these timings were measured against. Lives here rather than in
     /// MatchWorldView (which plays it) because a clip and the moments picked out of it are the
@@ -228,12 +229,36 @@ public partial class ScissorsController : Node3D
             // fist, the next they are planted. That is the point of a marker over the loser's
             // hand bone, which gave a position and left the angle to be guessed at in code.
             GlobalTransform = _stuckTarget!.GlobalTransform;
+            SprayBloodAtTheWound();
             _place = EScissorsPlace.StuckInHand;
             return;
         }
 
         GlobalTransform = ReadBoneWorldPose(_gripSkeleton!, _gripBoneIndex)
             * new Transform3D(Basis.FromEuler(GRIP_ROTATION), GRIP_OFFSET);
+    }
+
+    /// <summary>One burst of blood at the spot the blade just went in, thrown upward out of the
+    /// hand. Spawned on the strike frame and nowhere else, so it lands with the pin rather than
+    /// trailing it.
+    ///
+    /// Parented to the victim's Character rather than to the marker or to these scissors. The
+    /// marker's basis is turned on its side (it orients the blade, not the world) and this pair
+    /// is at whatever angle the swing left it, and a burst under either would fire sideways;
+    /// Character sits upright, so the material's local +Y really is up. Position still comes from
+    /// the marker, which is where the wound actually is.
+    ///
+    /// Frees itself off the one-shot's own Finished signal instead of a timer here — the burst
+    /// knows how long it lasts and this node does not need a second copy of that number.</summary>
+    private void SprayBloodAtTheWound()
+    {
+        PackedScene bloodSprayScene = GD.Load<PackedScene>(BLOOD_SPRAY_SCENE_PATH);
+        GpuParticles3D bloodSpray = bloodSprayScene.Instantiate<GpuParticles3D>();
+
+        _stuckTarget!.GetParent().AddChild(bloodSpray);
+        bloodSpray.GlobalPosition = _stuckTarget.GlobalPosition;
+        bloodSpray.Finished += bloodSpray.QueueFree;
+        bloodSpray.Emitting = true;
     }
 
     /// <summary>A bone's pose in WORLD space, with the rig's own scale divided back out.
