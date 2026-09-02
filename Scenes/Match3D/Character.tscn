@@ -1,7 +1,8 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="PackedScene" uid="uid://gpgmiwxrq3gj" path="res://Assets/Models/MainCharacter.glb" id="1_model"]
 [ext_resource type="AnimationLibrary" uid="uid://d1p4is3tck5wl" path="res://Assets/Models/main_amature_nomesh.glb" id="2_animations"]
+[ext_resource type="AnimationLibrary" uid="uid://bldysao8nrbfk" path="res://Assets/Models/Paper_animation_only.glb" id="5_paper"]
 [ext_resource type="Script" uid="uid://w1ypfpogo53j" path="res://Scripts/Match3D/CharacterIdlePose.cs" id="3_idlepose"]
 [ext_resource type="Script" uid="uid://wnbq0587kv1x" path="res://Scripts/Match3D/CharacterHeadFade.cs" id="4_headfade"]
 
@@ -10,7 +11,8 @@ script = ExtResource("3_idlepose")
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
 libraries = {
-&"": ExtResource("2_animations")
+&"": ExtResource("2_animations"),
+&"paper": ExtResource("5_paper")
 }
 
 [node name="ScissorsStuckTarget" type="Marker3D" parent="."]

@@ -61,8 +61,12 @@
 탁상의 갈색은 정보가 아니므로 알베도를 아예 무채색으로 구워두는 편이 낫다 — 셰이더는
 피에만 쓰고, 정적 에셋의 색은 처음부터 없앤다. 원본은 CC0라 위 URL에서 다시 받을 수 있다.
 
-애니메이션(`Anim_Punch_Baked`, `Anim_StabScissor_Baked`, `Anim_NoNoNoFinger`)은 Mixamo
-프리셋이 아니라 **Blender에서 직접 만든 자작**이다. 작업 파일은 `Assets/_Source/`에 있고
+애니메이션(`Anim_Punch_Baked`, `Anim_StabScissor_Baked`, `Anim_NoNoNoFinger`,
+`Anim_Paper_Flip_Baked`)은 Mixamo 프리셋이 아니라 **Blender에서 직접 만든 자작**이다.
+이들이 담긴 `Assets/Models/main_amature_nomesh.glb`와 `Assets/Models/Paper_animation_only.glb`는
+메쉬 없이 뼈대와 애니메이션만 들고 있지만, 그 뼈대 자체는 위 `Ch28`의 것이므로 **같은
+Mixamo 라이선스가 걸린다** — 애니메이션이 자작이라고 해서 재배포 금지가 풀리지는 않는다.
+작업 파일은 `Assets/_Source/`에 있고
 `.gitignore`로 저장소에서 빠져 있다 — 그 폴더의 `.gdignore`는 Godot도 그 안을 임포트하지
 않게 하려고 둔 것이다.
 

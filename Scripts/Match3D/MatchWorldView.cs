@@ -22,9 +22,12 @@ namespace RockAndScissPaper.Match3D;
 /// pausing for it.</summary>
 public partial class MatchWorldView : Node3D
 {
-	// The clip names the .glb was exported with. 보 has no animation yet — the design calls
-	// for a desk slam that has not been authored, so a 보 win currently plays nothing.
+	// The clip names the .glb was exported with. 보's carries a library prefix because it
+	// ships in its own .glb: an AnimationPlayer can hold only one library under the empty
+	// name, so every animation exported after the first is addressed as "library/clip".
+	// Character.tscn is where the name "paper" is bound to the file.
 	private const string ROCK_WIN_ANIMATION = "Anim_Punch_Baked";
+	private const string PAPER_WIN_ANIMATION = "paper/Anim_Paper_Flip_Baked";
 
 	// When the fist lands, measured off Anim_Punch_Baked's own bone tracks the same way
 	// ScissorsController's two moments were -- the right arm chain's angular speed climbs to
@@ -33,11 +36,20 @@ public partial class MatchWorldView : Node3D
 	// which is public precisely so the shake and the blade agree on one instant.
 	private const float PUNCH_IMPACT_SECONDS = 0.5f;
 
+	// 보's own landing, measured the same way off Anim_Paper_Flip_Baked: the right arm chain
+	// winds up to 22.8 rad/s at 0.633s and is down to 11.2 by 0.667s, which is the palm
+	// stopping against the desk. The clip runs 1.067s.
+	private const float PAPER_IMPACT_SECONDS = 0.65f;
+
 	// How hard each landing kicks the camera, as a fraction of HeadFollowCamera's own full swing.
 	// 바위 is a fist to the face and 가위 is a blade through a hand pinned to a table, so the
 	// punch throws the view further. Eyeball both against the running game.
 	private const float PUNCH_SHAKE_STRENGTH = 1.0f;
 	private const float STAB_SHAKE_STRENGTH = 0.7f;
+
+	// 보 lands on the desk rather than on anyone, so it is the lightest of the three — the
+	// table jumps, the head does not.
+	private const float PAPER_SHAKE_STRENGTH = 0.55f;
 
 	private const string CARD_VIEW_SCENE_PATH = "res://Scenes/Match3D/CardView.tscn";
 	private const string MY_CHARACTER_PATH = "MySeat/Character";
@@ -381,20 +393,38 @@ public partial class MatchWorldView : Node3D
 			return;
 		}
 
-		bool isStab = _blowClipAwaitingImpact == ScissorsController.STAB_ANIMATION_NAME;
-		float impactSeconds = isStab ? ScissorsController.STRIKE_SECONDS : PUNCH_IMPACT_SECONDS;
+		float impactSeconds;
+		float shakeStrength;
+		switch (_blowClipAwaitingImpact)
+		{
+			case ScissorsController.STAB_ANIMATION_NAME:
+				impactSeconds = ScissorsController.STRIKE_SECONDS;
+				shakeStrength = STAB_SHAKE_STRENGTH;
+				break;
+
+			case PAPER_WIN_ANIMATION:
+				impactSeconds = PAPER_IMPACT_SECONDS;
+				shakeStrength = PAPER_SHAKE_STRENGTH;
+				break;
+
+			default:
+				impactSeconds = PUNCH_IMPACT_SECONDS;
+				shakeStrength = PUNCH_SHAKE_STRENGTH;
+				break;
+		}
+
 		if (_blowAnimationPlayer.CurrentAnimationPosition < impactSeconds)
 		{
 			return;
 		}
 
-		_headCamera.Shake(isStab ? STAB_SHAKE_STRENGTH : PUNCH_SHAKE_STRENGTH);
+		_headCamera.Shake(shakeStrength);
 		_blowClipAwaitingImpact = null;
 	}
 
 	/// <summary>Plays the blow on the side that won, chosen by the card it won with — 바위
-	/// punches, 가위 stabs. A draw plays nothing, and so does a win with a card whose
-	/// animation is not authored yet. Returns whether one actually started, so the caller
+	/// punches, 가위 stabs, 보 slams the desk. A draw plays nothing, and so does a win with a
+	/// card whose animation is not authored yet. Returns whether one actually started, so the caller
 	/// (EnterResultHoldPhase) knows whether to wait on onFinished or fall back to a timed
 	/// hold that will never otherwise be cleared.</summary>
 	private bool PlayWinningBlow(Action onFinished)
@@ -429,7 +459,7 @@ public partial class MatchWorldView : Node3D
 			(didIWin ? _myCharacter : _opponentCharacter).GetNode<AnimationPlayer>(ANIMATION_PLAYER_PATH);
 		_blowClipAwaitingImpact = animationName;
 
-		// The prop only exists for the 가위 clip — 바위 punches bare-handed. Needs no RPC of its
+		// The prop only exists for the 가위 clip — 바위 and 보 land bare-handed. Needs no RPC of its
 		// own: both screens reach here off the same already-agreed LastRoundOutcome, and each
 		// resolves "the winner" to its own side of the table, so the two runs stay in step.
 		if (winningCard.Value == ECardName.Scissors)
@@ -454,6 +484,9 @@ public partial class MatchWorldView : Node3D
 				// Named by ScissorsController, which also carries the two moments measured
 				// out of this exact clip — one owner for the clip and its timings.
 				return ScissorsController.STAB_ANIMATION_NAME;
+
+			case ECardName.Paper:
+				return PAPER_WIN_ANIMATION;
 
 			default:
 				return null;
