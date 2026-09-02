@@ -45,6 +45,7 @@ public partial class RemoteHeadLook : Node3D
 	private Basis _restBoneWorldBasis;
 	private Quaternion _targetLocalDelta = Quaternion.Identity;
 	private Quaternion _shownLocalDelta = Quaternion.Identity;
+	private float _lookAuthority = 1f;
 
 	public override void _Ready()
 	{
@@ -106,15 +107,18 @@ public partial class RemoteHeadLook : Node3D
 
 		// A running clip owns the head, exactly as it does on the local side (HeadFollowCamera) —
 		// the opponent throwing a punch should be seen throwing it, not holding their head at
-		// whatever their mouse last said. Outside a blow nothing else is driving this bone, since
-		// HoldIdle leaves the player stopped rather than playing, so the applied pose stands and
-		// the smoothing above genuinely changes it every frame between updates.
-		if (_animationPlayer.IsPlaying())
-		{
-			return;
-		}
+		// whatever their mouse last said — and it is handed over and back across a few frames
+		// for the same reason it is there. Outside a blow nothing else is driving this bone,
+		// since HoldIdle leaves the player stopped rather than playing, so the applied pose
+		// stands and the smoothing above genuinely changes it every frame between updates.
+		//
+		// The smoothing runs above this rather than below it, so the head the clip hands back
+		// is already caught up with what the opponent was doing meanwhile, instead of starting
+		// to catch up only once the clip is over.
+		_lookAuthority = BoneLookRotator.RampedAuthority(_lookAuthority, _animationPlayer.IsPlaying(), delta);
 
 		Basis desiredBoneWorldBasis = (_restBoneWorldBasis * new Basis(_shownLocalDelta)).Orthonormalized();
-		BoneLookRotator.Apply(_skeleton, _headBoneIndex, _headBoneParentIndex, desiredBoneWorldBasis);
+		BoneLookRotator.Apply(
+			_skeleton, _headBoneIndex, _headBoneParentIndex, desiredBoneWorldBasis, _lookAuthority);
 	}
 }

@@ -18,8 +18,54 @@ namespace RockAndScissPaper.Match3D;
 /// RemoteHeadLook for the fix (a delta expressed in the sender's own rest-relative frame).</summary>
 public static class BoneLookRotator
 {
-    public static void Apply(Skeleton3D skeleton, int boneIndex, int boneParentIndex, Basis desiredBoneWorldBasis)
+    // How long the head takes to change hands between a running clip and look, each way.
+    // Taking it is quick — a blow should throw the head at once, and the clip's own motion
+    // covers the move. Handing it back is slower, because that direction has nothing of its
+    // own going on to hide inside.
+    private const float CLIP_TAKEOVER_SECONDS = 0.12f;
+    private const float LOOK_RECOVERY_SECONDS = 0.35f;
+
+    /// <summary>Advances how much of the bone the look direction currently owns — 0 while a
+    /// clip has it, 1 once it is fully handed back. Callers keep the running value and pass it
+    /// straight to Apply.
+    ///
+    /// Ramped rather than switched: handing the bone back on the single frame a clip ended
+    /// snapped the head from wherever the blow had left it to wherever the look direction was
+    /// pointing, with nothing in between.</summary>
+    public static float RampedAuthority(float lookAuthority, bool clipOwnsTheBone, double delta)
     {
+        float target;
+        float seconds;
+        if (clipOwnsTheBone)
+        {
+            target = 0f;
+            seconds = CLIP_TAKEOVER_SECONDS;
+        }
+        else
+        {
+            target = 1f;
+            seconds = LOOK_RECOVERY_SECONDS;
+        }
+
+        return Mathf.MoveToward(lookAuthority, target, (float)delta / seconds);
+    }
+
+    public static void Apply(
+        Skeleton3D skeleton,
+        int boneIndex,
+        int boneParentIndex,
+        Basis desiredBoneWorldBasis,
+        float lookAuthority)
+    {
+        // Blended from wherever the bone actually IS — the clip's pose mid-blow, this rotator's
+        // own output from last frame otherwise — so neither side has to know what the other was
+        // doing, and a clip that ends anywhere at all is departed from smoothly. At authority 1
+        // the slerp lands exactly on desiredBoneWorldBasis, so the steady state outside a blow
+        // is unchanged; at 0 it writes back the pose already there.
+        Basis posedBoneWorldBasis =
+            (skeleton.GlobalTransform * skeleton.GetBoneGlobalPose(boneIndex)).Basis.Orthonormalized();
+        desiredBoneWorldBasis = posedBoneWorldBasis.Slerp(desiredBoneWorldBasis, lookAuthority);
+
         // SetBonePoseRotation is LOCAL — relative to the bone's own PARENT, not the skeleton
         // root — so the parent's current world basis is what desiredBoneWorldBasis needs
         // dividing out by, not the skeleton's own GlobalTransform directly.

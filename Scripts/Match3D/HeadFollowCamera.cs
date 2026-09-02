@@ -97,6 +97,7 @@ public partial class HeadFollowCamera : Camera3D
 	private float _handViewBlend;
 	private float _shakeStrength;
 	private float _shakeSeconds;
+	private float _lookAuthority = 1f;
 
 	/// <summary>Whether the hand view is the current destination — true from the Space press
 	/// that starts the trip toward the hand until whatever starts the trip back (another Space,
@@ -305,17 +306,18 @@ public partial class HeadFollowCamera : Camera3D
         Basis desiredBoneWorldBasis = deltaFromRest * _restBoneWorldBasis;
 
         // A clip that is actually running owns the head, and mouse look stands down for its
-        // duration. Only the BONE stands down, though: lookBasis still aims the camera below, so
-        // the player keeps looking wherever they please through a punch instead of having the
-		// view yanked round with the character's head.
+        // duration — but over a beat rather than on one frame, or the head jumps from where the
+        // blow left it back to where the mouse is pointing. Only the BONE stands down, though:
+        // lookBasis still aims the camera below, so the player keeps looking wherever they
+		// please through a punch instead of having the view yanked round with the character's
+		// head.
 		//
 		// IsPlaying is the whole test because HoldIdle deliberately leaves the player stopped
 		// (Play, Seek, Stop(keepState)) — an idle character is not "playing" anything, so this is
 		// false at every moment except an actual blow.
-		if (!_animationPlayer.IsPlaying())
-		{
-			BoneLookRotator.Apply(_skeleton, _headBoneIndex, _headBoneParentIndex, desiredBoneWorldBasis);
-		}
+		_lookAuthority = BoneLookRotator.RampedAuthority(_lookAuthority, _animationPlayer.IsPlaying(), delta);
+		BoneLookRotator.Apply(
+			_skeleton, _headBoneIndex, _headBoneParentIndex, desiredBoneWorldBasis, _lookAuthority);
 
 		// Camera position: the tuned rest position, shifted by however much the bone itself has
 		// moved off ITS rest position (e.g. an animation clip's own head bob) — not the bone's
