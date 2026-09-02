@@ -25,10 +25,13 @@ public partial class TitleScreenUI : Control
         _musicVolumeSlider.ValueChanged += OnMusicVolumeChanged;
         GetNode<Button>("SettingsOverlay/Center/Box/CloseSettingsButton").Pressed += OnCloseSettingsPressed;
 
-        // Started from here rather than from AudioManager itself: the Autoload is a service
-        // and does not know which screen is up. It keeps playing through the connection
-        // screen, since that is still the menu — MatchWorldView is what stops it.
-        AudioManager.Instance!.PlayMainMenuMusic();
+        // The menu music would be started from here rather than from AudioManager itself: the
+        // Autoload is a service and does not know which screen is up. Left silent for now while
+        // the game's sound is worked out — the track that is in the project was picked against
+        // the old 2D look and does not belong to the one being built. AudioManager still owns
+        // the Music bus, the player and the volume, so this is one line away from coming back.
+        //
+        // AudioManager.Instance!.PlayMainMenuMusic();
     }
 
     private void OnMatchPressed()
