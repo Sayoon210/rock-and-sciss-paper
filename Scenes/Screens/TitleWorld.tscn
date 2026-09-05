@@ -1,0 +1,103 @@
+[gd_scene format=3 uid="uid://c7tlwr1dq8n2v"]
+
+[ext_resource type="PackedScene" path="res://Scenes/Match3D/Character.tscn" id="1_character"]
+[ext_resource type="PackedScene" uid="uid://rlamac0gftew" path="res://Assets/Models/CardRest.glb" id="2_cardrest"]
+[ext_resource type="PackedScene" uid="uid://br7mxhtotcqmu" path="res://Assets/Models/cc0_scissors.glb" id="3_scissors"]
+[ext_resource type="Material" path="res://Assets/Materials/TableWood.tres" id="4_tablewood"]
+[ext_resource type="Material" path="res://Assets/Materials/MonochromeExceptRed.tres" id="5_monochrome"]
+
+[sub_resource type="Environment" id="Environment_title"]
+background_mode = 1
+background_color = Color(0.02, 0.02, 0.025, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.5, 0.55, 0.65, 1)
+ambient_light_energy = 0.12
+tonemap_mode = 3
+fog_enabled = true
+fog_mode = 1
+fog_light_color = Color(0.02, 0.02, 0.025, 1)
+fog_density = 1.0
+fog_depth_begin = 1.6
+fog_depth_end = 4.0
+
+[sub_resource type="BoxMesh" id="BoxMesh_table"]
+size = Vector3(1.4, 0.05, 0.8474709)
+
+[node name="TitleWorld" type="Node3D" unique_id=606583457]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=704549865]
+environment = SubResource("Environment_title")
+
+[node name="KeyLight2" type="SpotLight3D" parent="." unique_id=1830784318]
+transform = Transform3D(1, 0, 0, 0, -1, -8.742278e-08, 0, 8.742278e-08, -1, 0, 1.2329332, 0)
+light_specular = 0.1
+shadow_enabled = true
+shadow_blur = 10.0
+spot_range = 0.7
+spot_angle = 40.0
+
+[node name="KeyLight2" type="SpotLight3D" parent="KeyLight2" unique_id=524308956]
+transform = Transform3D(1, 0, 0, 0, -1, -8.742278e-08, 0, 8.742278e-08, -1, 0, 0, 0)
+light_specular = 0.1
+shadow_enabled = true
+shadow_blur = 10.0
+spot_range = 0.7
+spot_angle = 40.0
+
+[node name="KeyLight" type="SpotLight3D" parent="." unique_id=1625368114]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 1.4344363, 0)
+light_energy = 2.0
+light_specular = 0.1
+shadow_enabled = true
+shadow_blur = 10.0
+spot_range = 6.0
+spot_angle = 40.0
+
+[node name="Table" type="MeshInstance3D" parent="." unique_id=220852954]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.695, 0)
+material_override = ExtResource("4_tablewood")
+mesh = SubResource("BoxMesh_table")
+
+[node name="MyScissors" parent="Table" unique_id=755311426 instance=ExtResource("3_scissors")]
+transform = Transform3D(-6.556708e-08, -1.5, -1.3322676e-15, 0.51303023, -2.2425265e-08, 1.409539, -1.409539, 6.1612894e-08, 0.51303023, 0.42456737, 0.1, 0.13558015)
+
+[node name="OpponentScissors" parent="Table" unique_id=1500538400 instance=ExtResource("3_scissors")]
+transform = Transform3D(1.887929e-07, 1.5, -4.485053e-08, 0.51303023, -2.2425265e-08, 1.409539, 1.409539, -1.9274707e-07, -0.51303023, -0.39956737, 0.1, -0.13558015)
+
+[node name="MySeat" type="Node3D" parent="." unique_id=2144182669]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.55)
+
+[node name="Character" parent="MySeat" unique_id=1589308678 instance=ExtResource("1_character")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0)
+
+[node name="OpponentSeat" type="Node3D" parent="." unique_id=1774767901]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0.025, 0, -0.55)
+
+[node name="Character" parent="OpponentSeat" unique_id=1164330066 instance=ExtResource("1_character")]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0)
+
+[node name="Field" type="Node3D" parent="." unique_id=689518767]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.72, 0)
+
+[node name="CardRest2" parent="Field" unique_id=749841999 instance=ExtResource("2_cardrest")]
+transform = Transform3D(-0.5, 0, -4.371139e-08, 0, 0.5, 0, 4.371139e-08, 0, -0.5, -0.0055994317, 0, -0.3283155)
+
+[node name="CardRest" parent="Field" unique_id=154479863 instance=ExtResource("2_cardrest")]
+transform = Transform3D(0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 0.018, 0, 0.34647065)
+
+[node name="TitleCamera" type="Camera3D" parent="." unique_id=703281063]
+transform = Transform3D(0.4746426, -0.35437256, 0.80568886, -7.1054274e-15, 0.91536975, 0.40261436, -0.88017863, -0.19109793, 0.43447345, 0.9229293, 1.42, 1.12148)
+current = true
+fov = 55.0
+
+[node name="ColorGrade" type="CanvasLayer" parent="." unique_id=358564985]
+layer = 0
+
+[node name="FullScreen" type="ColorRect" parent="ColorGrade" unique_id=324214122]
+material = ExtResource("5_monochrome")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
