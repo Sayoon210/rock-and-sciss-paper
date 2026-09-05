@@ -24,7 +24,7 @@
   "folder": "Scripts/Match3D",
   "kind": "class",
   "base": "",
-  "lines": 33,
+  "lines": 79,
   "fanIn": 2,
   "refs": []
  },
@@ -93,7 +93,7 @@
   "folder": "Scripts/Match3D",
   "kind": "class",
   "base": "Node3D",
-  "lines": 398,
+  "lines": 441,
   "fanIn": 2,
   "refs": [
    "CardData",
@@ -127,9 +127,11 @@
   "folder": "Scripts/Match3D",
   "kind": "class",
   "base": "Node3D",
-  "lines": 101,
+  "lines": 117,
   "fanIn": 1,
-  "refs": []
+  "refs": [
+   "MixamoRig"
+  ]
  },
  "CharacterIdlePose": {
   "file": "Scripts/Match3D/CharacterIdlePose.cs",
@@ -161,7 +163,7 @@
   "folder": "GameLogic",
   "kind": "class",
   "base": "",
-  "lines": 43,
+  "lines": 73,
   "fanIn": 5,
   "refs": [
    "ECardName"
@@ -172,7 +174,7 @@
   "folder": "GameLogic",
   "kind": "class",
   "base": "",
-  "lines": 44,
+  "lines": 58,
   "fanIn": 7,
   "refs": [
    "Deck",
@@ -283,7 +285,7 @@
   "folder": "Scripts/Match3D",
   "kind": "enum",
   "base": "",
-  "lines": 534,
+  "lines": 655,
   "fanIn": 1,
   "refs": []
  },
@@ -301,7 +303,7 @@
   "folder": "GameLogic",
   "kind": "enum",
   "base": "",
-  "lines": 435,
+  "lines": 408,
   "fanIn": 1,
   "refs": []
  },
@@ -310,7 +312,7 @@
   "folder": "Scripts/Match3D",
   "kind": "enum",
   "base": "",
-  "lines": 239,
+  "lines": 276,
   "fanIn": 1,
   "refs": []
  },
@@ -319,7 +321,7 @@
   "folder": "GameLogic",
   "kind": "enum",
   "base": "",
-  "lines": 435,
+  "lines": 408,
   "fanIn": 4,
   "refs": []
  },
@@ -419,12 +421,13 @@
   "folder": "Scripts/Match3D",
   "kind": "class",
   "base": "Camera3D",
-  "lines": 268,
+  "lines": 364,
   "fanIn": 2,
   "refs": [
    "BoneLookRotator",
    "CharacterHeadFade",
-   "GameState"
+   "GameState",
+   "MixamoRig"
   ]
  },
  "HealthBarsUI": {
@@ -518,8 +521,8 @@
   "folder": "GameLogic",
   "kind": "class",
   "base": "",
-  "lines": 435,
-  "fanIn": 5,
+  "lines": 408,
+  "fanIn": 6,
   "refs": [
    "CardChoice",
    "Deck",
@@ -556,7 +559,7 @@
   "folder": "Scripts/Match3D",
   "kind": "class",
   "base": "Node3D",
-  "lines": 534,
+  "lines": 655,
   "fanIn": 1,
   "refs": [
    "AnimationDebugPanel",
@@ -572,6 +575,15 @@
    "MatchView",
    "ScissorsController"
   ]
+ },
+ "MixamoRig": {
+  "file": "Scripts/Match3D/MixamoRig.cs",
+  "folder": "Scripts/Match3D",
+  "kind": "class",
+  "base": "",
+  "lines": 87,
+  "fanIn": 4,
+  "refs": []
  },
  "NetworkManager": {
   "file": "Scripts/Autoload/NetworkManager.cs",
@@ -589,11 +601,12 @@
   "folder": "Scripts/Match3D",
   "kind": "class",
   "base": "Node3D",
-  "lines": 98,
+  "lines": 125,
   "fanIn": 0,
   "refs": [
    "BoneLookRotator",
-   "GameState"
+   "GameState",
+   "MixamoRig"
   ]
  },
  "ResetEffect": {
@@ -632,7 +645,7 @@
   "folder": "GameLogic",
   "kind": "class",
   "base": "",
-  "lines": 325,
+  "lines": 328,
   "fanIn": 1,
   "refs": [
    "CardChoice",
@@ -647,6 +660,7 @@
    "EWinLossResult",
    "Hand",
    "ICardEffect",
+   "MatchSession",
    "ResetEffect",
    "RoundInProgress",
    "RoundResult",
@@ -694,10 +708,11 @@
   "folder": "Scripts/Match3D",
   "kind": "class",
   "base": "Node3D",
-  "lines": 239,
+  "lines": 276,
   "fanIn": 1,
   "refs": [
-   "EScissorsPlace"
+   "EScissorsPlace",
+   "MixamoRig"
   ]
  },
  "ScreenRouter": {
@@ -743,7 +758,7 @@
   "folder": "Scripts/UI",
   "kind": "class",
   "base": "Control",
-  "lines": 75,
+  "lines": 78,
   "fanIn": 0,
   "refs": [
    "AudioManager",
