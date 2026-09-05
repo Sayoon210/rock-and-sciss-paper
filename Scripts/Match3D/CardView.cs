@@ -76,6 +76,22 @@ public partial class CardView : Node3D
     // a short one armed while the player was still only looking at the card.
     private const float SUBMIT_THRESHOLD_VIEWPORT_FRACTION = 0.25f;
 
+    // How much of the card's own face color is added back in regardless of scene lighting.
+    // The match's lights are narrow spots over the table (MatchWorld.tscn) with a dim ambient
+    // floor, tuned for the characters and picked up as an afterthought by whatever a card
+    // happens to be sitting under -- a hand card a few centimetres outside a cone reads as
+    // solid black. Emission set to mirror the card's own albedo (below) keeps every card
+    // legible at that same brightness no matter where it sits or how the light rig is later
+    // retuned, rather than this needing its own light aimed at the hand.
+    //
+    // Kept low on purpose: emission is flat and uniform across the whole face, so it has no
+    // shading of its own -- push it too far and it drowns the actual shading the spotlight was
+    // giving the art (creases, print lines, the difference between a fold and flat card stock),
+    // which reads as the card going hazy/washed-out rather than legible. This value is a floor
+    // for total darkness, not a general brightness boost -- it should be barely noticeable
+    // wherever the card is already lit.
+    private const float FACE_EMISSION_ENERGY = 0.22f;
+
     // A held card is pulled toward the camera along the hand's own facing. Hand cards sit
     // coplanar in a row, so a card dragged sideways lands exactly on top of its neighbour and
     // the two z-fight; lifting the held one out of the shared plane is what stops that. Local
@@ -156,6 +172,8 @@ public partial class CardView : Node3D
         // materials are authored in the .tscn precisely because they are the same on all of them.)
         _frontMaterial = new StandardMaterial3D();
         _frontMaterial.Roughness = 0.7f;
+        _frontMaterial.EmissionEnabled = true;
+        _frontMaterial.EmissionEnergyMultiplier = FACE_EMISSION_ENERGY;
         GetNode<MeshInstance3D>(FRONT_MESH_PATH).MaterialOverride = _frontMaterial;
 
         // Only a grabbed card listens to global input — see _Input.
@@ -425,6 +443,13 @@ public partial class CardView : Node3D
         }
 
         _frontMaterial.AlbedoColor = art == null ? PLACEHOLDER_FACE_COLOR : Colors.White;
+
+        // Mirrored off the albedo values just set, not computed separately — the two channels
+        // agreeing is the whole point (see FACE_EMISSION_ENERGY), so there is one place that
+        // decides what the face looks like and emission just repeats it.
+        _frontMaterial.EmissionTexture = _frontMaterial.AlbedoTexture;
+        _frontMaterial.Emission = _frontMaterial.AlbedoColor;
+
         ShownCard = cardName;
     }
 
@@ -435,6 +460,8 @@ public partial class CardView : Node3D
     {
         _frontMaterial.AlbedoTexture = null;
         _frontMaterial.AlbedoColor = PLACEHOLDER_FACE_COLOR;
+        _frontMaterial.EmissionTexture = null;
+        _frontMaterial.Emission = PLACEHOLDER_FACE_COLOR;
         ShownCard = null;
     }
 }

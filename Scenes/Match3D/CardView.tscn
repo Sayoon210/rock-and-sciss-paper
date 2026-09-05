@@ -6,10 +6,17 @@
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rim"]
 albedo_color = Color(0.16, 0.15, 0.14, 1)
 roughness = 0.8
+emission_enabled = true
+emission = Color(0.16, 0.15, 0.14, 1)
+emission_energy_multiplier = 0.22
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_back"]
 albedo_texture = ExtResource("2_cardback")
 roughness = 0.7
+emission_enabled = true
+emission = Color(1, 1, 1, 1)
+emission_texture = ExtResource("2_cardback")
+emission_energy_multiplier = 0.22
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_highlight"]
 shading_mode = 0
