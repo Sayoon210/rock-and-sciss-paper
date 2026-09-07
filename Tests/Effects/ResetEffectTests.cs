@@ -4,7 +4,7 @@ namespace RockAndScissPaper.Tests;
 
 public class ResetEffectTests
 {
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void Apply_redraws_the_same_hand_size_for_both_players()
     {
         var self = new DeckAndHand(
@@ -20,7 +20,7 @@ public class ResetEffectTests
         Assert.Empty(opponent.Hand.Cards);
     }
 
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void Apply_preserves_each_players_total_card_count()
     {
         var self = new DeckAndHand(

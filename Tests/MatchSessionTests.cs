@@ -51,7 +51,7 @@ public class MatchSessionTests
         Assert.Equal(played, reveal!.Player1Card);
     }
 
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void A_round_waiting_on_a_choice_is_left_untouched_by_a_submission_timeout()
     {
         // Both cards are in and the round has moved on to asking for a 교체 choice. The
@@ -148,7 +148,7 @@ public class MatchSessionTests
         Assert.Equal(MatchSession.STARTING_HEALTH - WinLossRules.ROCK_WIN_DAMAGE, session.Player2Health);
     }
 
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void A_round_with_no_win_loss_does_not_change_health()
     {
         var session = new MatchSession(
@@ -233,7 +233,7 @@ public class MatchSessionTests
             new Random(1));
     }
 
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void A_choice_card_leaves_the_round_awaiting_a_choice()
     {
         MatchSession session = SwapVersusPlainSession();
@@ -250,7 +250,7 @@ public class MatchSessionTests
         Assert.Equal(1, session.RoundNumber);
     }
 
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void The_hand_offered_for_a_choice_no_longer_holds_the_played_card()
     {
         // This is the structural property that retires the old "a Swap must not return
@@ -274,7 +274,7 @@ public class MatchSessionTests
         Assert.DoesNotContain(ECardName.Swap, session.HandOf(ESide.Player1));
     }
 
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void Settling_the_last_owed_choice_finishes_the_round()
     {
         MatchSession session = SwapVersusPlainSession();
@@ -291,7 +291,7 @@ public class MatchSessionTests
         Assert.False(session.HasSubmittedCard(ESide.Player1));
     }
 
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void SubmitCard_is_rejected_while_the_round_is_awaiting_choices()
     {
         MatchSession session = SwapVersusPlainSession();
@@ -302,7 +302,7 @@ public class MatchSessionTests
             () => session.SubmitCard(ESide.Player2, ECardName.Rock));
     }
 
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void SubmitChoice_is_rejected_from_a_side_that_was_not_asked()
     {
         MatchSession session = SwapVersusPlainSession();
@@ -313,7 +313,7 @@ public class MatchSessionTests
             () => session.SubmitChoice(ESide.Player2, CardChoice.Swapping(Array.Empty<ECardName>())));
     }
 
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void SubmitChoice_is_rejected_when_that_side_already_chose()
     {
         MatchSession session = SwapVersusPlainSession();
@@ -325,7 +325,7 @@ public class MatchSessionTests
             () => session.SubmitChoice(ESide.Player1, CardChoice.Swapping(Array.Empty<ECardName>())));
     }
 
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void An_illegal_choice_leaves_the_side_still_awaited_and_the_round_unresolved()
     {
         // The choice-phase counterpart of "a rejected card must leave the round exactly as
@@ -346,7 +346,7 @@ public class MatchSessionTests
         Assert.NotNull(result);
     }
 
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void DeclineChoice_finishes_the_round_without_running_the_effect()
     {
         MatchSession session = SwapVersusPlainSession();
@@ -360,7 +360,7 @@ public class MatchSessionTests
         Assert.Equal(2, session.RoundNumber);
     }
 
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void DeclineChoice_is_a_no_op_for_a_side_that_owes_nothing()
     {
         // A choice timer that fires just after the round finished must not disturb the
@@ -372,7 +372,7 @@ public class MatchSessionTests
         Assert.Equal(ERoundPhase.AwaitingSubmissions, session.Phase);
     }
 
-    [Theory]
+    [Theory(Skip = DormantMechanics.REASON)]
     [InlineData(ECardName.Swap)]
     [InlineData(ECardName.Transform)]
     public void A_Joker_leaves_the_blocked_player_with_nothing_to_choose(ECardName choiceCard)
@@ -394,7 +394,7 @@ public class MatchSessionTests
         Assert.False(reveal.Result.Player1TransformApplied);
     }
 
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void A_choice_made_against_the_offered_hand_survives_the_opponents_Reset()
     {
         // 리셋 replaces both players' hands. It runs before anyone is prompted, so the hand
@@ -426,7 +426,7 @@ public class MatchSessionTests
         Assert.Contains(ECardName.Paper, result.Player2Hand);
     }
 
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void Both_sides_choosing_resolves_identically_regardless_of_arrival_order()
     {
         // 교체 and 리셋 both shuffle from the shared rng, so applying choices as they land

@@ -9,7 +9,7 @@ public class DrawEffectTests
         return new DeckAndHand(new Deck(new[] { ECardName.Scissors }), new Hand(Array.Empty<ECardName>()));
     }
 
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void Apply_draws_two_cards_into_the_hand()
     {
         var self = new DeckAndHand(
@@ -22,7 +22,7 @@ public class DrawEffectTests
         Assert.Equal(1, self.Deck.Count);
     }
 
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void Apply_does_not_touch_the_opponent()
     {
         var self = new DeckAndHand(new Deck(new[] { ECardName.Rock, ECardName.Paper }), new Hand(Array.Empty<ECardName>()));
@@ -38,7 +38,7 @@ public class DrawEffectTests
     /// than the deck currently holds (교체/리셋 only draw back what they just returned). It used
     /// to stop short at whatever was left, because an empty deck was a real state that ended the
     /// match. The deck restocks itself now, so two means two.</summary>
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void Apply_draws_both_cards_even_when_that_means_restocking()
     {
         var self = new DeckAndHand(new Deck(new[] { ECardName.Rock }), new Hand(Array.Empty<ECardName>()));

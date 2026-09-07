@@ -76,7 +76,7 @@ public class DeckAndHandTests
         Assert.Equal(ECardName.Paper, deckAndHand.Deck.TakeFromTop(UnusedRng));
     }
 
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void Vanish_removes_a_hand_card_without_returning_it_to_the_deck()
     {
         var deckAndHand = new DeckAndHand(

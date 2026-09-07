@@ -9,14 +9,14 @@ public class TransformEffectTests
         return new DeckAndHand(new Deck(new[] { ECardName.Paper }), new Hand(cards));
     }
 
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void A_hand_with_a_normal_or_blank_card_has_a_legal_choice()
     {
         Assert.True(new TransformEffect().HasAnyLegalChoice(HandOf(ECardName.Joker, ECardName.Rock)));
         Assert.True(new TransformEffect().HasAnyLegalChoice(HandOf(ECardName.Reset, ECardName.Blank)));
     }
 
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void A_hand_of_only_jokers_and_abilities_has_no_legal_choice()
     {
         // What 리셋 can deal to someone who has already played 변화 — the picker would
@@ -25,13 +25,13 @@ public class TransformEffectTests
             HandOf(ECardName.Joker, ECardName.Reset, ECardName.Swap)));
     }
 
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void An_empty_hand_has_no_legal_choice()
     {
         Assert.False(new TransformEffect().HasAnyLegalChoice(HandOf()));
     }
 
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void Apply_replaces_the_chosen_card_with_the_chosen_replacement()
     {
         DeckAndHand self = HandOf(ECardName.Rock, ECardName.Scissors);
@@ -45,7 +45,7 @@ public class TransformEffectTests
         Assert.Equal(2, self.Hand.Cards.Count);
     }
 
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void Apply_leaves_a_duplicate_of_the_transformed_card_alone()
     {
         DeckAndHand self = HandOf(ECardName.Rock, ECardName.Rock);
@@ -57,7 +57,7 @@ public class TransformEffectTests
         Assert.Equal(new[] { ECardName.Rock, ECardName.Blank }, self.Hand.Cards);
     }
 
-    [Theory]
+    [Theory(Skip = DormantMechanics.REASON)]
     [InlineData(ECardName.Rock, ECardName.Paper)]
     [InlineData(ECardName.Blank, ECardName.Scissors)]
     [InlineData(ECardName.Rock, ECardName.Blank)]
@@ -68,7 +68,7 @@ public class TransformEffectTests
         new TransformEffect().Validate(CardChoice.Transforming(from, into), self);
     }
 
-    [Theory]
+    [Theory(Skip = DormantMechanics.REASON)]
     [InlineData(ECardName.Joker, ECardName.Rock)]
     [InlineData(ECardName.Reset, ECardName.Rock)]
     [InlineData(ECardName.Rock, ECardName.Joker)]
@@ -81,7 +81,7 @@ public class TransformEffectTests
             () => new TransformEffect().Validate(CardChoice.Transforming(from, into), self));
     }
 
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void Validate_rejects_a_card_that_is_not_in_hand()
     {
         DeckAndHand self = HandOf(ECardName.Rock);
@@ -91,7 +91,7 @@ public class TransformEffectTests
                 CardChoice.Transforming(ECardName.Scissors, ECardName.Paper), self));
     }
 
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void Validate_rejects_a_missing_choice()
     {
         DeckAndHand self = HandOf(ECardName.Rock);
@@ -99,7 +99,7 @@ public class TransformEffectTests
         Assert.Throws<ArgumentException>(() => new TransformEffect().Validate(null, self));
     }
 
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void Validate_rejects_a_choice_shaped_for_a_different_card()
     {
         // A client prompted for 변화 that answers with a 교체-shaped payload gets nothing

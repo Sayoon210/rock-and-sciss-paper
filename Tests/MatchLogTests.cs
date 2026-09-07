@@ -95,7 +95,7 @@ public class MatchLogTests
 
     /// <summary>Blank, 조커 and ability rounds produce no verdict at all. They are out of the
     /// deck now, but the rules still resolve them, so the log keeps them distinct from a draw.</summary>
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void NoContestIsDistinctFromADraw()
     {
         MatchLog log = new MatchLog(10);

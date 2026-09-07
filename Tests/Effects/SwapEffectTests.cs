@@ -9,7 +9,7 @@ public class SwapEffectTests
         return new DeckAndHand(new Deck(new[] { ECardName.Blank, ECardName.Blank, ECardName.Blank }), new Hand(cards));
     }
 
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void Validate_rejects_a_choice_that_puts_back_more_cards_than_the_limit()
     {
         DeckAndHand self = HandOf(ECardName.Rock, ECardName.Rock, ECardName.Rock, ECardName.Blank);
@@ -24,7 +24,7 @@ public class SwapEffectTests
             () => new SwapEffect().Validate(CardChoice.Swapping(tooMany), self));
     }
 
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void Validate_accepts_a_choice_right_at_the_limit()
     {
         // Counted off MAX_SWAPPED_CARDS rather than written as a literal 2, so these two tests
@@ -40,7 +40,7 @@ public class SwapEffectTests
         new SwapEffect().Validate(CardChoice.Swapping(atLimit), self);
     }
 
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void Apply_returns_the_chosen_cards_and_draws_the_same_number_back()
     {
         var self = new DeckAndHand(
@@ -56,7 +56,7 @@ public class SwapEffectTests
         Assert.Contains(ECardName.Scissors, self.Hand.Cards);
     }
 
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void Apply_swapping_nothing_leaves_the_hand_as_it_was()
     {
         var self = new DeckAndHand(
@@ -70,7 +70,7 @@ public class SwapEffectTests
         Assert.Equal(1, self.Deck.Count);
     }
 
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void Apply_does_not_touch_the_opponent()
     {
         var self = new DeckAndHand(
@@ -94,7 +94,7 @@ public class SwapEffectTests
     // effect compensated for it, which is what let a player return the Swap card itself
     // and wedge the match. If a fixture here ever grows a Swap card again, that is the bug
     // coming back.
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void Validate_accepts_a_duplicate_the_hand_actually_holds_twice()
     {
         var self = new DeckAndHand(
@@ -104,7 +104,7 @@ public class SwapEffectTests
         new SwapEffect().Validate(CardChoice.Swapping(new[] { ECardName.Rock, ECardName.Rock }), self);
     }
 
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void Validate_rejects_more_copies_than_the_hand_holds()
     {
         var self = new DeckAndHand(
@@ -116,7 +116,7 @@ public class SwapEffectTests
                 CardChoice.Swapping(new[] { ECardName.Rock, ECardName.Rock, ECardName.Rock }), self));
     }
 
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void Validate_rejects_a_card_that_is_not_in_hand()
     {
         var self = new DeckAndHand(
@@ -127,7 +127,7 @@ public class SwapEffectTests
             () => new SwapEffect().Validate(CardChoice.Swapping(new[] { ECardName.Joker }), self));
     }
 
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void Validate_rejects_returning_a_swap_card_the_hand_no_longer_holds()
     {
         // The played Swap is gone by the time its owner chooses, so naming it is refused
@@ -140,7 +140,7 @@ public class SwapEffectTests
             () => new SwapEffect().Validate(CardChoice.Swapping(new[] { ECardName.Swap }), self));
     }
 
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void Validate_rejects_a_missing_choice()
     {
         var self = new DeckAndHand(

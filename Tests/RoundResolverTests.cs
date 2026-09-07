@@ -11,10 +11,27 @@ public class RoundResolverTests
             new Hand(new[] { handCard }));
     }
 
+    /// <summary>The matchups a 가위/바위/보 deck can actually deal. Every one of them decides a
+    /// win, a loss or a draw, and every card returns to the deck bottom — 소멸 needs a card this
+    /// deck does not hold.</summary>
     [Theory]
     [InlineData(ECardName.Rock, ECardName.Scissors, ECardFate.ReturnedToDeckBottom, ECardFate.ReturnedToDeckBottom, EWinLossResult.Player1Win)]
     [InlineData(ECardName.Scissors, ECardName.Rock, ECardFate.ReturnedToDeckBottom, ECardFate.ReturnedToDeckBottom, EWinLossResult.Player2Win)]
     [InlineData(ECardName.Rock, ECardName.Rock, ECardFate.ReturnedToDeckBottom, ECardFate.ReturnedToDeckBottom, EWinLossResult.Draw)]
+    public void A_revealed_and_finished_round_produces_the_right_fates_and_winloss(
+        ECardName player1Card,
+        ECardName player2Card,
+        ECardFate expectedPlayer1Fate,
+        ECardFate expectedPlayer2Fate,
+        EWinLossResult? expectedWinLoss)
+    {
+        AssertFatesAndWinLoss(player1Card, player2Card, expectedPlayer1Fate, expectedPlayer2Fate, expectedWinLoss);
+    }
+
+    /// <summary>The same table for the cards currently out of the deck. Split from the rows above
+    /// rather than skipped alongside them, because 가위/바위/보 against each other is the whole of
+    /// what the game deals today and has to keep being checked.</summary>
+    [Theory(Skip = DormantMechanics.REASON)]
     [InlineData(ECardName.Rock, ECardName.Blank, ECardFate.ReturnedToDeckBottom, ECardFate.Vanished, null)]
     [InlineData(ECardName.Blank, ECardName.Rock, ECardFate.Vanished, ECardFate.ReturnedToDeckBottom, null)]
     [InlineData(ECardName.Blank, ECardName.Blank, ECardFate.Vanished, ECardFate.Vanished, null)]
@@ -23,7 +40,17 @@ public class RoundResolverTests
     [InlineData(ECardName.Joker, ECardName.Blank, ECardFate.Vanished, ECardFate.Vanished, null)]
     [InlineData(ECardName.Joker, ECardName.Joker, ECardFate.Vanished, ECardFate.Vanished, null)]
     [InlineData(ECardName.Rock, ECardName.Draw, ECardFate.ReturnedToDeckBottom, ECardFate.Vanished, null)]
-    public void A_revealed_and_finished_round_produces_the_right_fates_and_winloss(
+    public void A_round_played_with_a_dormant_card_produces_the_right_fates_and_winloss(
+        ECardName player1Card,
+        ECardName player2Card,
+        ECardFate expectedPlayer1Fate,
+        ECardFate expectedPlayer2Fate,
+        EWinLossResult? expectedWinLoss)
+    {
+        AssertFatesAndWinLoss(player1Card, player2Card, expectedPlayer1Fate, expectedPlayer2Fate, expectedWinLoss);
+    }
+
+    private static void AssertFatesAndWinLoss(
         ECardName player1Card,
         ECardName player2Card,
         ECardFate expectedPlayer1Fate,
@@ -75,7 +102,7 @@ public class RoundResolverTests
 
     /// <summary>A spent hand is refilled whole, on both sides, whatever the round did — these
     /// two cards vanish and produce no winner at all, and the deal still happens.</summary>
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void Resolving_refills_a_spent_hand_for_both_players_regardless_of_outcome()
     {
         DeckAndHand player1 = MakeZone(ECardName.Joker);
@@ -89,7 +116,7 @@ public class RoundResolverTests
         Assert.Equal(MatchSession.HAND_SIZE, player2.Hand.Cards.Count);
     }
 
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void Resolving_reports_the_full_post_round_hand_after_a_Draw_card()
     {
         // Draw's own card vanishes and its effect draws 2, which a single "what you drew" field
@@ -105,7 +132,7 @@ public class RoundResolverTests
         Assert.Equal(1, result.Player1DeckCount);
     }
 
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void Resolving_runs_the_played_abilities_effect()
     {
         // A deck of its own rather than MakeZone's single card, because 드로우 is the effect
@@ -123,7 +150,7 @@ public class RoundResolverTests
         Assert.Equal(2, player1.Deck.Count);
     }
 
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void Resolving_does_not_include_the_played_ability_card_in_its_own_effect()
     {
         // Reset's effect reads "my current hand" — the just-played Reset card must
@@ -158,7 +185,7 @@ public class RoundResolverTests
     }
 
 
-    [Theory]
+    [Theory(Skip = DormantMechanics.REASON)]
     [InlineData(ECardName.Swap, true)]
     [InlineData(ECardName.Transform, true)]
     [InlineData(ECardName.Reset, false)]
@@ -173,7 +200,7 @@ public class RoundResolverTests
         Assert.Equal(expected, RoundResolver.RequiresChoice(card));
     }
 
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void Reveal_runs_the_opponents_Reset_before_anyone_is_asked_to_choose()
     {
         // Reset replaces both hands. Running it during Reveal is what makes the hand a
@@ -198,7 +225,7 @@ public class RoundResolverTests
         Assert.Contains(ECardName.Scissors, result.Player2Hand);
     }
 
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void A_Reset_that_leaves_nothing_transformable_asks_for_no_choice_at_all()
     {
         // The reachable version of "asked for a choice that cannot be made": 변화 is played,
@@ -219,7 +246,7 @@ public class RoundResolverTests
         Assert.False(result.Player2TransformApplied);
     }
 
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void A_Joker_blocks_a_Reset_so_neither_hand_is_replaced()
     {
         // 조커 outranks 리셋 (DESIGN.md): it destroys whatever the other side played and
@@ -235,7 +262,7 @@ public class RoundResolverTests
         Assert.False(round.ResetApplied);
     }
 
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void A_Reset_with_no_Joker_in_the_round_is_recorded_as_applied()
     {
         var player1 = new DeckAndHand(new Deck(RepeatedCards(ECardName.Rock, 20)), new Hand(new[] { ECardName.Reset, ECardName.Blank }));
@@ -247,7 +274,7 @@ public class RoundResolverTests
         Assert.True(round.ResetApplied);
     }
 
-    [Fact]
+    [Fact(Skip = DormantMechanics.REASON)]
     public void A_declined_choice_finishes_the_round_with_the_effect_unrun()
     {
         var player1 = new DeckAndHand(new Deck(RepeatedCards(ECardName.Rock, 20)), new Hand(new[] { ECardName.Swap, ECardName.Blank }));

@@ -6,7 +6,7 @@
 
 ![Godot](https://img.shields.io/badge/Godot-4.7%20Mono-478CBF?style=flat-square&logo=godotengine&logoColor=white)
 ![C#](https://img.shields.io/badge/C%23-.NET%208-512BD4?style=flat-square&logo=dotnet&logoColor=white)
-![Tests](https://img.shields.io/badge/xUnit-146%20passed-3FB950?style=flat-square)
+![Tests](https://img.shields.io/badge/xUnit-75%20passed-3FB950?style=flat-square)
 ![Status](https://img.shields.io/badge/status-in%20development-F0883E?style=flat-square)
 
 [시연 영상](https://youtu.be/wyBZq2DbPMs) · [프로젝트 페이지](https://poolc.org/project/518) · [아키텍처](ARCHITECTURE.md) · [개발 로그](DevLogDoc/)
@@ -30,7 +30,7 @@
 | **역할** | 기획 및 개발 (1인 개인 프로젝트) |
 | **기간** | 2026.08 ~ 진행 중 |
 | **엔진** | Godot 4.7 Mono · C# · .NET 8 |
-| **테스트** | xUnit 146개 — Godot 없이 0.1초 |
+| **테스트** | xUnit 75개 — Godot 없이 0.1초 |
 | **네트워크** | ENetMultiplayerPeer · 호스트 권위 1:1 |
 
 ## 아키텍처
@@ -77,7 +77,8 @@ Tests/  xUnit ──────────────────┘         
 
 ### 2. 테스트 구조
 
-Godot을 실행하지 않고, 인스턴스 두 개를 띄워 클릭하지 않고, **0.1초 만에** 규칙 전체를 검증합니다.
+Godot을 실행하지 않고, 인스턴스 두 개를 띄워 클릭하지 않고, **0.1초 만에** 현재 게임
+메커니즘 전체를 검증합니다.
 
 📂 [`Tests/WinLossRulesTests.cs`](Tests/WinLossRulesTests.cs) · [`MatchSessionTests.cs`](Tests/MatchSessionTests.cs)
 
@@ -87,8 +88,13 @@ Godot을 실행하지 않고, 인스턴스 두 개를 띄워 클릭하지 않고
 <br>
 
 ```
-통과!  - 실패: 0, 통과: 146, 건너뜀: 0, 전체: 146, 기간: 100 ms
+통과!  - 실패: 0, 통과: 75, 건너뜀: 52, 전체: 127, 기간: 92 ms
 ```
+
+건너뛴 52개는 **현재 덱에 없는 메커니즘**(공백카드·조커·능력카드 4종)을 검증하는 테스트입니다.
+규칙 코드는 그대로 컴파일되고 있으며, 이 카드들이 아이템으로 복귀할 때 다시 실행됩니다 —
+[`DormantMechanics.cs`](Tests/DormantMechanics.cs)의 상수 하나를 `null`로 바꾸면 전부
+되살아납니다.
 
 | 검증 항목 | 내용 |
 |---|---|
@@ -239,7 +245,7 @@ _shownLocalDelta = _shownLocalDelta.Slerp(_targetLocalDelta, weight).Normalized(
 |---|---|---|
 | [`GameLogic/`](GameLogic/) | 규칙 — 판정 · 덱 · 손패 · 세션 | Godot 참조 0개 |
 | [`GameLogic/Effects/`](GameLogic/Effects/) | 능력카드 4종과 `ICardEffect` | 현재 덱에서 제외, 코드와 테스트는 유지 |
-| [`Tests/`](Tests/) | xUnit 테스트 146개 | `GameLogic`만 참조 |
+| [`Tests/`](Tests/) | xUnit 테스트 — 현재 메커니즘 75개, 휴면 52개 | `GameLogic`만 참조 |
 | [`Scripts/Autoload/`](Scripts/Autoload/) | `GameState` · `NetworkManager` · `CardDatabase` 등 | 세션을 소유하고 중계만 함 |
 | [`Scripts/Match3D/`](Scripts/Match3D/) | 3D 매치 화면 전체 | 판정하지 않음 |
 | [`Scripts/Cards/`](Scripts/Cards/) | `CardData`(Resource) · [`DeckAssembler`](Scripts/Cards/DeckAssembler.cs) | 덱 구성을 결정하는 유일한 지점 |
