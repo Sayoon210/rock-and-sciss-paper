@@ -3,7 +3,7 @@ using RockAndScissPaper.Autoload;
 
 namespace RockAndScissPaper.Match3D;
 
-/// <summary>A countdown of GameState.SUBMIT_TIMEOUT_SECONDS below the health bars — how long
+/// <summary>A countdown of GameState.SUBMIT_TIMEOUT_SECONDS in the top-right corner — how long
 /// until the host plays for whoever has not submitted yet. Ticks on this screen's own clock
 /// rather than being sent updates: SUBMIT_TIMEOUT_SECONDS is public specifically so both sides
 /// can count the same number down independently and stay close enough (see its own doc

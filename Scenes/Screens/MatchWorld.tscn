@@ -13,7 +13,10 @@
 [ext_resource type="PackedScene" uid="uid://br7mxhtotcqmu" path="res://Assets/Models/cc0_scissors.glb" id="13_scissors"]
 [ext_resource type="Script" uid="uid://c8527eqn63qdk" path="res://Scripts/Match3D/ScissorsController.cs" id="14_scissorscontroller"]
 [ext_resource type="Material" path="res://Assets/Materials/TableWood.tres" id="15_tablewood"]
-[ext_resource type="Material" path="res://Assets/Materials/MonochromeExceptRed.tres" id="16_monochrome"]
+[ext_resource type="Script" path="res://Scripts/Match3D/SegmentedHealthBarUI.cs" id="17_segmentedhealth"]
+[ext_resource type="Script" path="res://Scripts/Match3D/OverheadHealthBarUI.cs" id="18_overheadhealth"]
+[ext_resource type="Script" path="res://Scripts/Match3D/DamageVignetteUI.cs" id="19_damagevignette"]
+[ext_resource type="Material" path="res://Assets/Materials/DamageVignette.tres" id="20_vignettematerial"]
 
 [sub_resource type="Environment" id="Environment_match"]
 background_mode = 1
@@ -39,9 +42,6 @@ albedo_color = Color(0.3, 1, 0.45, 0.15)
 
 [sub_resource type="BoxMesh" id="BoxMesh_cardslot"]
 size = Vector3(0.1397, 0.004, 0.19558)
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_healthfill"]
-bg_color = Color(0.29, 0.78, 0.36, 1)
 
 [node name="MatchWorld" type="Node3D" unique_id=2029126377]
 script = ExtResource("1_matchworldview")
@@ -129,6 +129,9 @@ transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0)
 [node name="RemoteHeadLook" type="Node3D" parent="OpponentSeat/Character" unique_id=947021892]
 script = ExtResource("8_remotelook")
 
+[node name="HealthAnchor" type="Marker3D" parent="OpponentSeat/Character" unique_id=947021893]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.51, 0)
+
 [node name="Field" type="Node3D" parent="." unique_id=14686278]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.72, 0)
 
@@ -145,17 +148,20 @@ transform = Transform3D(2, 0, 0, 0, 1.9673088, 0.36013374, 0, -0.36013374, 1.967
 transform = Transform3D(1, 0, 0, 0, 0.90172476, 0.43231076, 0, -0.43231076, 0.90172476, 0, -0.19224954, -0.27267984)
 script = ExtResource("7_handview")
 
-[node name="ColorGrade" type="CanvasLayer" parent="." unique_id=1801000001]
+[node name="ScreenEffects" type="CanvasLayer" parent="." unique_id=1801000001]
 layer = 0
 
-[node name="FullScreen" type="ColorRect" parent="ColorGrade" unique_id=1801000002]
-material = ExtResource("16_monochrome")
+[node name="DamageVignette" type="ColorRect" parent="ScreenEffects" unique_id=1801000002]
+visible = false
+material = ExtResource("20_vignettematerial")
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+color = Color(1, 1, 1, 1)
+script = ExtResource("19_damagevignette")
 
 [node name="MatchInterface" type="CanvasLayer" parent="." unique_id=1442123972]
 
@@ -178,70 +184,78 @@ text = "MATCH_LOG_HINT"
 
 [node name="HealthBars" type="Control" parent="MatchInterface" unique_id=1120044501]
 layout_mode = 3
-anchors_preset = 1
-anchor_left = 1.0
+anchors_preset = 15
 anchor_right = 1.0
-offset_left = -320.0
-offset_top = 20.0
-offset_right = -24.0
-offset_bottom = 165.0
-grow_horizontal = 0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
 script = ExtResource("9_healthbars")
 
-[node name="OpponentHealth" type="VBoxContainer" parent="MatchInterface/HealthBars" unique_id=1120044502]
+[node name="OpponentHealth" type="Control" parent="MatchInterface/HealthBars" unique_id=1120044502]
+layout_mode = 0
+offset_right = 190.0
+offset_bottom = 13.0
+mouse_filter = 2
+script = ExtResource("18_overheadhealth")
+HeadAnchorPath = NodePath("../../../OpponentSeat/Character/HealthAnchor")
+
+[node name="Segments" type="HBoxContainer" parent="MatchInterface/HealthBars/OpponentHealth" unique_id=1120044504]
 layout_mode = 1
-anchors_preset = 10
+anchors_preset = 15
 anchor_right = 1.0
-offset_bottom = 48.0
+anchor_bottom = 1.0
 grow_horizontal = 2
-
-[node name="Label" type="Label" parent="MatchInterface/HealthBars/OpponentHealth" unique_id=1120044503]
-layout_mode = 2
-text = "Opponent"
-
-[node name="Bar" type="ProgressBar" parent="MatchInterface/HealthBars/OpponentHealth" unique_id=1120044504]
-custom_minimum_size = Vector2(0, 18)
-layout_mode = 2
-theme_override_styles/fill = SubResource("StyleBoxFlat_healthfill")
-max_value = 10.0
-value = 10.0
-show_percentage = false
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 3
+script = ExtResource("17_segmentedhealth")
 
 [node name="MyHealth" type="VBoxContainer" parent="MatchInterface/HealthBars" unique_id=1120044505]
 layout_mode = 1
-anchors_preset = 10
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
 anchor_right = 1.0
-offset_top = 60.0
-offset_bottom = 108.0
-grow_horizontal = 2
+anchor_bottom = 1.0
+offset_left = -452.0
+offset_top = -104.0
+offset_right = -32.0
+offset_bottom = -32.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
+theme_override_constants/separation = 8
 
 [node name="Label" type="Label" parent="MatchInterface/HealthBars/MyHealth" unique_id=1120044506]
 layout_mode = 2
 text = "Me"
 
-[node name="Bar" type="ProgressBar" parent="MatchInterface/HealthBars/MyHealth" unique_id=1120044507]
-custom_minimum_size = Vector2(0, 18)
+[node name="Segments" type="HBoxContainer" parent="MatchInterface/HealthBars/MyHealth" unique_id=1120044507]
+custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
-theme_override_styles/fill = SubResource("StyleBoxFlat_healthfill")
-max_value = 10.0
-value = 10.0
-show_percentage = false
+mouse_filter = 2
+theme_override_constants/separation = 6
+script = ExtResource("17_segmentedhealth")
 
-[node name="SubmitTimeout" type="VBoxContainer" parent="MatchInterface/HealthBars" unique_id=1120044520]
-layout_mode = 1
-anchors_preset = 10
+[node name="SubmitTimeout" type="VBoxContainer" parent="MatchInterface" unique_id=1120044520]
+anchors_preset = 1
+anchor_left = 1.0
 anchor_right = 1.0
-offset_top = 120.0
-offset_bottom = 163.0
-grow_horizontal = 2
+offset_left = -404.0
+offset_top = 20.0
+offset_right = -24.0
+offset_bottom = 78.0
+grow_horizontal = 0
+theme_override_constants/separation = 6
 script = ExtResource("11_submittimeout")
 
-[node name="Label" type="Label" parent="MatchInterface/HealthBars/SubmitTimeout" unique_id=1120044521]
+[node name="Label" type="Label" parent="MatchInterface/SubmitTimeout" unique_id=1120044521]
 layout_mode = 2
 text = "Next round in..."
 
-[node name="Bar" type="ProgressBar" parent="MatchInterface/HealthBars/SubmitTimeout" unique_id=1120044522]
-custom_minimum_size = Vector2(0, 18)
+[node name="Bar" type="ProgressBar" parent="MatchInterface/SubmitTimeout" unique_id=1120044522]
+custom_minimum_size = Vector2(0, 26)
 layout_mode = 2
 max_value = 45.0
 value = 45.0
@@ -265,9 +279,9 @@ anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = -420.0
-offset_top = -420.0
+offset_top = -496.0
 offset_right = -24.0
-offset_bottom = -24.0
+offset_bottom = -100.0
 grow_horizontal = 0
 grow_vertical = 0
 

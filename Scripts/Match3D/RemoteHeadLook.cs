@@ -25,6 +25,7 @@ public partial class RemoteHeadLook : Node3D
 {
 	private const string CHARACTER_PATH = "..";
 	private const string ANIMATION_PLAYER_PATH = "../AnimationPlayer";
+	private const string HIT_RECOIL_PATH = "../HitRecoil";
 
 	/// <summary>How fast the shown rotation chases the last received one, as the fraction of
 	/// the remaining gap closed per second — an exponential approach, so it is frame-rate
@@ -40,6 +41,7 @@ public partial class RemoteHeadLook : Node3D
 
 	private Skeleton3D _skeleton = null!;
 	private AnimationPlayer _animationPlayer = null!;
+	private CharacterHitRecoil? _hitRecoil;
 	private int _headBoneIndex;
 	private int _headBoneParentIndex;
 	private Basis _restBoneWorldBasis;
@@ -56,6 +58,11 @@ public partial class RemoteHeadLook : Node3D
 		}
 
 		_animationPlayer = GetNode<AnimationPlayer>(ANIMATION_PLAYER_PATH);
+
+		// Optional: a Character without one simply never recoils. Not required the way the
+		// AnimationPlayer is, because this script also runs against characters that are only
+		// ever looked at (TitleWorld) and would gain nothing from failing over a missing node.
+		_hitRecoil = GetNodeOrNull<CharacterHitRecoil>(HIT_RECOIL_PATH);
 		_skeleton = skeleton;
 		_headBoneIndex = MixamoRig.FindBone(_skeleton, MixamoRig.HEAD);
 		if (_headBoneIndex < 0)
@@ -115,7 +122,13 @@ public partial class RemoteHeadLook : Node3D
 		// The smoothing runs above this rather than below it, so the head the clip hands back
 		// is already caught up with what the opponent was doing meanwhile, instead of starting
 		// to catch up only once the clip is over.
-		_lookAuthority = BoneLookRotator.RampedAuthority(_lookAuthority, _animationPlayer.IsPlaying(), delta);
+		// A recoil takes the head off the look direction for the same reason a clip does, and it
+		// has to: this bone is held to a WORLD orientation, so a spine bending back underneath a
+		// head that stayed exactly where the mouse left it would stretch the neck out of the
+		// body rather than move it. Handing the bone over lets the head ride the chain instead,
+		// and RampedAuthority gives it back over the same third of a second afterwards.
+		bool somethingElseOwnsTheHead = _animationPlayer.IsPlaying() || (_hitRecoil?.IsRecoiling ?? false);
+		_lookAuthority = BoneLookRotator.RampedAuthority(_lookAuthority, somethingElseOwnsTheHead, delta);
 
 		Basis desiredBoneWorldBasis = (_restBoneWorldBasis * new Basis(_shownLocalDelta)).Orthonormalized();
 		BoneLookRotator.Apply(

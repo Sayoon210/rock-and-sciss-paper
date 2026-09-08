@@ -25,6 +25,20 @@ public static class MixamoRig
     public const string HEAD = "Head";
     public const string RIGHT_HAND = "RightHand";
 
+    /// <summary>Both arms, shoulder joint to wrist. "ForeArm" is Mixamo's spelling.</summary>
+    public const string LEFT_ARM = "LeftArm";
+    public const string LEFT_FORE_ARM = "LeftForeArm";
+    public const string LEFT_HAND = "LeftHand";
+    public const string RIGHT_ARM = "RightArm";
+    public const string RIGHT_FORE_ARM = "RightForeArm";
+
+    /// <summary>The three bones between the hips and the neck, lowest first. Mixamo numbers
+    /// them rather than naming them, so the digits are part of the rig's vocabulary and not an
+    /// abbreviation of ours.</summary>
+    public const string SPINE = "Spine";
+    public const string SPINE_1 = "Spine1";
+    public const string SPINE_2 = "Spine2";
+
     /// <summary>The bone's index, or -1 when this rig has no such bone. Accepts both
     /// "&lt;prefix&gt;_Head" and a bare "Head", so a rig exported without a prefix works too.
     /// The underscore is part of the match on purpose: a plain EndsWith would let RIGHT_HAND

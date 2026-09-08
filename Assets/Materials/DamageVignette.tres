@@ -1,0 +1,11 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3]
+
+[ext_resource type="Shader" path="res://Shaders/DamageVignette.gdshader" id="1_damagevignette"]
+
+[resource]
+resource_name = "DamageVignette"
+shader = ExtResource("1_damagevignette")
+shader_parameter/intensity = 0.0
+shader_parameter/blood_color = Color(0.42, 0.02, 0.02, 1)
+shader_parameter/inner_radius = 0.45
+shader_parameter/outer_radius = 1.15

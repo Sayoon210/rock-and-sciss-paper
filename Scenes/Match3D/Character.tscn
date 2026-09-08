@@ -1,10 +1,11 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="PackedScene" uid="uid://gpgmiwxrq3gj" path="res://Assets/Models/MainCharacter.glb" id="1_model"]
 [ext_resource type="AnimationLibrary" uid="uid://d1p4is3tck5wl" path="res://Assets/Models/main_amature_nomesh.glb" id="2_animations"]
 [ext_resource type="AnimationLibrary" uid="uid://bldysao8nrbfk" path="res://Assets/Models/Paper_animation_only.glb" id="5_paper"]
 [ext_resource type="Script" uid="uid://w1ypfpogo53j" path="res://Scripts/Match3D/CharacterIdlePose.cs" id="3_idlepose"]
 [ext_resource type="Script" uid="uid://wnbq0587kv1x" path="res://Scripts/Match3D/CharacterHeadFade.cs" id="4_headfade"]
+[ext_resource type="Script" path="res://Scripts/Match3D/CharacterHitRecoil.cs" id="6_hitrecoil"]
 
 [node name="Character" instance=ExtResource("1_model")]
 script = ExtResource("3_idlepose")
@@ -21,3 +22,6 @@ transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 0.247, 0.797, 0.25)
 [node name="HeadFade" type="Node3D" parent="."]
 script = ExtResource("4_headfade")
 HeadAreaMeshNames = PackedStringArray("Ch28_Body", "Ch28_Eyelashes", "Ch28_Hair")
+
+[node name="HitRecoil" type="Node3D" parent="."]
+script = ExtResource("6_hitrecoil")

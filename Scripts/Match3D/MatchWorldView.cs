@@ -51,6 +51,11 @@ public partial class MatchWorldView : Node3D
 	// table jumps, the head does not.
 	private const float PAPER_SHAKE_STRENGTH = 0.55f;
 
+	/// <summary>How hard a landed 바위 throws the loser's upper body backwards, as a fraction of
+	/// CharacterHitRecoil's own full bend. Full: this is the one blow that is a fist to a face,
+	/// and the recoil exists to sell it. See CharacterHitRecoil for why the other two get none.</summary>
+	private const float PUNCH_RECOIL_STRENGTH = 1f;
+
 	private const string CARD_VIEW_SCENE_PATH = "res://Scenes/Match3D/CardView.tscn";
 	private const string MY_CHARACTER_PATH = "MySeat/Character";
 	private const string OPPONENT_CHARACTER_PATH = "OpponentSeat/Character";
@@ -64,11 +69,17 @@ public partial class MatchWorldView : Node3D
 	private const string ROUND_INTRO_PATH = "MatchInterface/RoundIntro";
 	private const string ROUND_INTRO_LABEL_PATH = "MatchInterface/RoundIntro/Label";
 	private const string ROUND_LABEL_PATH = "MatchInterface/Readout/RoundLabel";
+	private const string HEALTH_BARS_PATH = "MatchInterface/HealthBars";
+	private const string DAMAGE_VIGNETTE_PATH = "ScreenEffects/DamageVignette";
 	private const string ANIMATION_DEBUG_CONTAINER_PATH = "DebugInterface/AnimationButtons";
 
 	/// <summary>Relative to a seat's Character node: the pose a pair of scissors is pinned to
 	/// when that seat's occupant is the one who got stabbed.</summary>
 	private const string STUCK_TARGET_PATH = "ScissorsStuckTarget";
+
+	/// <summary>Relative to a seat's Character node: the upper-body recoil. Only the opponent's
+	/// is ever used — see CharacterHitRecoil.</summary>
+	private const string HIT_RECOIL_PATH = "HitRecoil";
 
 	// Cards lie flat on the table, so the slab is turned face-up out of its default upright
 	// pose. My card is turned to read from my side; the opponent's is turned the other way,
@@ -132,6 +143,7 @@ public partial class MatchWorldView : Node3D
 	private ScissorsController _opponentScissors = null!;
 	private Node3D _myStuckTarget = null!;
 	private Node3D _opponentStuckTarget = null!;
+	private CharacterHitRecoil _opponentRecoil = null!;
 	private CardView _myPlayedCard = null!;
 	private CardView _opponentPlayedCard = null!;
 	private HandView _handView = null!;
@@ -139,6 +151,8 @@ public partial class MatchWorldView : Node3D
 	private Control _roundIntroOverlay = null!;
 	private Label _roundIntroLabel = null!;
 	private Label _roundLabel = null!;
+	private HealthBarsUI _healthBars = null!;
+	private DamageVignetteUI _damageVignette = null!;
 
 	// Starts in Open rather than Intro: nothing below ever advances this without a GameState
 	// signal, and the scene runs standalone too (HandView's own fallback hand, for judging the
@@ -151,6 +165,12 @@ public partial class MatchWorldView : Node3D
 	// there is nothing to wait for, which is what keeps the shake to one kick per blow.
 	private string? _blowClipAwaitingImpact;
 	private AnimationPlayer? _blowAnimationPlayer;
+
+	/// <summary>The body to throw backwards when that blow lands, or null when this round has
+	/// none to throw. Armed beside the clip rather than worked out at the impact frame, because
+	/// the question it answers ("did I win, and with what") is already settled where the clip is
+	/// chosen.</summary>
+	private CharacterHitRecoil? _recoilAwaitingImpact;
 
 	public override void _Ready()
 	{
@@ -184,11 +204,14 @@ public partial class MatchWorldView : Node3D
 		// the same job because they hang off the Table, in world terms, rather than off a seat.)
 		_myStuckTarget = _myCharacter.GetNode<Node3D>(STUCK_TARGET_PATH);
 		_opponentStuckTarget = _opponentCharacter.GetNode<Node3D>(STUCK_TARGET_PATH);
+		_opponentRecoil = _opponentCharacter.GetNode<CharacterHitRecoil>(HIT_RECOIL_PATH);
 		_opponentStuckTarget.Transform = _myStuckTarget.Transform;
 		_headCamera = GetNode<HeadFollowCamera>(HEAD_CAMERA_PATH);
 		_roundIntroOverlay = GetNode<Control>(ROUND_INTRO_PATH);
 		_roundIntroLabel = GetNode<Label>(ROUND_INTRO_LABEL_PATH);
 		_roundLabel = GetNode<Label>(ROUND_LABEL_PATH);
+		_healthBars = GetNode<HealthBarsUI>(HEALTH_BARS_PATH);
+		_damageVignette = GetNode<DamageVignetteUI>(DAMAGE_VIGNETTE_PATH);
 
 		_myPlayedCard = AddCardToSlot("Table/MyCardSlot", MY_CARD_ROTATION);
 		_opponentPlayedCard = AddCardToSlot("Table/OpponentCardSlot", OPPONENT_CARD_ROTATION);
@@ -390,6 +413,7 @@ public partial class MatchWorldView : Node3D
 		if (_blowAnimationPlayer!.CurrentAnimation != _blowClipAwaitingImpact)
 		{
 			_blowClipAwaitingImpact = null;
+			_recoilAwaitingImpact = null;
 			return;
 		}
 
@@ -419,7 +443,26 @@ public partial class MatchWorldView : Node3D
 		}
 
 		_headCamera.Shake(shakeStrength);
+		_recoilAwaitingImpact?.Kick(PUNCH_RECOIL_STRENGTH);
+		CommitResolvedHealth();
 		_blowClipAwaitingImpact = null;
+		_recoilAwaitingImpact = null;
+	}
+
+	/// <summary>Hands the round's already-settled health to the bars, and reddens the screen
+	/// edge if the player is the one who lost some.
+	///
+	/// Called at the exact frame a blow lands (above), so the cells go out and burst on the
+	/// impact rather than when RoundResolved arrived — that signal fires before the cards have
+	/// even flipped face up, roughly 1.2 seconds ahead of any punch, and a health bar that
+	/// drains before the reveal is a spoiler as well as a mistimed one.
+	///
+	/// A round with no blow to wait on (a draw, or a win with a card whose animation is not
+	/// authored) never reaches that frame, so EnterResultHoldPhase calls this itself instead.
+	/// Every resolved round therefore commits exactly once.</summary>
+	private void CommitResolvedHealth()
+	{
+		_damageVignette.Flash(_healthBars.ShowCurrentHealth());
 	}
 
 	/// <summary>Plays the blow on the side that won, chosen by the card it won with — 바위
@@ -458,6 +501,16 @@ public partial class MatchWorldView : Node3D
 		_blowAnimationPlayer =
 			(didIWin ? _myCharacter : _opponentCharacter).GetNode<AnimationPlayer>(ANIMATION_PLAYER_PATH);
 		_blowClipAwaitingImpact = animationName;
+
+		// Only the opponent's body, and only for a punch the local player threw. The loser's own
+		// screen is looking out of the loser's own eyes, so there is nothing there to watch bend
+		// — that side already feels the blow as the camera shake above, which fires either way.
+		// CharacterHitRecoil carries the rest of the reasoning, 가위 and 보 included.
+		_recoilAwaitingImpact = null;
+		if (didIWin && winningCard.Value == ECardName.Rock)
+		{
+			_recoilAwaitingImpact = _opponentRecoil;
+		}
 
 		// The prop only exists for the 가위 clip — 바위 and 보 land bare-handed. Needs no RPC of its
 		// own: both screens reach here off the same already-agreed LastRoundOutcome, and each
@@ -552,83 +605,91 @@ public partial class MatchWorldView : Node3D
 			case EPresentationPhase.ResultHold:
 				// Only reached for a round with no blow to wait on — a blow-driven hold clears
 				// itself via PlayWinningBlow's onFinished callback instead of this timer.
-                EnterResultSettlePhase();
-                break;
+				EnterResultSettlePhase();
+				break;
 
-            case EPresentationPhase.ResultSettle:
-                EnterNextRoundOrIdle();
-                break;
-        }
-    }
+			case EPresentationPhase.ResultSettle:
+				EnterNextRoundOrIdle();
+				break;
+		}
+	}
 
-    private void EnterIntroPhase()
-    {
-        _phase = EPresentationPhase.Intro;
-        _phaseSecondsRemaining = (float)GameState.ROUND_INTRO_SECONDS;
-        _headCamera.SetRoundIntroLocked(true);
+	private void EnterIntroPhase()
+	{
+		_phase = EPresentationPhase.Intro;
+		_phaseSecondsRemaining = (float)GameState.ROUND_INTRO_SECONDS;
+		_headCamera.SetRoundIntroLocked(true);
 
-        // Both pairs are told an intro happened; each decides for itself whether this is the one
-        // it leaves on. A planted pair sits out the whole round after the stab and goes home on
-        // the intro after that, so this is deliberately NOT an unconditional send-home.
-        _myScissors.OnRoundIntro();
-        _opponentScissors.OnRoundIntro();
+		// Both pairs are told an intro happened; each decides for itself whether this is the one
+		// it leaves on. A planted pair sits out the whole round after the stab and goes home on
+		// the intro after that, so this is deliberately NOT an unconditional send-home.
+		_myScissors.OnRoundIntro();
+		_opponentScissors.OnRoundIntro();
 
-        _roundIntroLabel.Text = string.Format(Tr("MATCH_ROUND"), GameState.Instance!.View.RoundNumber);
-        _roundIntroOverlay.Visible = true;
-        _roundIntroOverlay.Modulate = new Color(1f, 1f, 1f, 0f);
-    }
+		_roundIntroLabel.Text = string.Format(Tr("MATCH_ROUND"), GameState.Instance!.View.RoundNumber);
+		_roundIntroOverlay.Visible = true;
+		_roundIntroOverlay.Modulate = new Color(1f, 1f, 1f, 0f);
+	}
 
-    /// <summary>Fades the whole splash (dim backdrop and text together, since both are
-    /// children of the one Control this sets Modulate on) in over the first
-    /// ROUND_INTRO_FADE_SECONDS, holds, then out over the last ROUND_INTRO_FADE_SECONDS.</summary>
-    private void UpdateIntroFade()
-    {
-        float elapsed = (float)GameState.ROUND_INTRO_SECONDS - _phaseSecondsRemaining;
-        float alpha;
-        if (elapsed < ROUND_INTRO_FADE_SECONDS)
-        {
-            alpha = elapsed / ROUND_INTRO_FADE_SECONDS;
-        }
-        else if (_phaseSecondsRemaining < ROUND_INTRO_FADE_SECONDS)
-        {
-            alpha = _phaseSecondsRemaining / ROUND_INTRO_FADE_SECONDS;
-        }
-        else
-        {
-            alpha = 1f;
-        }
+	/// <summary>Fades the whole splash (dim backdrop and text together, since both are
+	/// children of the one Control this sets Modulate on) in over the first
+	/// ROUND_INTRO_FADE_SECONDS, holds, then out over the last ROUND_INTRO_FADE_SECONDS.</summary>
+	private void UpdateIntroFade()
+	{
+		float elapsed = (float)GameState.ROUND_INTRO_SECONDS - _phaseSecondsRemaining;
+		float alpha;
+		if (elapsed < ROUND_INTRO_FADE_SECONDS)
+		{
+			alpha = elapsed / ROUND_INTRO_FADE_SECONDS;
+		}
+		else if (_phaseSecondsRemaining < ROUND_INTRO_FADE_SECONDS)
+		{
+			alpha = _phaseSecondsRemaining / ROUND_INTRO_FADE_SECONDS;
+		}
+		else
+		{
+			alpha = 1f;
+		}
 
-        _roundIntroOverlay.Modulate = new Color(1f, 1f, 1f, Mathf.Clamp(alpha, 0f, 1f));
-    }
+		_roundIntroOverlay.Modulate = new Color(1f, 1f, 1f, Mathf.Clamp(alpha, 0f, 1f));
+	}
 
-    private void EnterOpenPhase()
-    {
-        _phase = EPresentationPhase.Open;
-        _phaseSecondsRemaining = 0f;
-        _headCamera.SetRoundIntroLocked(false);
-        _roundIntroOverlay.Visible = false;
-    }
+	private void EnterOpenPhase()
+	{
+		_phase = EPresentationPhase.Open;
+		_phaseSecondsRemaining = 0f;
+		_headCamera.SetRoundIntroLocked(false);
+		_roundIntroOverlay.Visible = false;
+	}
 
-    /// <summary>A held beat between the cards finishing their turn and the winner moving. Without
-    /// it the blow starts on the very frame the flip ends, which leaves the player no moment to
-    /// read what was actually played before the character is already swinging.
-    ///
-    /// A phase of its own rather than a delay buried in the blow, so the wait is visible in the
-    /// machine above and cannot be mistaken for part of the clip when the clip is replaced.</summary>
-    private void EnterResultBeatPhase()
-    {
-        _phase = EPresentationPhase.ResultBeat;
-        _phaseSecondsRemaining = RESULT_BEAT_SECONDS;
-    }
+	/// <summary>A held beat between the cards finishing their turn and the winner moving. Without
+	/// it the blow starts on the very frame the flip ends, which leaves the player no moment to
+	/// read what was actually played before the character is already swinging.
+	///
+	/// A phase of its own rather than a delay buried in the blow, so the wait is visible in the
+	/// machine above and cannot be mistaken for part of the clip when the clip is replaced.</summary>
+	private void EnterResultBeatPhase()
+	{
+		_phase = EPresentationPhase.ResultBeat;
+		_phaseSecondsRemaining = RESULT_BEAT_SECONDS;
+	}
 
-    private void EnterResultHoldPhase()
-    {
-        _phase = EPresentationPhase.ResultHold;
+	private void EnterResultHoldPhase()
+	{
+		_phase = EPresentationPhase.ResultHold;
 
-        bool isBlowPlaying = PlayWinningBlow(EnterResultSettlePhase);
-        // A blow already in flight clears this phase through its own onFinished callback
+		bool isBlowPlaying = PlayWinningBlow(EnterResultSettlePhase);
+		// A blow already in flight clears this phase through its own onFinished callback
 		// instead — see AdvancePhase's ResultHold case.
 		_phaseSecondsRemaining = isBlowPlaying ? 0f : NO_ANIMATION_RESULT_HOLD_SECONDS;
+
+		// With a blow, the health lands on its impact frame instead (see CommitResolvedHealth).
+		// Without one there is no impact to wait for, and the hold itself is the moment the
+		// result is being shown.
+		if (!isBlowPlaying)
+		{
+			CommitResolvedHealth();
+		}
 	}
 
 	private void EnterResultSettlePhase()
@@ -638,17 +699,17 @@ public partial class MatchWorldView : Node3D
 	}
 
 	/// <summary>No dedicated match-end screen yet — MatchLogPanel's own "=== Match won/lost
-    /// ===" line (Tab to see it) is the whole of it for now. So a finished match just settles
-    /// here: camera unlocked, splash stays down, nothing left to submit.</summary>
-    private void EnterNextRoundOrIdle()
-    {
-        if (GameState.Instance!.View.MatchResult.HasValue)
-        {
-            _phase = EPresentationPhase.Open;
-            _headCamera.SetRoundIntroLocked(false);
-            return;
-        }
+	/// ===" line (Tab to see it) is the whole of it for now. So a finished match just settles
+	/// here: camera unlocked, splash stays down, nothing left to submit.</summary>
+	private void EnterNextRoundOrIdle()
+	{
+		if (GameState.Instance!.View.MatchResult.HasValue)
+		{
+			_phase = EPresentationPhase.Open;
+			_headCamera.SetRoundIntroLocked(false);
+			return;
+		}
 
-        EnterIntroPhase();
-    }
+		EnterIntroPhase();
+	}
 }
