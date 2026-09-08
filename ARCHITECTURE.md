@@ -93,6 +93,9 @@ graph TD
         HeadFollowCamera
         ScissorsController
         HealthBarsUI
+        SegmentedHealthBarUI
+        OverheadHealthBarUI
+        DamageVignetteUI
         MatchLogPanel
         SubmitTimeoutGaugeUI
         RemoteHeadLook
@@ -116,6 +119,7 @@ graph TD
     end
 
     TitleScreenUI --> ScreenRouter
+    TitleScreenUI --> ConnectionScreenUI
     ConnectionScreenUI --> GameState
     ConnectionScreenUI --> NetworkManager
     ConnectionScreenUI --> ScreenRouter
@@ -127,9 +131,13 @@ graph TD
     MatchWorldView --> HeadFollowCamera
     MatchWorldView --> ScissorsController
     MatchWorldView --> CharacterAnimationController
+    MatchWorldView --> HealthBarsUI
+    MatchWorldView --> DamageVignetteUI
     HandView --> CardView
     HandView --> GameState
     HealthBarsUI --> GameState
+    HealthBarsUI --> SegmentedHealthBarUI
+    OverheadHealthBarUI --> SegmentedHealthBarUI
     MatchLogPanel --> GameState
     SubmitTimeoutGaugeUI --> GameState
     RemoteHeadLook --> GameState
@@ -256,9 +264,54 @@ graph TD
   (`ScissorsController`) — 라운드 수를 세지 않는다. 찌르기 자체가 `PlayWinningBlow`의
   결과물이라 다음에 오는 리빌은 항상 "그 다음 라운드"의 것이기 때문
 - 찌르는 순간 상처에서 피가 위로 튄다(`Scenes/Match3D/BloodSpray.tscn`, 원샷
-  `GPUParticles3D`, `Finished` 시그널로 자기 자신을 정리) — 화면은
-  [MonochromeExceptRed.gdshader](Shaders/MonochromeExceptRed.gdshader)로 빨강만 채도를
-  남기므로, 화면에서 색을 가진 유일한 순간이 된다
+  `GPUParticles3D`, `Finished` 시그널로 자기 자신을 정리)
+- **주먹이 닿는 프레임에 맞은 쪽 상체가 뒤로 꺾인다**(`CharacterHitRecoil`, 척추 3본에
+  22도를 5:3:2로 나눠 건다). 3박자다 — 즉시 꺾임 / 0.15초 정지 / 1.0초 복귀(smoothstep).
+  **셰이크처럼 지수 감쇠를 쓰면 안 된다**: 지수는 시작 순간이 가장 빠른 곡선이라 도착한
+  프레임에 이미 돌아오기 시작하고, 감쇠율을 아무리 낮춰도 "멈춤"이 생기지 않는다.
+  셰이크가 지수를 쓰는 건 그쪽은 그 모양이 맞아서다(첫 프레임이 가장 세고 곧 사라짐).
+  카메라 셰이크와 달리 **의도적으로 비대칭이다** —
+  내가 바위로 이겼을 때 상대 몸에만 걸린다. 진 쪽 화면은 그 캐릭터의 눈에서 보는 1인칭이라
+  꺾일 몸이 애초에 안 보이고, 맞은 느낌은 양쪽에서 터지는 셰이크가 이미 담당한다.
+  네트워크를 타지 않는다(양쪽이 같은 결과를 이미 갖고 있고 각자 그릴 게 있는지만 판단).
+  바위 전용 — 보는 책상을 치고, 가위는 손을 책상에 박아두므로(`ScissorsController`) 몸을
+  젖히면 박힌 손이 소품에서 떨어져 나간다
+- **손은 책상에 붙어 있는다.** 두 팔이 척추 위에 달려 있어 그냥 굽히면 딸려 올라간다
+  (실측: 22도에서 양손이 수직으로 9.5cm 부상 — 상판에 놓인 손바닥이 뜬다). 그래서 손의
+  월드 위치·자세를 척추와 같이 적립해두고 매 프레임 되돌린다: **팔꿈치 각도를 코사인
+  법칙으로 풀어 어깨-손목 거리를 맞춘 뒤, 어깨를 겨냥해 방향을 맞춘다.** 이 순서가
+  1패스로 정확한 이유는, 관절마다 목표를 겨냥하는 일반적인 CCD는 **방향만** 고치는데
+  척추를 굽힌 뒤 남는 오차는 대부분 반경 방향이기 때문이다 — 그 방식은 3패스에도 손목이
+  11mm 어긋난 채였고, 지금은 전 구간 최대 0.33mm다. 22도에서 팔 여유가 1.7cm뿐이라
+  팔이 거의 펴진 채로 버티는 모양이 되고, 28도쯤이면 아예 안 닿는다
+- `Skeleton3D.ForceUpdateAllBoneTransforms()`는 4.7에서 deprecated다(내부 전용).
+  **부를 필요도 없다** — `GetBoneGlobalPose`가 스스로 최신화한다(실측: 부모 본에 포즈를
+  쓴 직후 자손을 강제 갱신 없이 읽은 값이 강제 갱신본과 소수점 6자리까지 동일)
+- 회복 각도는 **타격 시점에 적립한 포즈 기준**으로 매 프레임 절대값을 쓴다. 현재 포즈에
+  곱해 누적하면 안 된다 — 진 쪽은 `AnimationPlayer`가 멈춰 있어서 뼈를 다시 써주는 게
+  없으므로 프레임마다 굽힘이 쌓인다(실측: 6프레임 만에 0.48m까지 갔다가 반 바퀴를 넘겨
+  몸 **앞으로** 나왔다)
+- **매치 화면에는 전역 무채색 필터가 없다.** 한때
+  [MonochromeExceptRed.gdshader](Shaders/MonochromeExceptRed.gdshader)를 화면 전체에
+  걸어 빨강만 남겼고, 그래서 피가 화면에서 색을 가진 유일한 순간이었다. 지금 그 셰이더가
+  걸린 곳은 타이틀 화면(`TitleWorld.tscn`)뿐이다. 다만 탁상 알베도는 그 시절에 무채색으로
+  구워져 있고 되돌리지 않았으므로(`ATTRIBUTIONS.md` 참고), 필터를 뗀 뒤에도 탁상은
+  회색으로 남는다
+- 체력은 `MatchSession.STARTING_HEALTH`칸으로 쪼갠 바다(`SegmentedHealthBarUI`).
+  내 것은 우하단, 상대 것은 상대 머리 위 3D 마커를 매 프레임
+  `Camera3D.UnprojectPosition`으로 따라간다(`OverheadHealthBarUI`). **화면 밖으로 나가면
+  가장자리에 붙지 않고 그냥 사라진다** — 헤드 카메라 기본 자세가 탁상을 36도쯤 내려다보는
+  각도라 아래를 볼수록 위로 밀려 나가는데, 그때 테두리에 붙여두면 화면에 보이지도 않는
+  상대의 체력을 가리키고 있게 된다. 의도된 동작이니 버그로 고치지 말 것.
+  깎인 칸마다 붉은 스파크가 터지고(가산 블렌딩 원샷 `GPUParticles2D`, 수명에 따라
+  흰빛→붉은색→투명으로 식으며 줄어든다), 내가 맞은 경우에는 화면 가장자리가 붉어진다
+  (`DamageVignetteUI` + [DamageVignette.gdshader](Shaders/DamageVignette.gdshader),
+  잃은 체력 크기만큼 세기가 붙고 지수적으로 감쇠)
+- **체력이 깎여 보이는 순간은 `RoundResolved`가 아니라 타격이 닿는 프레임이다.**
+  `HealthBarsUI`는 그 신호를 구독하지 않고, `MatchWorldView`가 카메라를 흔드는 바로 그
+  자리에서 `ShowCurrentHealth()`를 부른다 — 신호는 카드가 뒤집히기도 전에 오므로, 거기에
+  붙여두면 리빌 전에 결과가 먼저 새어 나간다. 때릴 애니메이션이 없는 라운드(무승부 등)는
+  `EnterResultHoldPhase`가 대신 커밋한다
 - 애니메이션 클립은 **클립 하나당 `.glb` 하나**로 간다 — `Character.tscn`의
   `AnimationPlayer`가 `AnimationLibrary`를 여러 개 붙들고(첫 번째만 빈 이름 `&""`,
   그 뒤로는 `"paper/Anim_Paper_Flip_Baked"`처럼 이름이 붙는다). 기존 파일에 액션을
@@ -267,8 +320,24 @@ graph TD
 - 타이틀 화면도 이제 3D다 — `Scenes/Screens/TitleWorld.tscn`이 매치월드에서 라운드
   로직·손패뷰·마우스룩·UI를 전부 뺀 배경(조명·탁상·캐릭터 착석·가위·무채색 셰이더)이고,
   `TitleScreen.tscn`은 루트가 `Control`에서 `Node3D`로 바뀌어 그 위에 `World` 인스턴스와
-  `Interface`(메뉴, 옛 `TitleScreenUI` 그대로) 두 자식을 얹는다. 조명·환경·탁상은
+  `Interface`(메뉴) 두 자식을 얹는다. 조명·환경·탁상은
   `MatchWorld.tscn`과 지금 복사본 관계라 한쪽만 고치면 갈라진다
+- **접속 화면은 씬이 아니라 타이틀 화면 안의 패널이다.** `Interface/Menu/Layout` 아래에
+  메인 메뉴 · 접속(`ConnectionScreenUI`) · 설정 세 패널이 있고, 게임 제목 바로 아래 한
+  자리를 번갈아 쓴다 — `TitleScreenUI`가 셋 중 하나만 `Visible`로 둔다.
+  `ConnectionScreen.tscn`과 `ScreenRouter.GoToConnectionScreen`은 그래서 없어졌다:
+  씬을 갈면 뒤의 3D 탁상을 버리고 다시 세우게 되는데, 방 만들기/참가는 같은 메뉴의 다음
+  몇 줄일 뿐이다. **씬이 아니게 되면서 생긴 유일한 새 책임은 "뒤로"** — 패널을 닫는 것과
+  열려 있던 방을 정리하는 것이 같이 가야 한다(`ConnectionScreenUI.OnBackPressed`)
+- 메뉴 UI는 상자 없는 좌측 정렬 텍스트 목록이고, 항목마다 `>` 캐럿 `Label`이 앞에 붙은
+  `HBoxContainer` 한 줄이다. 생김새는 [Assets/Themes/TextMenu.tres](Assets/Themes/TextMenu.tres)
+  하나에 모여 있다(`Button` 스타일박스를 전부 `StyleBoxEmpty`로 비우고 글자색으로만
+  호버를 표현, 캐럿/제목/헤딩/상태줄은 `theme_type_variation`). **폰트는 여기 없다** —
+  `Assets/Fonts/DefaultTheme.tres`(프로젝트 전역 테마)가 계속 맑은고딕을 대며, 테마 조회가
+  못 찾은 항목은 위로 falling through 하기 때문이다. 여기에 `default_font`를 적으면
+  한글 폰트가 두 곳에 생긴다
+- 숨겨야 하는 항목은 **버튼이 아니라 줄(`HBoxContainer`)을 숨긴다** — 버튼만 숨기면
+  캐럿 `>`가 홀로 남는다(호스트에게만 보이는 "매치 시작"이 이 경우다)
 - 메뉴 배경음악은 꺼져 있다(`TitleScreenUI`의 `PlayMainMenuMusic()` 호출이 주석
   처리됨) — 2D 시절 톤이라 지금과 안 맞아서. `AudioManager`는 그대로라 되살리는 건
   주석 해제 한 줄

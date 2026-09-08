@@ -19,9 +19,17 @@ It does not decide whether a play is legal, who won a round, or what a card does
 carries every language, `keys,en,ko`. English is a translation like any other; it has no
 privileged position in the files.
 
-Godot picks the locale from the player's OS, and `internationalization/locale/fallback="en"`
-catches everything else — a French player gets the English column, not a screen full of
-`TITLE_PLAY`. There is no language switcher and none is needed.
+**The build is pinned to English: `internationalization/locale/test="en"`.** Godot would
+otherwise take the locale from the player's OS, which on the machine this is developed on means
+Korean — and the display font being brought in has no Hangul, so the Korean column would draw
+as missing glyphs. The pin is one project setting and it changes nothing else: both columns are
+still there, both `.translation` files are still built and still named in
+`locale/translations`, and `TranslationServer.SetLocale("ko")` at runtime still works. That is
+what a language option in the settings screen will call when there is one, and this line is
+what it will replace.
+
+Without the pin, `internationalization/locale/fallback="en"` catches whatever has no column of
+its own — a French player gets the English one, not a screen full of `TITLE_PLAY`.
 
 ### The symbols
 
@@ -38,7 +46,9 @@ The two halves cost very different amounts to change, which is the point of doin
 Adding or changing a string means three things, and skipping the third is silent:
 
 1. Put the symbol in the source file — the `.tscn`, the card's `.tres`, or the literal.
-2. Add a row to the CSV with both languages.
+2. Add a row to the CSV with both languages. **Fill the Korean cell even though nothing renders
+   it today** — the pin above is one line, and a half-filled column is what makes turning it
+   off expensive later.
 3. Re-import, so Godot regenerates the `.translation` files beside the CSV:
    `godot --headless --path . --import`. Both are committed; `project.godot` names both.
 

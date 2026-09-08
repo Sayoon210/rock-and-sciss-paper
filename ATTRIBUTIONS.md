@@ -18,7 +18,14 @@
 | `RoundWon.wav` | `RoundWon` | rhodesmas | ["Level Up 01"](https://freesound.org/s/320655/) | CC BY 4.0 | 파일명만 변경 |
 | `RoundLost.wav` | `RoundLost` | AceOfSpadesProduc100 | ["8-bit "failure" sound"](https://freesound.org/s/333785/) | CC BY 4.0 | 파일명만 변경 |
 | `Joker.wav` | `Joker` | bulbastre | ["Evil laughter joker"](https://freesound.org/s/103987/) | CC BY 4.0 | 파일명만 변경 |
+| `ButtonPressed.mp3` | `ButtonPressed` | soundshelfstudio (받은 파일명 기준) | **받은 페이지 URL이 기록되지 않음** — 아래 참고 | **미확인** | 파일명만 변경 |
 | `MainMenuBGM.ogg` | `-` | Alexander Nakarada ft. Kevin MacLeod | ["Tavern Brawl"](https://creatorchords.com/music/tavern-brawl-ft-kevin-macleod/) (chosic.com 경유) | CC BY 4.0 | 파일명 변경, **ogg로 변환** |
+
+`ButtonPressed.mp3`는 **받은 페이지가 기록되지 않았다.** 복원할 수 있는 단서는 원본 파일명
+`soundshelfstudio-ui-click-retro-514601.mp3` 하나뿐이다 — 제작자 이름과 숫자 ID가 거기 들어
+있으니 그것으로 다시 찾을 수는 있겠지만, **어느 사이트인지도 라이선스가 무엇인지도 확인되지
+않았다.** 배포를 고려하는 시점에는 이 두 칸이 채워져 있어야 하고, 지금 채우는 편이 나중보다
+쉽다. 표기 의무가 있는 라이선스로 밝혀지면 아래 "배포용 표기 문구"에도 한 줄이 는다.
 
 `RoundWon.wav`는 한때 같은 소리의 [mp3 재업로드본(337049)](https://freesound.org/s/337049/)을
 쓰다가 rhodesmas의 원본으로 교체한 것이다. 재업로더가 아니라 **원작자를 표기하는 게 맞고**,
@@ -46,10 +53,13 @@
 `AtlasTexture`로 잘라 썼다. 그 시트는 출처가 기록된 적이 없고, 지금은 쓰이지 않아
 `Assets/_Source/`로 물러났다(저장소에는 포함되지 않는다 — `.gitignore` 참고).
 
-타이틀 화면 버튼 다섯 개가 이 팩의 `Tilesheets/Large tiles/Thick outline/tilemap_packed.png`에서
-브라운 타일 한 장(`Rect2(32, 0, 32, 32)`)을 `StyleBoxTexture`로 9-slice 해서 쓴다 —
-[Scenes/Screens/TitleScreen.tscn](Scenes/Screens/TitleScreen.tscn). 팩 자체는 CC0라 표기
-의무는 없다(License.txt에도 "not a requirement"라고 명시).
+**이 팩은 현재 어디에서도 쓰이지 않는다.** 한때 타이틀 화면 버튼 다섯 개가
+`Tilesheets/Large tiles/Thick outline/tilemap_packed.png`의 브라운 타일 한 장
+(`Rect2(32, 0, 32, 32)`)을 `StyleBoxTexture`로 9-slice 해서 썼는데, 메뉴가 상자 없는
+좌측 정렬 텍스트 목록([Assets/Themes/TextMenu.tres](Assets/Themes/TextMenu.tres))으로
+바뀌면서 그 버튼들이 사라졌다. 팩은 지우지 않고 그대로 뒀다 — CC0라 저장소에 두는 데
+아무 제약이 없고, UI 요소가 다시 필요해질 때 받아올 곳을 다시 찾지 않아도 된다.
+표기 의무도 없다(License.txt에도 "not a requirement"라고 명시).
 
 ## 3D / 캐릭터
 
@@ -64,11 +74,17 @@
 에셋팩처럼 따로 배포하는 것은 안 된다. 소스 저장소가 공개로 바뀌면 이 `.glb`가 사실상
 재배포에 해당할 수 있으니 그때 다시 확인할 것.
 
-**탁상 텍스처를 무채색으로 구운 이유** — 화면은 [MonochromeExceptRed.gdshader](Shaders/MonochromeExceptRed.gdshader)로
-빨강만 남기고 채도를 걷어내는데, 다크우드는 색상환에서 빨강 바로 옆(주황)이라 그 필터를
-통과해 혼자 갈색으로 남았다. 임계값을 조여서 막으려 하면 어두운 피까지 같이 걸린다.
-탁상의 갈색은 정보가 아니므로 알베도를 아예 무채색으로 구워두는 편이 낫다 — 셰이더는
-피에만 쓰고, 정적 에셋의 색은 처음부터 없앤다. 원본은 CC0라 위 URL에서 다시 받을 수 있다.
+**탁상 텍스처를 무채색으로 구운 이유** — 당시 화면 전체에
+[MonochromeExceptRed.gdshader](Shaders/MonochromeExceptRed.gdshader)가 걸려 빨강만 남기고
+채도를 걷어냈는데, 다크우드는 색상환에서 빨강 바로 옆(주황)이라 그 필터를 통과해 혼자
+갈색으로 남았다. 임계값을 조여서 막으려 하면 어두운 피까지 같이 걸린다. 탁상의 갈색은
+정보가 아니므로 알베도를 아예 무채색으로 구워두는 편이 나았다 — 셰이더는 피에만 쓰고,
+정적 에셋의 색은 처음부터 없앤다.
+
+**그 셰이더는 이제 매치 화면에 없다** (타이틀 화면에는 남아 있다). 구운 텍스처는 되돌리지
+않았으므로 매치 화면의 탁상은 필터와 무관하게 회색으로 남는다 — 나무 색을 되살리고 싶으면
+위 URL에서 CC0 원본을 다시 받아 `dark_wood_diff_2k.png`를 갈아 끼우면 되고, 그때 이 칸의
+"수정" 내용도 같이 지워야 한다.
 
 애니메이션(`Anim_Punch_Baked`, `Anim_StabScissor_Baked`, `Anim_NoNoNoFinger`,
 `Anim_Paper_Flip_Baked`)은 Mixamo 프리셋이 아니라 **Blender에서 직접 만든 자작**이다.
@@ -78,6 +94,32 @@ Mixamo 라이선스가 걸린다** — 애니메이션이 자작이라고 해서
 작업 파일은 `Assets/_Source/`에 있고
 `.gitignore`로 저장소에서 빠져 있다 — 그 폴더의 `.gdignore`는 Godot도 그 안을 임포트하지
 않게 하려고 둔 것이다.
+
+## 폰트
+
+| 파일 | 제작자 | 출처 | 라이선스 | 수정 |
+|---|---|---|---|---|
+| `Assets/Fonts/drybrush/` (전체) | 1001fonts 배포 | ["Drybrush"](https://www.1001fonts.com/drybrush-font.html#license) | **퍼블릭 도메인 / CC0 1.0** — 상업 이용·수정·재배포 전부 허용, **표기 의무 없음** | 없음 (받은 그대로 커밋) |
+| `Assets/Fonts/MalgunGothic.ttf` | Microsoft (추정) | **기록되지 않음** — 아래 참고 | **미확인** | 없음 |
+
+Drybrush가 게임 전체의 기본 폰트다 —
+[Assets/Fonts/DefaultTheme.tres](Assets/Fonts/DefaultTheme.tres)의 `default_font`이고,
+`project.godot`의 `gui/theme/custom`이 그 테마를 가리키므로 따로 지정하지 않은 모든
+`Control`이 이걸 쓴다. 받은 패키지에 `.otf`와 `.ttf`가 같이 들어 있고 **쓰이는 것은
+`.ttf`뿐이다**; `.otf`는 같은 서체의 다른 포맷이라 지우지 않고 뒀다. 동봉된
+`License.txt`(CC0 전문)와 `1001fonts-drybrush-eula.txt`도 원본 그대로 함께 커밋했다.
+
+**맑은고딕은 지우지 않고 대체 폰트(fallback)로 남겼다.** Drybrush에는 한글 글리프가 없어서,
+그냥 갈아치웠으면 `strings.csv`의 `ko` 열이 영영 못 그려지는 열이 된다 — 언어 옵션을 나중에
+붙일 수 있게 두기로 한 결정([Scripts/CLAUDE.md](Scripts/CLAUDE.md))이 그때 무효가 된다.
+`FontVariation.fallbacks`에 한 줄 얹는 것으로 영어는 Drybrush가, Drybrush에 없는 글자는
+맑은고딕이 그린다.
+
+**그래서 맑은고딕의 출처·라이선스는 여전히 확인해야 한다.** 파일명으로 보아 Windows 동봉
+폰트로 보이는데, 그렇다면 **재배포 조건이 위 항목들보다 까다로울 가능성이 높다** — 게임에
+폰트 파일을 실어 배포하는 것이 허용되는지가 쟁점이다. 지금은 화면에 거의 안 나오는(영어
+고정) 대체 폰트일 뿐이라 급하지 않지만, 배포를 준비할 때는 확인하거나 한글용 오픈 폰트로
+교체해야 한다.
 
 ## 라이선스별로 실제로 해야 하는 것
 
@@ -121,5 +163,8 @@ https://creativecommons.org/licenses/by/4.0/
 
 ## 아직 정리 안 된 것
 
-`Assets/Fonts/MalgunGothic.ttf`도 외부 파일이지만 출처·라이선스가 여기 안 적혀 있다.
-재배포 조건이 위 항목들보다 까다로울 수 있으니, 배포를 준비할 때 같이 확인할 것.
+두 가지가 남아 있고, 둘 다 **출처가 기록되지 않아** 배포 전에 확인이 필요하다.
+
+- `Assets/Fonts/MalgunGothic.ttf` — 위 "폰트" 참고.
+- `Assets/Audio/ButtonPressed.mp3` — 위 "사운드" 참고.
+- `Assets/Cards/*_art.png` — 위 "UI / 이미지" 참고 (어느 AI 서비스로 생성했는지 미기록).
