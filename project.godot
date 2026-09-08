@@ -10,7 +10,7 @@ config_version=5
 
 [application]
 
-config/name="RockAndScissPaper 3D"
+config/name="How To Rock,Scissor,Paper"
 run/main_scene="res://Scenes/Screens/TitleScreen.tscn"
 config/features=PackedStringArray("4.7", "C#", "Forward Plus")
 config/icon="res://icon.svg"
@@ -53,6 +53,7 @@ theme/custom="res://Assets/Fonts/DefaultTheme.tres"
 [internationalization]
 
 locale/translations=PackedStringArray("res://Data/Translations/strings.en.translation", "res://Data/Translations/strings.ko.translation")
+locale/test="en"
 
 [physics]
 

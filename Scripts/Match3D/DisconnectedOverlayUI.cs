@@ -24,6 +24,7 @@ public partial class DisconnectedOverlayUI : Control
     public override void _Ready()
     {
         GetNode<Button>(TITLE_BUTTON_PATH).Pressed += OnTitleScreenPressed;
+        ButtonClickSound.HookUp(this);
 
         GameState.Instance!.OpponentLeft += OnOpponentLeft;
 

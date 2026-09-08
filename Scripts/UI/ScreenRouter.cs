@@ -18,8 +18,10 @@ namespace RockAndScissPaper.UI;
 /// way in, so doing this unconditionally costs nothing.</summary>
 public static class ScreenRouter
 {
+    // No route to the connection screen: there is no longer a scene to route to. 방 만들기 /
+    // 참가 is a panel inside TitleScreen.tscn now (ConnectionScreenUI), so getting there is a
+    // visibility swap the title screen makes for itself, not a screen-to-screen move.
     public const string TITLE_SCREEN_PATH = "res://Scenes/Screens/TitleScreen.tscn";
-    public const string CONNECTION_SCREEN_PATH = "res://Scenes/Screens/ConnectionScreen.tscn";
     public const string MATCH_WORLD_PATH = "res://Scenes/Screens/MatchWorld.tscn";
 
     // The 교체/변화 choice phase has not been verified across two instances yet, and the
@@ -37,11 +39,6 @@ public static class ScreenRouter
         NetworkManager.Instance?.Disconnect();
         GameState.Instance?.ResetConnection();
         ChangeScene(caller, TITLE_SCREEN_PATH);
-    }
-
-    public static void GoToConnectionScreen(Node caller)
-    {
-        ChangeScene(caller, CONNECTION_SCREEN_PATH);
     }
 
     public static void GoToMatchWorld(Node caller)

@@ -1,37 +1,13 @@
-[gd_scene format=3 uid="uid://tardm6qunsle"]
+[gd_scene load_steps=5 format=3 uid="uid://tardm6qunsle"]
 
 [ext_resource type="Script" uid="uid://mspey8mcamqv" path="res://Scripts/UI/TitleScreenUI.cs" id="1_titlescreenui"]
-[ext_resource type="PackedScene" uid="uid://c7tlwr1dq8n2v" path="res://Scenes/Screens/TitleWorld.tscn" id="3_titleworld"]
-[ext_resource type="Texture2D" path="res://Assets/kenney_ui-pack-pixel-adventure/Tilesheets/Large tiles/Thick outline/tilemap_packed.png" id="2_uipack"]
-
-[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_brownnormal"]
-texture = ExtResource("2_uipack")
-texture_margin_left = 4.0
-texture_margin_top = 4.0
-texture_margin_right = 4.0
-texture_margin_bottom = 4.0
-region_rect = Rect2(32, 0, 32, 32)
-
-[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_brownhover"]
-texture = ExtResource("2_uipack")
-texture_margin_left = 4.0
-texture_margin_top = 4.0
-texture_margin_right = 4.0
-texture_margin_bottom = 4.0
-region_rect = Rect2(32, 0, 32, 32)
-modulate_color = Color(1.15, 1.15, 1.15, 1)
-
-[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_brownpressed"]
-texture = ExtResource("2_uipack")
-texture_margin_left = 4.0
-texture_margin_top = 4.0
-texture_margin_right = 4.0
-texture_margin_bottom = 4.0
-region_rect = Rect2(32, 32, 32, 32)
+[ext_resource type="PackedScene" uid="uid://c7tlwr1dq8n2v" path="res://Scenes/Screens/TitleWorld.tscn" id="2_titleworld"]
+[ext_resource type="Theme" path="res://Assets/Themes/TextMenu.tres" id="3_textmenu"]
+[ext_resource type="Script" path="res://Scripts/UI/ConnectionScreenUI.cs" id="4_connectionscreenui"]
 
 [node name="TitleScreen" type="Node3D"]
 
-[node name="World" parent="." instance=ExtResource("3_titleworld")]
+[node name="World" parent="." instance=ExtResource("2_titleworld")]
 
 [node name="Interface" type="CanvasLayer" parent="."]
 
@@ -42,125 +18,218 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
+theme = ExtResource("3_textmenu")
 script = ExtResource("1_titlescreenui")
 
-[node name="CenterContainer" type="CenterContainer" parent="Interface/Menu" unique_id=205313980]
+[node name="Layout" type="VBoxContainer" parent="Interface/Menu"]
 layout_mode = 1
 anchors_preset = 9
-anchor_right = 0.52
 anchor_bottom = 1.0
-grow_horizontal = 2
+offset_left = 96.0
+offset_top = 150.0
+offset_right = 900.0
+offset_bottom = -80.0
 grow_vertical = 2
+theme_override_constants/separation = 44
 
-[node name="Buttons" type="VBoxContainer" parent="Interface/Menu/CenterContainer" unique_id=841002249]
+[node name="TitleLabel" type="Label" parent="Interface/Menu/Layout"]
 layout_mode = 2
-theme_override_constants/separation = 18
+theme_type_variation = &"Title"
+text = "How To Rock,Scissor,Paper"
 
-[node name="TitleLabel" type="Label" parent="Interface/Menu/CenterContainer/Buttons" unique_id=614764356]
+[node name="MainMenu" type="VBoxContainer" parent="Interface/Menu/Layout"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 56
-text = "RockAndScissPaper"
-horizontal_alignment = 1
+theme_override_constants/separation = 8
 
-[node name="MatchButton" type="Button" parent="Interface/Menu/CenterContainer/Buttons" unique_id=1116291792]
-custom_minimum_size = Vector2(300, 60)
+[node name="MatchRow" type="HBoxContainer" parent="Interface/Menu/Layout/MainMenu"]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.97, 0.9, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 24
-theme_override_styles/normal = SubResource("StyleBoxTexture_brownnormal")
-theme_override_styles/hover = SubResource("StyleBoxTexture_brownhover")
-theme_override_styles/pressed = SubResource("StyleBoxTexture_brownpressed")
+
+[node name="Caret" type="Label" parent="Interface/Menu/Layout/MainMenu/MatchRow"]
+custom_minimum_size = Vector2(26, 0)
+layout_mode = 2
+theme_type_variation = &"Caret"
+text = ">"
+vertical_alignment = 1
+
+[node name="MatchButton" type="Button" parent="Interface/Menu/Layout/MainMenu/MatchRow"]
+layout_mode = 2
+alignment = 0
 text = "TITLE_PLAY"
 
-[node name="QuitButton" type="Button" parent="Interface/Menu/CenterContainer/Buttons" unique_id=331504956]
-custom_minimum_size = Vector2(300, 60)
+[node name="SettingsRow" type="HBoxContainer" parent="Interface/Menu/Layout/MainMenu"]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.97, 0.9, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 24
-theme_override_styles/normal = SubResource("StyleBoxTexture_brownnormal")
-theme_override_styles/hover = SubResource("StyleBoxTexture_brownhover")
-theme_override_styles/pressed = SubResource("StyleBoxTexture_brownpressed")
-text = "TITLE_QUIT"
 
-[node name="SettingsButton" type="Button" parent="Interface/Menu/CenterContainer/Buttons" unique_id=2731847205]
-custom_minimum_size = Vector2(300, 60)
+[node name="Caret" type="Label" parent="Interface/Menu/Layout/MainMenu/SettingsRow"]
+custom_minimum_size = Vector2(26, 0)
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.97, 0.9, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 24
-theme_override_styles/normal = SubResource("StyleBoxTexture_brownnormal")
-theme_override_styles/hover = SubResource("StyleBoxTexture_brownhover")
-theme_override_styles/pressed = SubResource("StyleBoxTexture_brownpressed")
+theme_type_variation = &"Caret"
+text = ">"
+vertical_alignment = 1
+
+[node name="SettingsButton" type="Button" parent="Interface/Menu/Layout/MainMenu/SettingsRow"]
+layout_mode = 2
+alignment = 0
 text = "TITLE_SETTINGS"
 
-[node name="DebugHarnessButton" type="Button" parent="Interface/Menu/CenterContainer/Buttons" unique_id=1518153499]
-custom_minimum_size = Vector2(300, 60)
+[node name="DebugHarnessRow" type="HBoxContainer" parent="Interface/Menu/Layout/MainMenu"]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.97, 0.9, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 24
-theme_override_styles/normal = SubResource("StyleBoxTexture_brownnormal")
-theme_override_styles/hover = SubResource("StyleBoxTexture_brownhover")
-theme_override_styles/pressed = SubResource("StyleBoxTexture_brownpressed")
+
+[node name="Caret" type="Label" parent="Interface/Menu/Layout/MainMenu/DebugHarnessRow"]
+custom_minimum_size = Vector2(26, 0)
+layout_mode = 2
+theme_type_variation = &"Caret"
+text = ">"
+vertical_alignment = 1
+
+[node name="DebugHarnessButton" type="Button" parent="Interface/Menu/Layout/MainMenu/DebugHarnessRow"]
+layout_mode = 2
+alignment = 0
 text = "TITLE_DEBUG_HARNESS"
 
-[node name="SettingsOverlay" type="PanelContainer" parent="Interface/Menu" unique_id=3390218447]
+[node name="QuitRow" type="HBoxContainer" parent="Interface/Menu/Layout/MainMenu"]
+layout_mode = 2
+
+[node name="Caret" type="Label" parent="Interface/Menu/Layout/MainMenu/QuitRow"]
+custom_minimum_size = Vector2(26, 0)
+layout_mode = 2
+theme_type_variation = &"Caret"
+text = ">"
+vertical_alignment = 1
+
+[node name="QuitButton" type="Button" parent="Interface/Menu/Layout/MainMenu/QuitRow"]
+layout_mode = 2
+alignment = 0
+text = "TITLE_QUIT"
+
+[node name="Connection" type="VBoxContainer" parent="Interface/Menu/Layout"]
 visible = false
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+layout_mode = 2
+theme_override_constants/separation = 8
+script = ExtResource("4_connectionscreenui")
 
-[node name="Center" type="CenterContainer" parent="Interface/Menu/SettingsOverlay" unique_id=1697402883]
+[node name="HeadingLabel" type="Label" parent="Interface/Menu/Layout/Connection"]
+layout_mode = 2
+theme_type_variation = &"Heading"
+text = "CONNECT_HEADING"
+
+[node name="CreateRoomRow" type="HBoxContainer" parent="Interface/Menu/Layout/Connection"]
 layout_mode = 2
 
-[node name="Box" type="VBoxContainer" parent="Interface/Menu/SettingsOverlay/Center" unique_id=3841927650]
-custom_minimum_size = Vector2(360, 0)
+[node name="Caret" type="Label" parent="Interface/Menu/Layout/Connection/CreateRoomRow"]
+custom_minimum_size = Vector2(26, 0)
 layout_mode = 2
-theme_override_constants/separation = 16
+theme_type_variation = &"Caret"
+text = ">"
+vertical_alignment = 1
 
-[node name="SettingsHeadingLabel" type="Label" parent="Interface/Menu/SettingsOverlay/Center/Box" unique_id=712946380]
+[node name="CreateRoomButton" type="Button" parent="Interface/Menu/Layout/Connection/CreateRoomRow"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 32
+alignment = 0
+text = "CONNECT_CREATE_ROOM"
+
+[node name="JoinRow" type="HBoxContainer" parent="Interface/Menu/Layout/Connection"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Caret" type="Label" parent="Interface/Menu/Layout/Connection/JoinRow"]
+custom_minimum_size = Vector2(26, 0)
+layout_mode = 2
+theme_type_variation = &"Caret"
+text = ">"
+vertical_alignment = 1
+
+[node name="JoinButton" type="Button" parent="Interface/Menu/Layout/Connection/JoinRow"]
+layout_mode = 2
+alignment = 0
+text = "CONNECT_JOIN"
+
+[node name="AddressField" type="LineEdit" parent="Interface/Menu/Layout/Connection/JoinRow"]
+custom_minimum_size = Vector2(230, 0)
+layout_mode = 2
+size_flags_vertical = 4
+text = "127.0.0.1"
+
+[node name="StartMatchRow" type="HBoxContainer" parent="Interface/Menu/Layout/Connection"]
+visible = false
+layout_mode = 2
+
+[node name="Caret" type="Label" parent="Interface/Menu/Layout/Connection/StartMatchRow"]
+custom_minimum_size = Vector2(26, 0)
+layout_mode = 2
+theme_type_variation = &"Caret"
+text = ">"
+vertical_alignment = 1
+
+[node name="StartMatchButton" type="Button" parent="Interface/Menu/Layout/Connection/StartMatchRow"]
+layout_mode = 2
+disabled = true
+alignment = 0
+text = "CONNECT_START_MATCH"
+
+[node name="BackRow" type="HBoxContainer" parent="Interface/Menu/Layout/Connection"]
+layout_mode = 2
+
+[node name="Caret" type="Label" parent="Interface/Menu/Layout/Connection/BackRow"]
+custom_minimum_size = Vector2(26, 0)
+layout_mode = 2
+theme_type_variation = &"Caret"
+text = ">"
+vertical_alignment = 1
+
+[node name="BackButton" type="Button" parent="Interface/Menu/Layout/Connection/BackRow"]
+layout_mode = 2
+alignment = 0
+text = "TITLE_BACK"
+
+[node name="StatusLabel" type="Label" parent="Interface/Menu/Layout/Connection"]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+theme_type_variation = &"Status"
+
+[node name="Settings" type="VBoxContainer" parent="Interface/Menu/Layout"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="HeadingLabel" type="Label" parent="Interface/Menu/Layout/Settings"]
+layout_mode = 2
+theme_type_variation = &"Heading"
 text = "TITLE_SETTINGS"
-horizontal_alignment = 1
 
-[node name="SoundEffectVolumeLabel" type="Label" parent="Interface/Menu/SettingsOverlay/Center/Box" unique_id=1284759036]
+[node name="SoundEffectVolumeLabel" type="Label" parent="Interface/Menu/Layout/Settings"]
 layout_mode = 2
 text = "TITLE_SETTINGS_SOUND_EFFECTS"
 
-[node name="SoundEffectVolumeSlider" type="HSlider" parent="Interface/Menu/SettingsOverlay/Center/Box" unique_id=2957183640]
-custom_minimum_size = Vector2(0, 32)
+[node name="SoundEffectVolumeSlider" type="HSlider" parent="Interface/Menu/Layout/Settings"]
+custom_minimum_size = Vector2(340, 28)
 layout_mode = 2
+size_flags_horizontal = 0
 max_value = 1.0
 step = 0.01
 
-[node name="MusicVolumeLabel" type="Label" parent="Interface/Menu/SettingsOverlay/Center/Box" unique_id=671038295]
+[node name="MusicVolumeLabel" type="Label" parent="Interface/Menu/Layout/Settings"]
 layout_mode = 2
 text = "TITLE_SETTINGS_MUSIC"
 
-[node name="MusicVolumeSlider" type="HSlider" parent="Interface/Menu/SettingsOverlay/Center/Box" unique_id=4082916573]
-custom_minimum_size = Vector2(0, 32)
+[node name="MusicVolumeSlider" type="HSlider" parent="Interface/Menu/Layout/Settings"]
+custom_minimum_size = Vector2(340, 28)
 layout_mode = 2
+size_flags_horizontal = 0
 max_value = 1.0
 step = 0.01
 
-[node name="CloseSettingsButton" type="Button" parent="Interface/Menu/SettingsOverlay/Center/Box" unique_id=1560374928]
-custom_minimum_size = Vector2(300, 60)
+[node name="BackRow" type="HBoxContainer" parent="Interface/Menu/Layout/Settings"]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.97, 0.9, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 24
-theme_override_styles/normal = SubResource("StyleBoxTexture_brownnormal")
-theme_override_styles/hover = SubResource("StyleBoxTexture_brownhover")
-theme_override_styles/pressed = SubResource("StyleBoxTexture_brownpressed")
-text = "TITLE_SETTINGS_CLOSE"
+
+[node name="Caret" type="Label" parent="Interface/Menu/Layout/Settings/BackRow"]
+custom_minimum_size = Vector2(26, 0)
+layout_mode = 2
+theme_type_variation = &"Caret"
+text = ">"
+vertical_alignment = 1
+
+[node name="BackButton" type="Button" parent="Interface/Menu/Layout/Settings/BackRow"]
+layout_mode = 2
+alignment = 0
+text = "TITLE_BACK"

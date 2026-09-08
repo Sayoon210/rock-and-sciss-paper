@@ -1,9 +1,14 @@
-[gd_resource type="Theme" load_steps=3 format=3]
+[gd_resource type="Theme" load_steps=5 format=3]
 
-[ext_resource type="FontFile" path="res://Assets/Fonts/MalgunGothic.ttf" id="1_font"]
+[ext_resource type="FontFile" path="res://Assets/Fonts/drybrush/Drybrush.ttf" id="1_drybrush"]
+[ext_resource type="FontFile" path="res://Assets/Fonts/MalgunGothic.ttf" id="2_malgungothic"]
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_tooltippanel"]
 
+[sub_resource type="FontVariation" id="FontVariation_default"]
+base_font = ExtResource("1_drybrush")
+fallbacks = Array[Font]([ExtResource("2_malgungothic")])
+
 [resource]
-default_font = ExtResource("1_font")
+default_font = SubResource("FontVariation_default")
 TooltipPanel/styles/panel = SubResource("StyleBoxEmpty_tooltippanel")

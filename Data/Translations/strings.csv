@@ -21,13 +21,13 @@ CARD_TYPE_NORMAL,Normal Card,일반카드
 CARD_TYPE_BLANK,Blank Card,공백카드
 CARD_TYPE_JOKER,Joker Card,조커카드
 CARD_TYPE_ABILITY,Ability Card,능력카드
-TITLE_PLAY,Play,대전
+TITLE_PLAY,Play Game,게임 시작
 TITLE_QUIT,Quit,종료
 TITLE_DEBUG_HARNESS,Debug Harness,디버그 하네스
 TITLE_SETTINGS,Settings,설정
 TITLE_SETTINGS_SOUND_EFFECTS,Sound Effects,효과음
 TITLE_SETTINGS_MUSIC,Music,음악
-TITLE_SETTINGS_CLOSE,Close,닫기
+TITLE_BACK,Back,뒤로
 CONNECT_HEADING,Connect,대전 연결
 CONNECT_CREATE_ROOM,Create Room,방 만들기
 CONNECT_ADDRESS,Address,주소
@@ -41,7 +41,6 @@ CONNECT_STATUS_CONNECTED,Connected to your opponent.,상대와 연결되었습�
 CONNECT_STATUS_FAILED,Could not connect.,접속에 실패했습니다.
 CONNECT_STATUS_DROPPED,The connection dropped.,연결이 끊겼습니다.
 MATCH_MY_HEALTH,Me {0} / {1},나 {0} / {1}
-MATCH_OPPONENT_HEALTH,Opponent {0} / {1},상대 {0} / {1}
 MATCH_ROUND,Round {0},{0} 라운드
 MATCH_DECK_COUNT,Deck {0},덱 {0}
 MATCH_CONFIRM,Confirm,확인
