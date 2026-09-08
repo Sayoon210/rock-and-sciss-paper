@@ -19,13 +19,24 @@ namespace RockAndScissPaper.Autoload;
 public partial class AudioManager : Node
 {
     private const string SOUND_DIRECTORY_PATH = "res://Assets/Audio/";
-    private const string SOUND_FILE_EXTENSION = ".wav";
     private const string SOUND_EFFECT_BUS_NAME = "SFX";
 
-    /// <summary>Music is named by path rather than through ESoundName. That enum exists so a
-    /// sound can be asked for by name and found on disk by the same name, which needs every
-    /// entry to share one extension — music is .ogg (streamed and compressed, since a looping
-    /// track as .wav is tens of megabytes) while the effects are .wav.</summary>
+    /// <summary>The extensions a sound effect may be delivered in, tried in this order for each
+    /// ESoundName until one is found on disk. An effect used to have to be .wav; it does not
+    /// any more, because the file a sound arrives as is whatever the place it came from happened
+    /// to offer, and converting every one of them by hand is a step that buys nothing — Godot
+    /// imports all three and hands back an AudioStream either way.
+    ///
+    /// .wav first because it is the one with no decoder in front of it: an mp3 carries encoder
+    /// padding at the head of the file, which on a short percussive sound (a UI click) is heard
+    /// as the click arriving slightly after the press. If that ever matters for a particular
+    /// sound, the fix is to convert that one file, and the order here is what makes dropping the
+    /// .wav in beside it enough.</summary>
+    private static readonly string[] SOUND_FILE_EXTENSIONS = { ".wav", ".ogg", ".mp3" };
+
+    /// <summary>Music is named by path rather than through ESoundName, because there is one
+    /// track and nothing asks for it by name — the enum earns its keep for effects, which are
+    /// cued from a dozen places and want to be named rather than spelled out as paths.</summary>
     private const string MAIN_MENU_MUSIC_PATH = "res://Assets/Audio/MainMenuBGM.ogg";
     private const string MUSIC_BUS_NAME = "Music";
 
@@ -161,8 +172,8 @@ public partial class AudioManager : Node
     }
 
     /// <summary>Walks the enum and loads the file named after each member, rather than
-    /// scanning the directory the way CardDatabase does. A .wav is an imported asset, and an
-    /// exported build does not list those under their source names — driving this from the
+    /// scanning the directory the way CardDatabase does. An audio file is an imported asset, and
+    /// an exported build does not list those under their source names — driving this from the
     /// enum also means a file whose name does not match any member is reported as missing
     /// instead of quietly loading into nothing.</summary>
     private void LoadSounds()
@@ -171,8 +182,8 @@ public partial class AudioManager : Node
 
         foreach (ESoundName soundName in Enum.GetValues<ESoundName>())
         {
-            string resourcePath = SOUND_DIRECTORY_PATH + soundName + SOUND_FILE_EXTENSION;
-            if (!ResourceLoader.Exists(resourcePath))
+            string? resourcePath = FindSoundFile(soundName);
+            if (resourcePath == null)
             {
                 missingSoundNames.Add(soundName.ToString());
                 continue;
@@ -185,6 +196,24 @@ public partial class AudioManager : Node
         {
             GD.Print($"AudioManager: no file under {SOUND_DIRECTORY_PATH} for {string.Join(", ", missingSoundNames)}.");
         }
+    }
+
+    /// <summary>The first extension in SOUND_FILE_EXTENSIONS that exists for this name, or null
+    /// if none does. First match wins rather than "exactly one must exist": two files sharing a
+    /// stem is a mistake someone is in the middle of making — replacing a sound — and the order
+    /// above is what decides which of the two is heard until the old one is deleted.</summary>
+    private static string? FindSoundFile(ESoundName soundName)
+    {
+        foreach (string extension in SOUND_FILE_EXTENSIONS)
+        {
+            string resourcePath = SOUND_DIRECTORY_PATH + soundName + extension;
+            if (ResourceLoader.Exists(resourcePath))
+            {
+                return resourcePath;
+            }
+        }
+
+        return null;
     }
 
     private void CreateSoundEffectPlayer()
