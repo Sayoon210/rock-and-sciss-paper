@@ -420,28 +420,13 @@ public partial class CardView : Node3D
         CardData? cardData = CardDatabase.Instance?.GetCardData(cardName);
         Texture2D? art = cardData?.CardArt;
 
-        // Rock/Paper/Scissors' art (Assets/Cards/*Art.tres) is an AtlasTexture cropping one
-        // card out of the shared CardSprite.png sheet. That cropping is a 2D-only draw-time
-        // behavior (Sprite2D/TextureRect) — a 3D material's AlbedoTexture just samples the
-        // atlas's underlying image directly, ignoring Region entirely, which is why all three
-        // cards' art showed at once on a single card's face. Sampling the real image ourselves
-        // and cropping via UV1 scale/offset reproduces the same crop in 3D.
-        if (art is AtlasTexture atlas && atlas.Atlas != null)
-        {
-            Vector2 atlasSize = atlas.Atlas.GetSize();
-            _frontMaterial.AlbedoTexture = atlas.Atlas;
-            _frontMaterial.Uv1Scale = new Vector3(
-                atlas.Region.Size.X / atlasSize.X, atlas.Region.Size.Y / atlasSize.Y, 1f);
-            _frontMaterial.Uv1Offset = new Vector3(
-                atlas.Region.Position.X / atlasSize.X, atlas.Region.Position.Y / atlasSize.Y, 0f);
-        }
-        else
-        {
-            _frontMaterial.AlbedoTexture = art;
-            _frontMaterial.Uv1Scale = Vector3.One;
-            _frontMaterial.Uv1Offset = Vector3.Zero;
-        }
-
+        // One PNG per card, drawn to fill the whole face — no cropping to reproduce. Each card
+        // used to be a region of a shared CardSprite.png sheet, which needed unpicking here:
+        // an AtlasTexture's Region is a 2D-only draw-time behavior (Sprite2D/TextureRect), and
+        // a 3D material's AlbedoTexture samples the underlying sheet directly and ignores it,
+        // so every card's face showed all three arts at once until the crop was redone by hand
+        // through UV1 scale/offset. Per-card textures make the whole problem not exist.
+        _frontMaterial.AlbedoTexture = art;
         _frontMaterial.AlbedoColor = art == null ? PLACEHOLDER_FACE_COLOR : Colors.White;
 
         // Mirrored off the albedo values just set, not computed separately — the two channels

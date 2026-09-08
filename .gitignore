@@ -14,3 +14,10 @@ obj/
 *.blend
 *.blend[0-9]
 *.fbx
+
+# The rest of Assets/_Source/ is the same kind of thing, just not by extension —
+# the retired CardSprite.png atlas sheet, card art as it was before being
+# normalised to one size. Kept on disk, out of the repo. .gdignore is the one
+# file that has to stay, since it is what makes Godot skip the folder.
+Assets/_Source/*
+!Assets/_Source/.gdignore

@@ -36,6 +36,15 @@
 | 파일 | 제작자 | 출처 | 라이선스 | 수정 |
 |---|---|---|---|---|
 | `Assets/kenney_ui-pack-pixel-adventure/` (전체) | Kenney | ["UI Pack: Pixel Adventure"](https://kenney.nl/assets/ui-pack-pixel-adventure) | CC0 1.0 | 없음 (원본 그대로 커밋) |
+| `Assets/Cards/rock_art.png`, `paper_art.png`, `scissors_art.png` | AI 이미지 생성 | **사용한 서비스가 기록되지 않음** — 아래 참고 | 해당 서비스 약관에 따름 (미확인) | 세 장을 416 × 661로 통일. 가위만 426 × 682에서 리샘플, 나머지 둘은 받은 그대로 |
+
+카드 아트 세 장은 AI로 생성한 것이다. **어느 서비스로 생성했는지가 기록되지 않았다** — 상업적
+이용 가능 여부와 산출물의 권리 귀속이 서비스마다 다르므로, 배포를 고려하는 시점에는 이 칸이
+채워져 있어야 한다. 지금 채우는 편이 나중보다 쉽다.
+
+이 세 장 이전에는 `Assets/Cards/CardSprite.png` 한 장에 세 카드가 나란히 그려진 시트를
+`AtlasTexture`로 잘라 썼다. 그 시트는 출처가 기록된 적이 없고, 지금은 쓰이지 않아
+`Assets/_Source/`로 물러났다(저장소에는 포함되지 않는다 — `.gitignore` 참고).
 
 타이틀 화면 버튼 다섯 개가 이 팩의 `Tilesheets/Large tiles/Thick outline/tilemap_packed.png`에서
 브라운 타일 한 장(`Rect2(32, 0, 32, 32)`)을 `StyleBoxTexture`로 9-slice 해서 쓴다 —

@@ -21,9 +21,16 @@ namespace RockAndScissPaper.Match3D;
 /// stopped being visible.</summary>
 public static class RoundedCardMesh
 {
-    // A standard poker card, 63.5 x 88.9 mm. The 0.5 mm thickness is a slight exaggeration of
-    // real 0.3 mm card stock, so the card still reads as an object rather than a decal.
-    public static readonly Vector2 CARD_SIZE = new Vector2(0.0635f, 0.0889f);
+	// 55.95 x 88.9 mm — a poker card's height, but narrower than a poker card's 63.5 mm width.
+    // The width follows the card art (Assets/Cards/*_art.png, 416 x 661), which is drawn with its
+    // border frame flush to the image edge: there is no margin to pad into and nothing to crop,
+    // so a card at any other ratio could only display that art stretched. Matching the mesh to
+    // the art instead costs a dimension that was never a game rule, and 0.629 is an ordinary card
+	// proportion — between a poker card's 0.714 and a tarot card's 0.583.
+    //
+    // The 0.5 mm thickness is a slight exaggeration of real 0.3 mm card stock, so the card still
+    // reads as an object rather than a decal.
+    public static readonly Vector2 CARD_SIZE = new Vector2(0.05595f, 0.0889f);
     public const float CARD_THICKNESS = 0.0005f;
 
 	// A real playing card's corners are about 3.2 mm. 2 mm is deliberately under that — the
@@ -111,8 +118,8 @@ public static class RoundedCardMesh
 		return surface.Commit();
 	}
 
-	/// <summary>UV laid out the way QuadMesh lays its own out — origin at the top-left — so
-	/// CardView's existing atlas UV1 scale/offset crop still lands correctly.</summary>
+	/// <summary>UV laid out the way QuadMesh lays its own out — origin at the top-left — which is
+	/// the orientation a card's art PNG is written in, so the face samples it upright.</summary>
     private static void AddFaceVertex(SurfaceTool surface, Vector2 point, Vector2 size, float z)
     {
         surface.SetUV(new Vector2(
